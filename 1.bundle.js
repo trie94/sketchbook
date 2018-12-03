@@ -49256,7 +49256,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 var OrbitControls = __webpack_require__("./node_modules/three-orbit-controls/index.js")(THREE);
 
 function Scene(canvas) {
-
     var clock = new THREE.Clock();
     var HEIGHT = window.innerHeight;
     var WIDTH = window.innerWidth;
