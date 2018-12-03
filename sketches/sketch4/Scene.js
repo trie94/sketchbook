@@ -3,7 +3,6 @@ import Test from './test';
 const OrbitControls = require('three-orbit-controls')(THREE);
 
 export default function Scene(canvas) {
-
     const clock = new THREE.Clock();
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
