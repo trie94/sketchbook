@@ -30,7 +30,7 @@ module.exports = {
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, './dist'),
-        chunkFilename: 'chunks/[id].[chunkhash].js'
+        // chunkFilename: 'chunks/[id].[chunkhash].js'
     },
 
     module: {
@@ -39,6 +39,12 @@ module.exports = {
             exclude: /node_modules/,
             use: {
                 loader: 'babel-loader',
+                options:
+                {
+                    plugins: [
+                        'syntax-dynamic-import',
+                    ]
+                }
             }
         },
         {
@@ -89,7 +95,7 @@ module.exports = {
 
     optimization: {
         splitChunks: {
-            chunks: 'all'
+            chunks: 'initial'
         },
         minimizer: [
             // new UglifyJsPlugin({
