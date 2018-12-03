@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "8ac46eb1d6b6cc418db1";
+/******/ 	var hotCurrentHash = "dd43d1a2a0fe3850cea2";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -944,8 +944,10 @@ var sketchName = window.location.pathname.substring(1);
 var sketch = sketches[sketchName];
 
 if (sketch) {
-    sketch().then(function (result) {
-        return result.default();
+    sketch().then(
+    // result => result.default(),
+    function (result) {
+        return console.log(result);
     }, function (error) {
         return console.log(error);
     });
