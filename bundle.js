@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "ca362f1a0db0ad595d0b";
+/******/ 	var hotCurrentHash = "967dcfc01a2f612ef975";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -956,11 +956,21 @@ function listSketches() {
     root.appendChild(sketch1);
     sketch1.setAttribute('href', basename + "sketch1");
     sketch1.innerHTML = "/sketch1";
+    sketch1.addEventListener("click", function () {
+        sketchName = window.location.pathname.substring(1);
+        sketch = sketches[sketchName];
+        sketch();
+    });
 
     var sketch2 = document.createElement('a');
     root.appendChild(sketch2);
     sketch2.setAttribute('href', basename + "sketch4");
     sketch2.innerHTML = "/sketch4";
+    sketch2.addEventListener("click", function () {
+        sketchName = window.location.pathname.substring(1);
+        sketch = sketches[sketchName];
+        sketch();
+    });
 }
 
 /***/ }),
