@@ -2,6 +2,7 @@ import * as THREE from 'three';
 const OrbitControls = require('three-orbit-controls')(THREE);
 import * as Elements from './elements';
 import Scene from './Scene';
+import BaseSketch from '../BaseSketch';
 
 export default function Sketch1() {
 
@@ -19,12 +20,6 @@ export default function Sketch1() {
 
     // // number of islands
     // let islandNum = 30;
-
-    start();
-    function start()
-    {
-        console.log("create a scene");
-    }
 
     // function createScene() {
         

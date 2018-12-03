@@ -27,9 +27,6 @@ const sketches = {
 let sketchName = window.location.pathname.substring(1);
 let sketch = sketches[sketchName];
 
-// initialize scene
-// location.reload();
-
 if (sketch) {
     sketch().then(
         result => result.default(),

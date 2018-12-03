@@ -19,6 +19,7 @@ export default function BaseSketch(scene) {
         scene.onMouseClick();
     }
 
+    // these two functions will be moved based on either using three js
     function start() {
         scene.start();
     }
