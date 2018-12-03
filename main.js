@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "23ab763dee8c6940f741";
+/******/ 	var hotCurrentHash = "d970cc869346947fbc05";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -941,6 +941,7 @@ var sketches = {
 };
 
 var sketchName = window.location.pathname.substring(1);
+console.log(sketchName);
 sketchName.replace(basename.substring(1), "");
 sketchName.replace("/", "");
 var sketch = sketches[sketchName];
