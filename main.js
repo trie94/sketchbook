@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "967dcfc01a2f612ef975";
+/******/ 	var hotCurrentHash = "8ac46eb1d6b6cc418db1";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -744,7 +744,7 @@
 /******/
 /******/ 	// script path function
 /******/ 	function jsonpScriptSrc(chunkId) {
-/******/ 		return __webpack_require__.p + "" + chunkId + ".bundle.js"
+/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch1","2":"sketch4"}[chunkId]||chunkId) + "/" + ({"1":"sketch1","2":"sketch4"}[chunkId]||chunkId) + ".js"
 /******/ 	}
 /******/
 /******/ 	// The require function
@@ -936,7 +936,7 @@ var sketches = {
         return __webpack_require__.e(/* import() | sketch1 */ 1).then(__webpack_require__.t.bind(null, "./sketches/sketch1/index.js", 7));
     },
     sketch4: function sketch4() {
-        return __webpack_require__.e(/* import() | sketch1 */ 1).then(__webpack_require__.t.bind(null, "./sketches/sketch4/index.js", 7));
+        return __webpack_require__.e(/* import() | sketch4 */ 2).then(__webpack_require__.t.bind(null, "./sketches/sketch4/index.js", 7));
     }
 };
 
@@ -956,21 +956,11 @@ function listSketches() {
     root.appendChild(sketch1);
     sketch1.setAttribute('href', basename + "sketch1");
     sketch1.innerHTML = "/sketch1";
-    sketch1.addEventListener("click", function () {
-        sketchName = window.location.pathname.substring(1);
-        sketch = sketches[sketchName];
-        sketch();
-    });
 
     var sketch2 = document.createElement('a');
     root.appendChild(sketch2);
     sketch2.setAttribute('href', basename + "sketch4");
     sketch2.innerHTML = "/sketch4";
-    sketch2.addEventListener("click", function () {
-        sketchName = window.location.pathname.substring(1);
-        sketch = sketches[sketchName];
-        sketch();
-    });
 }
 
 /***/ }),
@@ -1632,4 +1622,4 @@ module.exports = __webpack_require__("./index.js");
 /***/ })
 
 /******/ });
-//# sourceMappingURL=bundle.js.map
+//# sourceMappingURL=main.js.map
