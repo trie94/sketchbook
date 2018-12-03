@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "d970cc869346947fbc05";
+/******/ 	var hotCurrentHash = "af5123272c2ef70d1824";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -940,10 +940,10 @@ var sketches = {
     }
 };
 
-var sketchName = window.location.pathname.substring(1);
-console.log(sketchName);
-sketchName.replace(basename.substring(1), "");
-sketchName.replace("/", "");
+var sketchName = window.location.pathname;
+console.log('original sketchname: ' + sketchName);
+sketchName.replace(basename, '');
+sketchName.replace('/', '');
 var sketch = sketches[sketchName];
 console.log("sketchname: " + sketchName + " /sketch: " + sketch);
 
