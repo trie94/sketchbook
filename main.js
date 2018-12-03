@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "14abf15ab608b69f45e9";
+/******/ 	var hotCurrentHash = "ea37eae96fb9757ae7c6";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -933,15 +933,16 @@ listSketches();
 // get sketch
 var sketches = {
     sketch1: function sketch1() {
-        return __webpack_require__.e(/* import() | sketch1 */ 1).then(__webpack_require__.t.bind(null, "./sketches/sketch1/index.js", 7));
+        return __webpack_require__.e(/* import() | sketch1 */ 1).then(__webpack_require__.t.bind(null, "./sketch1/index.js", 7));
     },
     sketch4: function sketch4() {
-        return __webpack_require__.e(/* import() | sketch4 */ 2).then(__webpack_require__.t.bind(null, "./sketches/sketch4/index.js", 7));
+        return __webpack_require__.e(/* import() | sketch4 */ 2).then(__webpack_require__.t.bind(null, "./sketch4/index.js", 7));
     }
 };
 
 var sketchName = window.location.pathname.substring(1);
 var sketch = sketches[sketchName];
+console.log("sketchname: " + sketchName + " /sketch: " + sketch);
 
 if (sketch) {
     console.log("sketch?????");

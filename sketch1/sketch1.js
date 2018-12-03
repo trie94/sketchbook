@@ -1,5 +1,49 @@
 (window["webpackJsonp"] = window["webpackJsonp"] || []).push([[1],{
 
+/***/ "./BaseSketch.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = BaseSketch;
+function BaseSketch(scene) {
+    bindEventListeners();
+    start();
+    update();
+
+    function bindEventListeners() {
+        window.onresize = resizeCanvas;
+        window.onclick = mouseClick;
+        resizeCanvas();
+    }
+
+    function resizeCanvas() {
+        canvas.style.width = window.innerWidth;
+        canvas.style.height = window.innerHeight;
+        scene.onWindowResize();
+    }
+
+    function mouseClick() {
+        scene.onMouseClick();
+    }
+
+    // these two functions will be moved based on either using three js
+    function start() {
+        scene.start();
+    }
+
+    function update() {
+        requestAnimationFrame(update);
+        scene.update();
+    }
+}
+
+/***/ }),
+
 /***/ "./node_modules/three-orbit-controls/index.js":
 /***/ (function(module, exports) {
 
@@ -48688,51 +48732,7 @@ function LensFlare() {
 
 /***/ }),
 
-/***/ "./sketches/BaseSketch.js":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = BaseSketch;
-function BaseSketch(scene) {
-    bindEventListeners();
-    start();
-    update();
-
-    function bindEventListeners() {
-        window.onresize = resizeCanvas;
-        window.onclick = mouseClick;
-        resizeCanvas();
-    }
-
-    function resizeCanvas() {
-        canvas.style.width = window.innerWidth;
-        canvas.style.height = window.innerHeight;
-        scene.onWindowResize();
-    }
-
-    function mouseClick() {
-        scene.onMouseClick();
-    }
-
-    // these two functions will be moved based on either using three js
-    function start() {
-        scene.start();
-    }
-
-    function update() {
-        requestAnimationFrame(update);
-        scene.update();
-    }
-}
-
-/***/ }),
-
-/***/ "./sketches/sketch1/Scene.js":
+/***/ "./sketch1/Scene.js":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48864,7 +48864,7 @@ function Scene(canvas) {
 
 /***/ }),
 
-/***/ "./sketches/sketch1/elements.js":
+/***/ "./sketch1/elements.js":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48892,7 +48892,7 @@ function createFish() {
 
 /***/ }),
 
-/***/ "./sketches/sketch1/index.js":
+/***/ "./sketch1/index.js":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48907,15 +48907,15 @@ var _three = __webpack_require__("./node_modules/three/build/three.module.js");
 
 var THREE = _interopRequireWildcard(_three);
 
-var _elements = __webpack_require__("./sketches/sketch1/elements.js");
+var _elements = __webpack_require__("./sketch1/elements.js");
 
 var Elements = _interopRequireWildcard(_elements);
 
-var _Scene = __webpack_require__("./sketches/sketch1/Scene.js");
+var _Scene = __webpack_require__("./sketch1/Scene.js");
 
 var _Scene2 = _interopRequireDefault(_Scene);
 
-var _BaseSketch = __webpack_require__("./sketches/BaseSketch.js");
+var _BaseSketch = __webpack_require__("./BaseSketch.js");
 
 var _BaseSketch2 = _interopRequireDefault(_BaseSketch);
 
