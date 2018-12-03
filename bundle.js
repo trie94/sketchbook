@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "bbfac5e65031af9f0af7";
+/******/ 	var hotCurrentHash = "ca362f1a0db0ad595d0b";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -915,7 +915,7 @@
 __webpack_require__("./style.scss");
 
 if (false) {}
-var basename =  true ? "/sketchbook" : undefined;
+var basename =  true ? "/sketchbook/" : undefined;
 
 if (true) {
     module.hot.accept();
@@ -954,12 +954,12 @@ if (sketch) {
 function listSketches() {
     var sketch1 = document.createElement('a');
     root.appendChild(sketch1);
-    sketch1.setAttribute('href', "/sketch1");
+    sketch1.setAttribute('href', basename + "sketch1");
     sketch1.innerHTML = "/sketch1";
 
     var sketch2 = document.createElement('a');
     root.appendChild(sketch2);
-    sketch2.setAttribute('href', "/sketch4");
+    sketch2.setAttribute('href', basename + "sketch4");
     sketch2.innerHTML = "/sketch4";
 }
 
