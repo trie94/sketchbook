@@ -21,7 +21,7 @@ listSketches();
 // get sketch
 const sketches = {
     sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketches/sketch1"),
-    sketch4: () => import(/* webpackChunkName: "sketch1" */ "./sketches/sketch4")
+    sketch4: () => import(/* webpackChunkName: "sketch4" */ "./sketches/sketch4")
 };
 
 let sketchName = window.location.pathname.substring(1);
