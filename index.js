@@ -20,11 +20,13 @@ listSketches();
 
 // get sketch
 const sketches = {
-    sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketches/sketch1"),
-    sketch4: () => import(/* webpackChunkName: "sketch4" */ "./sketches/sketch4")
+    sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketch1"),
+    sketch4: () => import(/* webpackChunkName: "sketch4" */ "./sketch4")
 };
 
-let sketchName = window.location.pathname.substring(1);
+let sketchName = window.location.pathname;
+sketchName = sketchName.replace(basename, '');
+sketchName = sketchName.replace('/', '');
 let sketch = sketches[sketchName];
 
 if (sketch) {

@@ -6,11 +6,10 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const glob = require('glob');
 
 console.log('globbing');
-let files = glob.sync('./sketches/**/index.js');
+let files = glob.sync('./sketch*/**/index.js');
 files = files.map(function (file) {
     let name = file;
     name = name.replace('/index.js', '');
-    name = name.replace('./sketches/', '');
     name = name + '/index.html';
     return name;
 });
