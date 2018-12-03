@@ -1,7 +1,7 @@
 import './style.scss';
 
 if (process.env.NODE_ENV !== 'production') { console.log("dev mode"); }
-let basename = process.env.NODE_ENV == 'production' ? "/sketchbook" : "/";
+let basename = process.env.NODE_ENV == 'production' ? "/sketchbook/" : "/";
 
 if (module.hot) {
     module.hot.accept();
@@ -37,11 +37,11 @@ if (sketch) {
 function listSketches() {
     const sketch1 = document.createElement('a');
     root.appendChild(sketch1);
-    sketch1.setAttribute('href', "/sketch1");
+    sketch1.setAttribute('href', basename + "sketch1");
     sketch1.innerHTML = "/sketch1";
 
     const sketch2 = document.createElement('a');
     root.appendChild(sketch2);
-    sketch2.setAttribute('href', "/sketch4");
+    sketch2.setAttribute('href', basename + "sketch4");
     sketch2.innerHTML = "/sketch4";
 }
