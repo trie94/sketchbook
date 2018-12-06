@@ -31,7 +31,6 @@ function BaseSketch(scene) {
         scene.onMouseClick();
     }
 
-    // these two functions will be moved based on either using three js
     function start() {
         scene.start();
     }
@@ -48747,11 +48746,15 @@ var _three = __webpack_require__("./node_modules/three/build/three.module.js");
 
 var THREE = _interopRequireWildcard(_three);
 
+var _iceberg = __webpack_require__("./sketch1/iceberg.js");
+
+var _iceberg2 = _interopRequireDefault(_iceberg);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 var OrbitControls = __webpack_require__("./node_modules/three-orbit-controls/index.js")(THREE);
-// import Sketch1 from './sketches/sketch1';
-
 function Scene(canvas) {
 
     var clock = new THREE.Clock();
@@ -48766,9 +48769,6 @@ function Scene(canvas) {
     var controls = createControl();
     var camHelper = new THREE.CameraHelper(camera);
 
-    // sketches
-    // const sketch1 = new Sketch1();
-
     // audio
     var listener = new THREE.AudioListener();
     var audioLoader = new THREE.AudioLoader();
@@ -48777,8 +48777,12 @@ function Scene(canvas) {
     var sceneObjects = [];
     var camPos = camera.position;
 
+    // grid
+    var iceberg = new _iceberg2.default();
+
     function createScene() {
         var scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0xf7d9aa, 100, 1000);
         return scene;
     }
 
@@ -48789,7 +48793,7 @@ function Scene(canvas) {
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.BasicShadowMap;
+        // renderer.shadowMap.type = THREE.BasicShadowMap;
 
         return renderer;
     }
@@ -48801,8 +48805,8 @@ function Scene(canvas) {
         var farPlane = 10000;
         var camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(0, 0, 300);
-        camera.lookAt(new THREE.Vector3(0, 100, 0));
+        camera.position.set(0, 150, 450);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
     }
@@ -48817,31 +48821,32 @@ function Scene(canvas) {
     }
 
     function createLights() {
-        var ambientLight = new THREE.AmbientLight(0x333333, 0.5);
-        var directionalLight = new THREE.DirectionalLight(0xfff5d6, 1);
-
         var lights = [];
-        lights.push(ambientLight);
-        lights.push(directionalLight);
+        lights.push(new THREE.AmbientLight(0x999999, 0.5));
+        lights.push(new THREE.DirectionalLight(0xffffff, 1));
+        lights.push(new THREE.DirectionalLight(0x46f5fd, 1));
+        lights.push(new THREE.DirectionalLight(0x8200C9, 1));
+        lights[1].position.set(10, 0, 0);
+        lights[2].position.set(0.75, 1, 0.5);
+        lights[3].position.set(-0.75, -1, 0.5);
 
         return lights;
     }
 
-    // function loadSound() {
-    //     audioLoader.load(bgm, (buffer) => {
-    //         bgmAudio.setBuffer(buffer);
-    //         bgmAudio.setLoop(true),
-    //             bgmAudio.setVolume(0.3);
-    //         bgmAudio.play();
-    //     });
-    // }
-
     this.start = function () {
-        console.log("start from sketch1 scene manager");
+        // scene.add(iceberg.getGrid());
+        for (var i = 0; i < light.length; i++) {
+            scene.add(light[i]);
+        }
+        scene.add(iceberg.createIceberg(30));
+        scene.add(iceberg.createWaves());
+        scene.add(iceberg.createSea());
     };
 
     this.update = function () {
         camPos = camera.position;
+        renderer.render(scene, camera);
+        iceberg.moveWaves();
     };
 
     this.onWindowResize = function () {
@@ -48864,7 +48869,7 @@ function Scene(canvas) {
 
 /***/ }),
 
-/***/ "./sketch1/elements.js":
+/***/ "./sketch1/iceberg.js":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -48873,8 +48878,7 @@ function Scene(canvas) {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.createClouds = createClouds;
-exports.createFish = createFish;
+exports.default = Iceberg;
 
 var _three = __webpack_require__("./node_modules/three/build/three.module.js");
 
@@ -48882,12 +48886,196 @@ var THREE = _interopRequireWildcard(_three);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-function createClouds() {
-    console.log("create clouds");
-}
+function Iceberg() {
+    // for island position
+    var pointVertex = [];
+    // number of islands
+    var islandNum = 30;
+    var radius = 160;
 
-function createFish() {
-    console.log("create fish");
+    // grid for generating random islands
+    var config = {
+        height: 100,
+        width: 100,
+        heightSeg: 100,
+        widthSeg: 100,
+        color: "black"
+    };
+
+    // set 0 opacity for production
+    var material = new THREE.LineBasicMaterial({
+        color: config.color,
+        transparent: true,
+        opacity: 0
+    });
+
+    // line
+    var gridObject = new THREE.Object3D();
+    var gridGeo = new THREE.Geometry();
+
+    // each vertice point
+    var pointGeo = new THREE.Geometry();
+
+    var stepw = 2 * config.width / config.widthSeg;
+    var steph = 2 * config.height / config.heightSeg;
+
+    // line - width
+    for (var i = -config.width; i <= config.width; i += stepw) {
+        gridGeo.vertices.push(new THREE.Vector3(-config.height, i, 0));
+        gridGeo.vertices.push(new THREE.Vector3(config.height, i, 0));
+    }
+
+    // line - height
+    for (var _i = -config.height; _i <= config.height; _i += steph) {
+        gridGeo.vertices.push(new THREE.Vector3(_i, -config.width, 0));
+        gridGeo.vertices.push(new THREE.Vector3(_i, config.width, 0));
+    }
+
+    // draw grid line
+    var line = new THREE.LineSegments(gridGeo, material);
+    gridObject.add(line);
+    gridObject.rotation.x = Math.PI / 2;
+
+    // point vertices
+    for (var _i2 = -config.width; _i2 <= config.width; _i2 += stepw) {
+        for (var j = -config.height; j <= config.height; j += steph) {
+            pointGeo.vertices.push(new THREE.Vector3(_i2, j, 0));
+        }
+    }
+
+    var prevIndex = null;
+    for (var _i3 = 0; _i3 < islandNum; _i3++) {
+
+        var index = Math.floor(Math.random() * pointGeo.vertices.length - 1 + 1);
+
+        // prevent overlap
+        while (index === prevIndex) {
+            index = Math.floor(Math.random() * pointGeo.vertices.length - 1 + 1);
+        }
+
+        pointVertex[_i3] = pointGeo.vertices[index];
+        prevIndex = index;
+    }
+
+    this.getGrid = function () {
+        return gridObject;
+    };
+
+    var waveGeo = new THREE.RingGeometry(0, radius, 20, 20, 20);
+    var waveMat = new THREE.MeshBasicMaterial({
+        color: 0x9ffafa,
+        transparent: true,
+        opacity: 0.7,
+        // flatShading: true,
+        side: THREE.DoubleSide,
+        depthWrite: false
+        // wireframe: true
+    });
+    var waves = new THREE.Mesh(waveGeo, waveMat);
+    waves.rotation.x = Math.PI / 2;
+
+    var wavesVertex = [];
+    var vertexLength = waveGeo.vertices.length;
+    for (var _i4 = 0; _i4 < vertexLength; _i4++) {
+        var v = waveGeo.vertices[_i4];
+        wavesVertex.push({
+            y: v.y,
+            x: v.x,
+            z: v.z,
+            // a random angle
+            ang: Math.random() * Math.PI * 2,
+            // a random distance
+            amp: 3 + Math.random() * 3,
+            // a random speed between 0.016 and 0.048 radians / frame
+            speed: 0.008 + Math.random() * 0.008
+        });
+    }
+
+    this.createIceberg = function (number) {
+        var icebergColors = [0xf7faff, 0xc1ecff, 0xc1c3ff, 0x9397ff, 0x93f5ff];
+        var iceberg = new THREE.Object3D();
+
+        for (var _i5 = 0, num = 0; _i5 < number; _i5++) {
+
+            var rad = Math.floor(Math.random() * 15) + 3;
+            var detail = Math.floor(Math.random() * 1.2) + 1;
+            var iceGeo = new THREE.TetrahedronGeometry(rad, detail);
+            var iceMat = new THREE.MeshPhongMaterial({
+                color: icebergColors[num],
+                flatShading: true
+                // transparent: true,
+                // opacity: 0.7,
+            });
+
+            if (num < icebergColors.length - 1) {
+                num++;
+            } else {
+                num = 0;
+            }
+
+            var icebergMesh = new THREE.Mesh(iceGeo, iceMat);
+            icebergMesh.position.x = pointVertex[_i5].x;
+            icebergMesh.position.y = pointVertex[_i5].z;
+            icebergMesh.position.z = pointVertex[_i5].y;
+            icebergMesh.rotation.x = Math.floor(Math.random() * Math.PI);
+            icebergMesh.rotation.y = Math.floor(Math.random() * Math.PI);
+            icebergMesh.rotation.z = Math.floor(Math.random() * Math.PI);
+            iceberg.add(icebergMesh);
+        }
+        return iceberg;
+    };
+
+    this.createWaves = function () {
+        return waves;
+    };
+
+    this.moveWaves = function () {
+
+        var verts = waves.geometry.vertices;
+        var l = verts.length;
+
+        for (var _i6 = 0; _i6 < l; _i6++) {
+            var _v = verts[_i6];
+
+            // get the data associated to it
+            var vprops = wavesVertex[_i6];
+
+            // update the position of the vertex
+            _v.x = vprops.x + Math.cos(vprops.ang) * vprops.amp;
+            _v.z = vprops.z + Math.sin(vprops.ang) * vprops.amp;
+
+            // increment the angle for the next frame
+            vprops.ang += vprops.speed;
+        }
+        waves.geometry.verticesNeedUpdate = true;
+        waves.rotation.z += .005;
+    };
+
+    var seaGeom = new THREE.CylinderGeometry(radius, radius, 15, 20, 10);
+    // seaGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI/2));
+    var seaMat = new THREE.MeshBasicMaterial({
+        color: 0x9ffafa,
+        transparent: true,
+        opacity: 0.7,
+        flatShading: true
+        // wireframe: true
+    });
+    var dombGeo = new THREE.TetrahedronGeometry(170, 3);
+    var dombMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.5
+        // flatShading: true,
+        // wireframe: true
+    });
+    var sea = new THREE.Mesh(seaGeom, seaMat);
+    var domb = new THREE.Mesh(dombGeo, dombMat);
+    sea.position.y = -5;
+    sea.receiveShadow = true;
+
+    this.createSea = function () {
+        return sea;
+    };
 }
 
 /***/ }),
@@ -48903,14 +49091,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Sketch1;
 
-var _three = __webpack_require__("./node_modules/three/build/three.module.js");
-
-var THREE = _interopRequireWildcard(_three);
-
-var _elements = __webpack_require__("./sketch1/elements.js");
-
-var Elements = _interopRequireWildcard(_elements);
-
 var _Scene = __webpack_require__("./sketch1/Scene.js");
 
 var _Scene2 = _interopRequireDefault(_Scene);
@@ -48921,311 +49101,14 @@ var _BaseSketch2 = _interopRequireDefault(_BaseSketch);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-var OrbitControls = __webpack_require__("./node_modules/three-orbit-controls/index.js")(THREE);
 function Sketch1() {
+    var canvas = document.createElement('canvas');
+    canvas.id = 'canvas';
+    var root = document.getElementById('root');
+    root.appendChild(canvas);
 
-    // // add object that requires animation
-    // let circle;
-    // let controls;
-    // let waves;
-    // // for wave movement
-    // let wavesVertex = [];
-    // // for island position
-    // let pointVertex = [];
-
-    // // variables for the base
-    // let radius = 160;
-
-    // // number of islands
-    // let islandNum = 30;
-
-    // function createScene() {
-
-    //     const WIDTH = window.innerWidth;
-    //     const HEIGHT = window.innerHeight;
-
-    //     const scene = new THREE.Scene();
-    //     scene.fog = new THREE.Fog(0xf7d9aa, 100, 1000);
-    //     const camera = new THREE.PerspectiveCamera(
-    //         60,
-    //         this.WIDTH / this.HEIGHT,
-    //         1,
-    //         10000
-    //     );
-    //     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    //     renderer.setPixelRatio((window.devicePixelRatio) ? window.devicePixelRatio : 1);
-    //     renderer.setSize(this.WIDTH, this.HEIGHT);
-    //     renderer.shadowMap.enabled = true;
-
-    //     camera.position.set(0, 150, 450);
-    //     camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-    //     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    //     this.controls.target = new THREE.Vector3(0, 15, 0);
-    //     this.controls.maxPolarAngle = Math.PI / 2;
-
-    //     // create stuff
-    //     createGrid();
-    //     this.createSea();
-    //     this.createIceberg(this.islandNum);
-    //     this.createLights();
-    //     this.createWaves();
-    //     Elements.createClouds();
-    // }
-
-    // function createGrid() {
-    //     // grid for generating random islands
-    //     const config = {
-    //         height: 100,
-    //         width: 100,
-    //         heightSeg: 100,
-    //         widthSeg: 100,
-    //         color: "black"
-    //     };
-
-    //     // set 0 opacity for production
-    //     const material = new THREE.LineBasicMaterial({
-    //         color: config.color,
-    //         transparent: true,
-    //         opacity: 0
-    //     });
-
-    //     // line
-    //     const gridObject = new THREE.Object3D();
-    //     const gridGeo = new THREE.Geometry();
-
-    //     // each vertice point
-    //     const pointGeo = new THREE.Geometry();
-
-    //     const stepw = 2 * config.width / config.widthSeg;
-    //     const steph = 2 * config.height / config.heightSeg;
-
-    //     // line - width
-    //     for (let i = -config.width; i <= config.width; i += stepw) {
-    //         gridGeo.vertices.push(new THREE.Vector3(-config.height, i, 0));
-    //         gridGeo.vertices.push(new THREE.Vector3(config.height, i, 0));
-    //     }
-
-    //     // line - height
-    //     for (let i = -config.height; i <= config.height; i += steph) {
-    //         gridGeo.vertices.push(new THREE.Vector3(i, -config.width, 0));
-    //         gridGeo.vertices.push(new THREE.Vector3(i, config.width, 0));
-    //     }
-
-    //     // draw grid line
-    //     const line = new THREE.LineSegments(gridGeo, material);
-    //     gridObject.add(line);
-    //     gridObject.rotation.x = Math.PI / 2;
-    //     this.scene.add(gridObject);
-
-    //     // point vertices
-    //     for (let i = -config.width; i <= config.width; i += stepw) {
-    //         for (let j = -config.height; j <= config.height; j += steph) {
-    //             pointGeo.vertices.push(new THREE.Vector3(i, j, 0));
-    //         }
-    //     }
-
-    //     let prevIndex = null;
-    //     for (let i = 0; i < this.islandNum; i++) {
-
-    //         let index = Math.floor((Math.random() * pointGeo.vertices.length - 1) + 1);
-
-    //         // prevent overlap
-    //         while (index === prevIndex) {
-    //             index = Math.floor((Math.random() * pointGeo.vertices.length - 1) + 1);
-    //         }
-
-    //         this.pointVertex[i] = pointGeo.vertices[index];
-    //         prevIndex = index;
-    //     }
-    // }
-
-    // function createSea() {
-    //     const seaGeom = new THREE.CylinderGeometry(this.radius, this.radius, 15, 20, 10);
-    //     // seaGeom.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI/2));
-    //     const seaMat = new THREE.MeshBasicMaterial({
-    //         color: 0x9ffafa,
-    //         transparent: true,
-    //         opacity: 0.7,
-    //         flatShading: true,
-    //         // wireframe: true
-    //     });
-    //     const dombGeo = new THREE.TetrahedronGeometry(170, 3);
-    //     const dombMat = new THREE.MeshBasicMaterial({
-    //         color: 0xffffff,
-    //         transparent: true,
-    //         opacity: 0.5,
-    //         // flatShading: true,
-    //         // wireframe: true
-    //     });
-    //     const sea = new THREE.Mesh(seaGeom, seaMat);
-    //     const domb = new THREE.Mesh(dombGeo, dombMat);
-    //     sea.position.y = -5;
-    //     sea.receiveShadow = true;
-    //     this.scene.add(sea);
-    //     // this.scene.add(domb);
-    // }
-
-    // // island object
-    // function Island(radTop, radBottom, height, radSeg, heightSeg, color, opacity) {
-    //     const islandGeo = new THREE.CylinderGeometry(radTop, radBottom, height, radSeg, heightSeg);
-    //     const islandMat = new THREE.MeshPhongMaterial({
-    //         color: color,
-    //         transparent: false,
-    //         opacity: opacity,
-    //         flatShading: true
-    //     });
-    //     this.mesh = new THREE.Mesh(islandGeo, islandMat);
-    // }
-
-    // function createIslands(number) {
-    //     const islandColors = [0xf7faff, 0xc1ecff, 0xc1c3ff, 0x9397ff, 0x93f5ff];
-    //     const islands = [];
-
-    //     for (let i = 0, num = 0; i < number; i++) {
-    //         const radTops = (Math.floor(Math.random() * 10) + 3);
-    //         const radBottoms = radTops + (Math.floor(Math.random() * 10) + 1);
-    //         const heights = radTops + (Math.floor(Math.random() * 15) - 3);
-
-    //         const radSegs = (Math.floor(Math.random() * 10) + 7);
-    //         const heightSegs = (Math.floor(Math.random() * 15) + 10);
-    //         const opacities = (Math.floor(Math.random() * 10) + 7) * 0.1;
-
-    //         // assign color
-    //         if (num < islandColors.length - 1) {
-    //             num++;
-    //         } else {
-    //             num = 0;
-    //         }
-
-    //         islands[i] = new this.Island(radTops, radBottoms, heights, radSegs, heightSegs, islandColors[num], opacities);
-    //         islands[i].mesh.receiveShadow = true;
-    //         this.scene.add(islands[i].mesh);
-    //         islands[i].mesh.position.x = this.pointVertex[i].x;
-    //         islands[i].mesh.position.y = this.pointVertex[i].z;
-    //         islands[i].mesh.position.z = this.pointVertex[i].y;
-    //     }
-    // }
-
-    // // same as island
-    // function createIceberg(number) {
-    //     const icebergColors = [0xf7faff, 0xc1ecff, 0xc1c3ff, 0x9397ff, 0x93f5ff];
-    //     const iceberg = new THREE.Object3D();
-
-    //     for (let i = 0, num = 0; i < number; i++) {
-
-    //         const rad = (Math.floor(Math.random() * 15) + 3);
-    //         const detail = (Math.floor(Math.random() * 1.2) + 1);
-    //         const iceGeo = new THREE.TetrahedronGeometry(rad, detail);
-    //         const iceMat = new THREE.MeshPhongMaterial({
-    //             color: icebergColors[num],
-    //             flatShading: true,
-    //             // transparent: true,
-    //             // opacity: 0.7
-    //         });
-
-    //         if (num < icebergColors.length - 1) {
-    //             num++;
-
-    //         } else {
-    //             num = 0;
-    //         }
-
-    //         const icebergMesh = new THREE.Mesh(iceGeo, iceMat);
-    //         icebergMesh.position.x = this.pointVertex[i].x;
-    //         icebergMesh.position.y = this.pointVertex[i].z;
-    //         icebergMesh.position.z = this.pointVertex[i].y;
-    //         icebergMesh.rotation.x = (Math.floor(Math.random() * Math.PI));
-    //         icebergMesh.rotation.y = (Math.floor(Math.random() * Math.PI));
-    //         icebergMesh.rotation.z = (Math.floor(Math.random() * Math.PI));
-    //         iceberg.add(icebergMesh);
-    //     }
-
-    //     this.scene.add(iceberg);
-    // }
-
-    // function createWaves() {
-    //     const waveGeo = new THREE.RingGeometry(0, this.radius, 20, 20, 20);
-    //     const waveMat = new THREE.MeshBasicMaterial({
-    //         color: 0x9ffafa,
-    //         transparent: true,
-    //         opacity: 0.7,
-    //         // flatShading: true,
-    //         side: THREE.DoubleSide,
-    //         depthWrite: false,
-    //         // wireframe: true
-    //     });
-    //     const waves = new THREE.Mesh(waveGeo, waveMat);
-    //     waves.rotation.x = Math.PI / 2;
-
-    //     let wavesVertex = [];
-    //     let vertexLength = waveGeo.vertices.length;
-    //     for (let i = 0; i < vertexLength; i++) {
-    //         let v = waveGeo.vertices[i];
-    //         wavesVertex.push({
-    //             y: v.y,
-    //             x: v.x,
-    //             z: v.z,
-    //             // a random angle
-    //             ang: Math.random() * Math.PI * 2,
-    //             // a random distance
-    //             amp: 3 + Math.random() * 3,
-    //             // a random speed between 0.016 and 0.048 radians / frame
-    //             speed: 0.008 + Math.random() * 0.008
-    //         });
-    //     }
-    //     this.wavesVertex = wavesVertex;
-    //     this.waves = waves;
-    //     this.scene.add(waves);
-    // }
-
-    // function moveWaves() {
-    //     // get the vertices
-    //     let verts = this.waves.geometry.vertices;
-    //     let l = verts.length;
-
-    //     for (let i = 0; i < l; i++) {
-    //         let v = verts[i];
-
-    //         // get the data associated to it
-    //         let vprops = this.wavesVertex[i];
-
-    //         // update the position of the vertex
-    //         v.x = vprops.x + Math.cos(vprops.ang) * vprops.amp;
-    //         v.z = vprops.z + Math.sin(vprops.ang) * vprops.amp;
-
-    //         // increment the angle for the next frame
-    //         vprops.ang += vprops.speed;
-
-    //     }
-    //     this.waves.geometry.verticesNeedUpdate = true;
-    //     this.waves.rotation.z += .005;
-    // }
-
-    // function createLights() {
-    //     let ambientLight = new THREE.AmbientLight(0x999999);
-    //     this.scene.add(ambientLight);
-
-    //     let lights = [];
-    //     lights[0] = new THREE.DirectionalLight(0xffffff, 1);
-    //     lights[0].position.set(1, 0, 0);
-    //     lights[1] = new THREE.DirectionalLight(0x46f5fd, 1);
-    //     lights[1].position.set(0.75, 1, 0.5);
-    //     lights[2] = new THREE.DirectionalLight(0x8200C9, 1);
-    //     lights[2].position.set(-0.75, -1, 0.5);
-    //     this.scene.add(lights[0]);
-    //     this.scene.add(lights[1]);
-    //     this.scene.add(lights[2]);
-    // }
-
-    // function update() {
-    //     this.controls.update();
-    //     this.moveWaves();
-    //     this.renderScene();
-    //     this.frameId = window.requestAnimationFrame(this.animate);
-    // }
+    var scene = new _Scene2.default(canvas);
+    Sketch1.prototype = new _BaseSketch2.default(scene);
 }
 
 /***/ })

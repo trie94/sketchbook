@@ -31,7 +31,6 @@ function BaseSketch(scene) {
         scene.onMouseClick();
     }
 
-    // these two functions will be moved based on either using three js
     function start() {
         scene.start();
     }
@@ -48870,10 +48869,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Sketch4;
 
-var _three = __webpack_require__("./node_modules/three/build/three.module.js");
-
-var THREE = _interopRequireWildcard(_three);
-
 var _Scene = __webpack_require__("./sketch4/Scene.js");
 
 var _Scene2 = _interopRequireDefault(_Scene);
@@ -48884,9 +48879,6 @@ var _BaseSketch2 = _interopRequireDefault(_BaseSketch);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-var OrbitControls = __webpack_require__("./node_modules/three-orbit-controls/index.js")(THREE);
 function Sketch4() {
     var canvas = document.createElement('canvas');
     canvas.id = 'canvas';
