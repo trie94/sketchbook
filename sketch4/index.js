@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-const OrbitControls = require('three-orbit-controls')(THREE);
 import Scene from './Scene';
 import BaseSketch from '../BaseSketch';
 

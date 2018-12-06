@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 const OrbitControls = require('three-orbit-controls')(THREE);
-// import Sketch1 from './sketches/sketch1';
+import Iceberg from './iceberg';
 
 export default function Scene(canvas) {
 
@@ -16,9 +16,6 @@ export default function Scene(canvas) {
     const controls = createControl();
     const camHelper = new THREE.CameraHelper(camera);
 
-    // sketches
-    // const sketch1 = new Sketch1();
-
     // audio
     const listener = new THREE.AudioListener();
     const audioLoader = new THREE.AudioLoader();
@@ -27,8 +24,12 @@ export default function Scene(canvas) {
     let sceneObjects = [];
     let camPos = camera.position;
 
+    // grid
+    const iceberg = new Iceberg();
+
     function createScene() {
         const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0xf7d9aa, 100, 1000);
         return scene;
     }
 
@@ -39,7 +40,7 @@ export default function Scene(canvas) {
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.BasicShadowMap;
+        // renderer.shadowMap.type = THREE.BasicShadowMap;
 
         return renderer;
     }
@@ -51,8 +52,8 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(0, 0, 300);
-        camera.lookAt(new THREE.Vector3(0, 100, 0));
+        camera.position.set(0, 150, 450);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
     }
@@ -67,31 +68,33 @@ export default function Scene(canvas) {
     }
 
     function createLights() {
-        const ambientLight = new THREE.AmbientLight(0x333333, 0.5);
-        const directionalLight = new THREE.DirectionalLight(0xfff5d6, 1);
-
         let lights = [];
-        lights.push(ambientLight);
-        lights.push(directionalLight);
+        lights.push(new THREE.AmbientLight(0x999999, 0.5));
+        lights.push(new THREE.DirectionalLight(0xffffff, 1));
+        lights.push(new THREE.DirectionalLight(0x46f5fd, 1));
+        lights.push(new THREE.DirectionalLight(0x8200C9, 1));
+        lights[1].position.set(10, 0, 0);
+        lights[2].position.set(0.75, 1, 0.5);
+        lights[3].position.set(-0.75, -1, 0.5);
 
         return lights;
     }
 
-    // function loadSound() {
-    //     audioLoader.load(bgm, (buffer) => {
-    //         bgmAudio.setBuffer(buffer);
-    //         bgmAudio.setLoop(true),
-    //             bgmAudio.setVolume(0.3);
-    //         bgmAudio.play();
-    //     });
-    // }
-
     this.start = function () {
-        console.log("start from sketch1 scene manager");
+        // scene.add(iceberg.getGrid());
+        for(let i=0; i<light.length; i++)
+        {
+            scene.add(light[i]);
+        }
+        scene.add(iceberg.createIceberg(30));
+        scene.add(iceberg.createWaves());
+        scene.add(iceberg.createSea());
     }
 
     this.update = function () {
         camPos = camera.position;
+        renderer.render(scene, camera);
+        iceberg.moveWaves();
     }
 
     this.onWindowResize = function () {
