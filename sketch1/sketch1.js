@@ -49102,11 +49102,7 @@ var _BaseSketch2 = _interopRequireDefault(_BaseSketch);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function Sketch1() {
-    var canvas = document.createElement('canvas');
-    canvas.id = 'canvas';
-    var root = document.getElementById('root');
-    root.appendChild(canvas);
-
+    var canvas = document.getElementById('canvas');
     var scene = new _Scene2.default(canvas);
     Sketch1.prototype = new _BaseSketch2.default(scene);
 }
