@@ -16,12 +16,15 @@ if (module.hot) {
 }
 
 const root = document.getElementById('root');
-listSketches();
+const canvas = document.createElement('canvas');
+canvas.id = 'canvas';
+root.appendChild(canvas);
+init();
 
 // get sketch
 const sketches = {
     sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketch1"),
-    sketch4: () => import(/* webpackChunkName: "sketch4" */ "./sketch4")
+    sketch2: () => import(/* webpackChunkName: "sketch2" */ "./sketch2")
 };
 
 let sketchName = window.location.pathname;
@@ -36,14 +39,26 @@ if (sketch) {
     );
 }
 
-function listSketches() {
-    const sketch1 = document.createElement('a');
-    root.appendChild(sketch1);
-    sketch1.setAttribute('href', basename + "sketch1");
-    sketch1.innerHTML = "/sketch1";
+function init() {
 
-    const sketch2 = document.createElement('a');
-    root.appendChild(sketch2);
-    sketch2.setAttribute('href', basename + "sketch4");
-    sketch2.innerHTML = "/sketch4";
+    // title
+    const title = document.createElement('h4');
+    title.innerHTML = "Sketch List";
+
+    let sketchWrapper = document.createElement('div');
+    sketchWrapper.classList = "sketch-wrapper";
+    root.appendChild(sketchWrapper);
+    sketchWrapper.appendChild(title);
+
+    // sketch
+    addSketchElem(sketchWrapper, "sketch1", "Iceberg");
+    addSketchElem(sketchWrapper, "sketch2", "Shell");
+}
+
+function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
+    let sketch = document.createElement('a');
+    sketch.className = "sketch-list";
+    sketchWrapper.appendChild(sketch);
+    sketch.setAttribute('href', basename + sketchFileName);
+    sketch.innerHTML = sketchName;
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import Test from './test';
 const OrbitControls = require('three-orbit-controls')(THREE);
+import Skybox from './background';
+import Blob from './Blob';
 
 export default function Scene(canvas) {
     const clock = new THREE.Clock();
@@ -13,8 +14,8 @@ export default function Scene(canvas) {
     const renderer = createRenderer();
     const camera = createCamera();
     const controls = createControl();
+    const skybox = Skybox();
     const camHelper = new THREE.CameraHelper(camera);
-    const test = new Test().getMesh();
 
     // audio
     const listener = new THREE.AudioListener();
@@ -23,6 +24,10 @@ export default function Scene(canvas) {
 
     let sceneObjects = [];
     let camPos = camera.position;
+
+    // blob
+    const blob = new Blob();
+    const blobMesh = blob.getBlob();
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -75,11 +80,13 @@ export default function Scene(canvas) {
     }
 
     this.start = function () {
-        console.log("start from sketch4 scene manager");
-        scene.add(test);
+        scene.add(skybox);
+        scene.add(blobMesh);
+        console.log("start from sketch2 scene manager");
     }
 
     this.update = function () {
+        blob.update();
         camPos = camera.position;
         renderer.render(scene, camera);
     }
@@ -98,6 +105,6 @@ export default function Scene(canvas) {
     }
 
     this.onMouseClick = function () {
-        console.log("on mouse click, scene4");
+        console.log("on mouse click, scene2");
     }
 }

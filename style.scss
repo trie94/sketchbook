@@ -16,3 +16,45 @@ body {
 p {
     margin: 1.2em;
 }
+
+h4 {
+    display: block;
+    padding: 4px 0 4px 32px;
+    color: #cecece;
+    background-color: rgba(220, 220, 220, 0.3);
+}
+
+.sketch {
+    &-wrapper{
+        height: 100%;
+        width: 180px;
+        position: fixed;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        overflow-x: hidden;
+    }
+    &-list{
+        padding: 8px 0 4px 32px;
+        text-decoration: none;
+        color: #818181;
+        display: block;
+    }
+}
+
+a:link {
+    color: gray;
+    text-decoration: none;
+}
+
+a:visited {
+    color: gray;
+}
+
+a:hover {
+    color: #000;
+}
+
+a:active {
+    color: #000;
+}

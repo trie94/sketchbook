@@ -27,9 +27,7 @@ const htmlPlugins = files.map(function (file) {
 module.exports = {
     entry: ['./index.js'],
     output: {
-        // filename: 'bundle.js',
         path: path.resolve(__dirname, './dist'),
-        // chunkFilename: 'chunks/[id].[chunkhash].js'
         chunkFilename: './[name]/[name].js'
     },
 
