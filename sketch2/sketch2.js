@@ -48905,21 +48905,12 @@ function Scene(canvas) {
     var WIDTH = window.innerWidth;
 
     // scene subjects
-    var light = createLights();
+
     var scene = createScene();
     var renderer = createRenderer();
     var camera = createCamera();
     var controls = createControl();
     var skybox = (0, _background2.default)();
-    var camHelper = new THREE.CameraHelper(camera);
-
-    // audio
-    var listener = new THREE.AudioListener();
-    var audioLoader = new THREE.AudioLoader();
-    var bgmAudio = new THREE.Audio(listener);
-
-    var sceneObjects = [];
-    var camPos = camera.position;
 
     // blob
     var blob = new _Blob2.default();
@@ -48964,26 +48955,13 @@ function Scene(canvas) {
         return controls;
     }
 
-    function createLights() {
-        var ambientLight = new THREE.AmbientLight(0x333333, 0.5);
-        var directionalLight = new THREE.DirectionalLight(0xfff5d6, 1);
-
-        var lights = [];
-        lights.push(ambientLight);
-        lights.push(directionalLight);
-
-        return lights;
-    }
-
     this.start = function () {
         scene.add(skybox);
         scene.add(blobMesh);
-        console.log("start from sketch2 scene manager");
     };
 
     this.update = function () {
         blob.update();
-        camPos = camera.position;
         renderer.render(scene, camera);
     };
 
@@ -49000,9 +48978,7 @@ function Scene(canvas) {
         renderer.setSize(WIDTH, HEIGHT);
     };
 
-    this.onMouseClick = function () {
-        console.log("on mouse click, scene2");
-    };
+    this.onMouseClick = function () {};
 }
 
 /***/ }),

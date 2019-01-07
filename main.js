@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "175fd9b8976e7f6d4c65";
+/******/ 	var hotCurrentHash = "ed091700cbef0813d03c";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -936,10 +936,10 @@ init();
 // get sketch
 var sketches = {
     sketch1: function sketch1() {
-        return __webpack_require__.e(/* import() | sketch1 */ 1).then(__webpack_require__.t.bind(null, "./sketch1/index.js", 7));
+        return __webpack_require__.e(/* import() | sketch1 */ 1).then(__webpack_require__.t.bind(null, "./sketch1/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
     },
     sketch2: function sketch2() {
-        return __webpack_require__.e(/* import() | sketch2 */ 2).then(__webpack_require__.t.bind(null, "./sketch2/index.js", 7));
+        return __webpack_require__.e(/* import() | sketch2 */ 2).then(__webpack_require__.t.bind(null, "./sketch2/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     }
 };
 
@@ -957,7 +957,6 @@ if (sketch) {
 }
 
 function init() {
-
     // title
     var title = document.createElement('h4');
     title.innerHTML = "Sketch List";
@@ -977,6 +976,7 @@ function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
     sketch.className = "sketch-list";
     sketchWrapper.appendChild(sketch);
     sketch.setAttribute('href', basename + sketchFileName);
+    sketch.id = sketchFileName;
     sketch.innerHTML = sketchName;
 }
 
