@@ -23,8 +23,8 @@ init();
 
 // get sketch
 const sketches = {
-    sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketch1"),
-    sketch2: () => import(/* webpackChunkName: "sketch2" */ "./sketch2")
+    sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketch1").then(document.getElementById(sketchName).style.color = "#81d9f9"),
+    sketch2: () => import(/* webpackChunkName: "sketch2" */ "./sketch2").then(document.getElementById(sketchName).style.color = "white")
 };
 
 let sketchName = window.location.pathname;
@@ -40,7 +40,6 @@ if (sketch) {
 }
 
 function init() {
-
     // title
     const title = document.createElement('h4');
     title.innerHTML = "Sketch List";
@@ -60,5 +59,6 @@ function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
     sketch.className = "sketch-list";
     sketchWrapper.appendChild(sketch);
     sketch.setAttribute('href', basename + sketchFileName);
+    sketch.id = sketchFileName;
     sketch.innerHTML = sketchName;
 }

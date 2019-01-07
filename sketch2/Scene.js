@@ -9,21 +9,12 @@ export default function Scene(canvas) {
     let WIDTH = window.innerWidth;
 
     // scene subjects
-    const light = createLights();
+
     const scene = createScene();
     const renderer = createRenderer();
     const camera = createCamera();
     const controls = createControl();
     const skybox = Skybox();
-    const camHelper = new THREE.CameraHelper(camera);
-
-    // audio
-    const listener = new THREE.AudioListener();
-    const audioLoader = new THREE.AudioLoader();
-    const bgmAudio = new THREE.Audio(listener);
-
-    let sceneObjects = [];
-    let camPos = camera.position;
 
     // blob
     const blob = new Blob();
@@ -68,26 +59,13 @@ export default function Scene(canvas) {
         return controls;
     }
 
-    function createLights() {
-        const ambientLight = new THREE.AmbientLight(0x333333, 0.5);
-        const directionalLight = new THREE.DirectionalLight(0xfff5d6, 1);
-
-        let lights = [];
-        lights.push(ambientLight);
-        lights.push(directionalLight);
-
-        return lights;
-    }
-
     this.start = function () {
         scene.add(skybox);
         scene.add(blobMesh);
-        console.log("start from sketch2 scene manager");
     }
 
     this.update = function () {
         blob.update();
-        camPos = camera.position;
         renderer.render(scene, camera);
     }
 
@@ -105,6 +83,6 @@ export default function Scene(canvas) {
     }
 
     this.onMouseClick = function () {
-        console.log("on mouse click, scene2");
+        
     }
 }

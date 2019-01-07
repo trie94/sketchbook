@@ -1,7 +1,7 @@
 varying vec3 viewPos;
 varying vec3 viewNormal;
 varying vec3 worldNormal;
-varying vec3 worldPos;
+// varying vec3 worldPos;
 varying vec3 objectPos;
 
 uniform float height;
@@ -105,7 +105,7 @@ void main()
     objectPos = position;
     float h = height + 10.0 * snoise(vec3(pos.xz * 0.02, time * 0.3));
     pos.y = min(pos.y, h);
-    worldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
+    // worldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
     vec4 viewPosition = modelViewMatrix * vec4( pos, 1.0 );
     viewPos = viewPosition.xyz;
     worldNormal = normalize(mat3(modelMatrix) * normal);

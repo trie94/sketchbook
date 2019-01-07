@@ -2,7 +2,7 @@ uniform vec3 color;
 varying vec3 viewPos;
 varying vec3 viewNormal;
 varying vec3 worldNormal;
-varying vec3 worldPos;
+// varying vec3 worldPos;
 varying vec3 objectPos;
 
 uniform float height;
