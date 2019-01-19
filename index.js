@@ -24,7 +24,8 @@ init();
 // get sketch
 const sketches = {
     sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketch1").then(document.getElementById(sketchName).style.color = "#81d9f9"),
-    sketch2: () => import(/* webpackChunkName: "sketch2" */ "./sketch2").then(document.getElementById(sketchName).style.color = "white")
+    sketch2: () => import(/* webpackChunkName: "sketch2" */ "./sketch2").then(document.getElementById(sketchName).style.color = "white"),
+    sketch3: () => import(/* webpackChunkName: "sketch3" */ "./sketch3").then(document.getElementById(sketchName).style.color = "#635a40"),
 };
 
 let sketchName = window.location.pathname;
@@ -52,6 +53,7 @@ function init() {
     // sketch
     addSketchElem(sketchWrapper, "sketch1", "Iceberg");
     addSketchElem(sketchWrapper, "sketch2", "Shell");
+    addSketchElem(sketchWrapper, "sketch3", "Munyu");
 }
 
 function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
