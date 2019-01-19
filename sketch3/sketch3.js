@@ -49298,7 +49298,8 @@ function MunyuGenerator() {
     var speed = [];
     var munyuColors = [];
     var munyuNum = 5;
-    var colors = [0xc36251, 0xc1c351, 0x51c39e, 0x5058c4, 0xa750c4, 0x80c450];
+    // const colors = [0xc36251, 0xc1c351, 0x51c39e, 0x5058c4, 0xa750c4, 0x80c450];
+    var colors = [0xc38651, 0xc1c351, 0x51c39e, 0x80c450];
     var munyuObjArr = [];
 
     var config = {
@@ -49317,7 +49318,6 @@ function MunyuGenerator() {
             if (num >= colors.length - 1) {
                 num = 0;
             }
-            num++;
 
             var xPos = void 0;
             var yPos = void 0;
@@ -49347,6 +49347,7 @@ function MunyuGenerator() {
 
             munyus.push(munyu);
             munyuObjArr.push(munyus[i].getMunyu(xPos, 0, yPos, colors[num]));
+            num++;
         }
         return munyuObjArr;
     };
