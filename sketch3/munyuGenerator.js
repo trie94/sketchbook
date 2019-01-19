@@ -8,7 +8,8 @@ export default function MunyuGenerator() {
     let speed = [];
     let munyuColors = [];
     const munyuNum = 5;
-    const colors = [0xc36251, 0xc1c351, 0x51c39e, 0x5058c4, 0xa750c4, 0x80c450];
+    // const colors = [0xc36251, 0xc1c351, 0x51c39e, 0x5058c4, 0xa750c4, 0x80c450];
+    const colors = [0xc38651, 0xc1c351, 0x51c39e, 0x80c450];
     let munyuObjArr = [];
 
     const config = {
@@ -27,7 +28,6 @@ export default function MunyuGenerator() {
             if (num >= colors.length - 1) {
                 num = 0;
             }
-            num++;
 
             let xPos;
             let yPos;
@@ -58,6 +58,7 @@ export default function MunyuGenerator() {
 
             munyus.push(munyu);
             munyuObjArr.push(munyus[i].getMunyu(xPos, 0, yPos, colors[num]));
+            num++;
         }
         return munyuObjArr;
     }
