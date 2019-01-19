@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "ed091700cbef0813d03c";
+/******/ 	var hotCurrentHash = "c86d295a42a47a13bb40";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -744,7 +744,7 @@
 /******/
 /******/ 	// script path function
 /******/ 	function jsonpScriptSrc(chunkId) {
-/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch1","2":"sketch2"}[chunkId]||chunkId) + "/" + ({"1":"sketch1","2":"sketch2"}[chunkId]||chunkId) + ".js"
+/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch1","2":"sketch2","3":"sketch3"}[chunkId]||chunkId) + "/" + ({"1":"sketch1","2":"sketch2","3":"sketch3"}[chunkId]||chunkId) + ".js"
 /******/ 	}
 /******/
 /******/ 	// The require function
@@ -940,6 +940,9 @@ var sketches = {
     },
     sketch2: function sketch2() {
         return __webpack_require__.e(/* import() | sketch2 */ 2).then(__webpack_require__.t.bind(null, "./sketch2/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
+    },
+    sketch3: function sketch3() {
+        return __webpack_require__.e(/* import() | sketch3 */ 3).then(__webpack_require__.t.bind(null, "./sketch3/index.js", 7)).then(document.getElementById(sketchName).style.color = "#635a40");
     }
 };
 
@@ -969,6 +972,7 @@ function init() {
     // sketch
     addSketchElem(sketchWrapper, "sketch1", "Iceberg");
     addSketchElem(sketchWrapper, "sketch2", "Shell");
+    addSketchElem(sketchWrapper, "sketch3", "Munyu");
 }
 
 function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
