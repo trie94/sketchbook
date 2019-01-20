@@ -192,7 +192,7 @@ export default function Munyu() {
         audioLoader.load(munyuSound, (buffer) => {
             munyuAudio.setBuffer(buffer);
             munyuAudio.setLoop(false);
-            munyuAudio.setVolume(1);
+            munyuAudio.setVolume(0.5);
         });
         audioLoader.load(amazinguSound, (buffer) => {
             amazinguAudio.setBuffer(buffer);

@@ -24,6 +24,14 @@ h4 {
     background-color: rgba(220, 220, 220, 0.3);
 }
 
+.instruction {
+    position: absolute;
+    z-index: 1;
+    top: 5%;
+    left: 45%;
+    color: #818181;
+}
+
 .sketch {
     &-wrapper{
         height: 100%;

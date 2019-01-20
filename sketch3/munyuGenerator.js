@@ -54,7 +54,7 @@ export default function MunyuGenerator() {
                 }
                 curIterations++;
 
-            } while(!valid && curIterations < maxIterations);
+            } while (!valid && curIterations < maxIterations);
 
             munyus.push(munyu);
             munyuObjArr.push(munyus[i].getMunyu(xPos, 0, yPos, colors[num]));
@@ -64,8 +64,19 @@ export default function MunyuGenerator() {
     }
 
     this.idle = function () {
-        for(let i=0; i<munyus.length; i++){
+        for (let i = 0; i < munyus.length; i++) {
             munyus[i].idle(speed[i]);
+        }
+    }
+
+    this.playSound = function () {
+        munyus[0].getListener();
+        let randomNum = Math.floor(Math.random() * 10);
+        // console.log(randomNum);
+        if (randomNum % 2 == 0) {
+            munyus[0].playMunyu();
+        } else {
+            munyus[0].playAmazingu();
         }
     }
 

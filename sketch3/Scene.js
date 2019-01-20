@@ -3,11 +3,14 @@ const OrbitControls = require('three-orbit-controls')(THREE);
 import Skybox from './background';
 import Environment from './environment';
 import MunyuGenerator from './munyuGenerator';
+import './../style.scss';
 
 export default function Scene(canvas) {
     const clock = new THREE.Clock();
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
+    let instruction = document.createElement('p');
+    const root = document.getElementById('root');
 
     // scene subjects
     const scene = createScene();
@@ -63,6 +66,10 @@ export default function Scene(canvas) {
     }
 
     this.start = function () {
+        instruction.innerHTML = "Click Munyus to hear their voice!";
+        instruction.className = "instruction";
+        root.appendChild(instruction);
+
         scene.add(skybox);
         scene.add(environment.getSea());
         for (let i = 0; i < munyus.length; i++) {
@@ -89,6 +96,10 @@ export default function Scene(canvas) {
     }
 
     this.onMouseClick = function () {
+        munyuGenerator.playSound();
 
+        if (root.children.length > 2) {
+            root.removeChild(instruction);
+        }
     }
 }

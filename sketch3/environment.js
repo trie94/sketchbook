@@ -27,7 +27,7 @@ export default function Environment() {
         // wireframe: true
     });
     const sea = new THREE.Mesh(seaGeom, seaMat);
-    sea.position.y = -10;
+    sea.position.y = -12;
 
     this.getSea = function(){
         return sea;
