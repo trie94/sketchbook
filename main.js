@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "e5c7e1e0b575c4842e20";
+/******/ 	var hotCurrentHash = "b07366c39df614c28630";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -994,7 +994,7 @@ exports = module.exports = __webpack_require__("./node_modules/css-loader/lib/cs
 
 
 // module
-exports.push([module.i, "html {\n  font-family: 'Source Sans Pro', sans-serif; }\n\nbody {\n  margin: 0; }\n\n#root {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  overflow: hidden; }\n\np {\n  margin: 1.2em; }\n\nh4 {\n  display: block;\n  padding: 4px 0 4px 32px;\n  color: #cecece;\n  background-color: rgba(220, 220, 220, 0.3); }\n\n.sketch-wrapper {\n  height: 100%;\n  width: 180px;\n  position: fixed;\n  z-index: 1;\n  top: 0;\n  left: 0;\n  overflow-x: hidden; }\n\n.sketch-list {\n  padding: 8px 0 4px 32px;\n  text-decoration: none;\n  color: #818181;\n  display: block; }\n\na:link {\n  color: gray;\n  text-decoration: none; }\n\na:visited {\n  color: gray; }\n\na:hover {\n  color: #000; }\n\na:active {\n  color: #000; }\n", ""]);
+exports.push([module.i, "html {\n  font-family: 'Source Sans Pro', sans-serif; }\n\nbody {\n  margin: 0; }\n\n#root {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  overflow: hidden; }\n\np {\n  margin: 1.2em; }\n\nh4 {\n  display: block;\n  padding: 4px 0 4px 32px;\n  color: #cecece;\n  background-color: rgba(220, 220, 220, 0.3); }\n\n.instruction {\n  position: absolute;\n  z-index: 1;\n  top: 5%;\n  left: 45%;\n  color: #818181; }\n\n.sketch-wrapper {\n  height: 100%;\n  width: 180px;\n  position: fixed;\n  z-index: 1;\n  top: 0;\n  left: 0;\n  overflow-x: hidden; }\n\n.sketch-list {\n  padding: 8px 0 4px 32px;\n  text-decoration: none;\n  color: #818181;\n  display: block; }\n\na:link {\n  color: gray;\n  text-decoration: none; }\n\na:visited {\n  color: gray; }\n\na:hover {\n  color: #000; }\n\na:active {\n  color: #000; }\n", ""]);
 
 // exports
 

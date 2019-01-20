@@ -48992,7 +48992,7 @@ function Munyu() {
         audioLoader.load(_munyu_basic2.default, function (buffer) {
             munyuAudio.setBuffer(buffer);
             munyuAudio.setLoop(false);
-            munyuAudio.setVolume(1);
+            munyuAudio.setVolume(0.5);
         });
         audioLoader.load(_amazingu2.default, function (buffer) {
             amazinguAudio.setBuffer(buffer);
@@ -49046,6 +49046,8 @@ var _munyuGenerator = __webpack_require__("./sketch3/munyuGenerator.js");
 
 var _munyuGenerator2 = _interopRequireDefault(_munyuGenerator);
 
+__webpack_require__("./style.scss");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -49055,6 +49057,8 @@ function Scene(canvas) {
     var clock = new THREE.Clock();
     var HEIGHT = window.innerHeight;
     var WIDTH = window.innerWidth;
+    var instruction = document.createElement('p');
+    var root = document.getElementById('root');
 
     // scene subjects
     var scene = createScene();
@@ -49110,6 +49114,10 @@ function Scene(canvas) {
     }
 
     this.start = function () {
+        instruction.innerHTML = "Click Munyus to hear their voice!";
+        instruction.className = "instruction";
+        root.appendChild(instruction);
+
         scene.add(skybox);
         scene.add(environment.getSea());
         for (var i = 0; i < munyus.length; i++) {
@@ -49135,7 +49143,13 @@ function Scene(canvas) {
         renderer.setSize(WIDTH, HEIGHT);
     };
 
-    this.onMouseClick = function () {};
+    this.onMouseClick = function () {
+        munyuGenerator.playSound();
+
+        if (root.children.length > 2) {
+            root.removeChild(instruction);
+        }
+    };
 }
 
 /***/ }),
@@ -49230,7 +49244,7 @@ function Environment() {
         // wireframe: true
     });
     var sea = new THREE.Mesh(seaGeom, seaMat);
-    sea.position.y = -10;
+    sea.position.y = -12;
 
     this.getSea = function () {
         return sea;
@@ -49355,6 +49369,17 @@ function MunyuGenerator() {
     this.idle = function () {
         for (var i = 0; i < munyus.length; i++) {
             munyus[i].idle(speed[i]);
+        }
+    };
+
+    this.playSound = function () {
+        munyus[0].getListener();
+        var randomNum = Math.floor(Math.random() * 10);
+        // console.log(randomNum);
+        if (randomNum % 2 == 0) {
+            munyus[0].playMunyu();
+        } else {
+            munyus[0].playAmazingu();
         }
     };
 
