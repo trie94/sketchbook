@@ -49299,7 +49299,7 @@ function MunyuGenerator() {
     var munyuColors = [];
     var munyuNum = 5;
     // const colors = [0xc36251, 0xc1c351, 0x51c39e, 0x5058c4, 0xa750c4, 0x80c450];
-    var colors = [0xc38651, 0xc1c351, 0x51c39e, 0x80c450];
+    var colors = [0xc38651, 0xc1c351, 0x51c39e, 0x80c450, 0x3bc6bd];
     var munyuObjArr = [];
 
     var config = {
@@ -49315,7 +49315,7 @@ function MunyuGenerator() {
             var munyu = new _Munyu2.default();
 
             speed.push(Math.random() * 0.005 + 0.001);
-            if (num >= colors.length - 1) {
+            if (num > colors.length - 1) {
                 num = 0;
             }
 
