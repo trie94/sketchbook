@@ -33,6 +33,9 @@ export default function Scene(canvas) {
     }
     let bubbles = [];
 
+    let mouse;
+    let mouseConstraint;
+
     let two = new Two({
         width: WIDTH,
         height: HEIGHT,
@@ -50,15 +53,15 @@ export default function Scene(canvas) {
 
     // create a renderer
     let render = Render.create({
-        element: document.body,
         canvas: canvas,
         engine: engine,
         options: {
             width: WIDTH,
             height: HEIGHT,
-            // hasBounds: true
+            hasBounds: true
         }
     });
+
     Render.setPixelRatio(render, "auto");
 
     function initBlob() {
@@ -66,7 +69,7 @@ export default function Scene(canvas) {
         let ceiling = Bodies.rectangle(centerX, 0, WIDTH, 50, { isStatic: true });
         let leftwall = Bodies.rectangle(0, centerY, 50, HEIGHT, { isStatic: true });
         let rightwall = Bodies.rectangle(WIDTH, centerY, 50, HEIGHT, { isStatic: true });
-        centerBody = Bodies.circle(centerX, centerY, 1);
+        centerBody = Bodies.circle(centerX, centerY, 3);
         let dTheta = Math.PI * 2 / pointsNum;
 
         let centerToInner = {
@@ -185,6 +188,22 @@ export default function Scene(canvas) {
         World.add(engine.world, [centerBody, ...anchorBodies, ...anchorOuterBodies, ground, ceiling, leftwall, rightwall]);
         // engine.world.gravity.scale = 0;
 
+        mouse = Matter.Mouse.create(canvas);
+        mouse.pixelRatio = devicePixelRatio;
+        mouseConstraint = Matter.MouseConstraint.create(engine, {
+            element: canvas,
+            mouse: mouse,
+            // constraint: {
+            //     render: {
+            //         visible: false
+            //     },
+            //     stiffness:0.8
+            // }
+        });
+        World.add(engine.world, mouseConstraint);
+        render.mouse = mouse;
+
+        console.log(mouseConstraint);
         blobGrad = new Two.RadialGradient(
             0, 0,
             outerRadius,
@@ -223,9 +242,8 @@ export default function Scene(canvas) {
 
     this.start = function () {
         initBlob();
-        two.update();
         Engine.run(engine);
-        // Render.run(render);
+        Render.run(render);
     }
 
     this.update = function () {
@@ -239,11 +257,15 @@ export default function Scene(canvas) {
             anchors[i].y = anchorOuterBodies[i].position.y - centerPos.y;
         }
 
+        if (mouseConstraint.body) {
+            console.log("body is clicked");
+        }
+
         blobFace.translation.set(centerBody.position.x, centerBody.position.y);
         blobLeftEye.translation.set(centerBody.position.x - 10, centerBody.position.y);
         blobRightEye.translation.set(centerBody.position.x + 10, centerBody.position.y);
         blobMouth.translation.set(centerBody.position.x, centerBody.position.y + 3);
-        two.update();
+        // two.update();
     }
 
     this.onWindowResize = function () {
