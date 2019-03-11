@@ -5,7 +5,7 @@ export default function BaseSketch(scene) {
 
     function bindEventListeners() {
         window.onresize = resizeCanvas;
-        window.onclick = mouseClick;
+        window.addEventListener("click", mouseClick);
         resizeCanvas();
     }
 
@@ -15,8 +15,8 @@ export default function BaseSketch(scene) {
         scene.onWindowResize();
     }
 
-    function mouseClick() {
-        scene.onMouseClick();
+    function mouseClick(e) {
+        scene.onMouseClick(e);
     }
 
     function start() {

@@ -6,20 +6,28 @@ export default function Scene(canvas) {
 
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
+
     let time = Date.now();
 
     let centerX = WIDTH / 2;
     let centerY = HEIGHT / 2;
     let radius = 100;
-    let outerRadius = radius + 30;
-    let pointsNum = 8;
+    let outerRadius = radius + 10;
+    let pointsNum = 20;
     // two
     let anchors = [];
+    let anchorOffset = 8;
+    let anchorOffsets = [];
 
+    let faceBody;
     let centerBody;
     let anchorBodies = [];
     let anchorOuterBodies = [];
+    let smallBodies = [];
+    let stuffList = [];
+
     let blob;
+    let blobShadow;
     let blobFace;
     let blobLeftEye;
     let blobRightEye;
@@ -31,16 +39,17 @@ export default function Scene(canvas) {
         bodyBlue: "#9bd0dd",
         face: "#edffff"
     }
-    let bubbles = [];
 
-    let mouse;
-    let mouseConstraint;
+    let confettiColor = ["#aec3df", "#e4c6c3", "#d1b0df", "#d0e0ae"];
+    let confettis = [];
 
     let two = new Two({
         width: WIDTH,
         height: HEIGHT,
         domElement: canvas
     });
+
+    canvas.setAttribute("style", "background-color: #eaece6;");
 
     // module aliases
     let Engine = Matter.Engine,
@@ -65,16 +74,27 @@ export default function Scene(canvas) {
     Render.setPixelRatio(render, "auto");
 
     function initBlob() {
-        let ground = Bodies.rectangle(centerX, HEIGHT, WIDTH, 50, { isStatic: true });
-        let ceiling = Bodies.rectangle(centerX, 0, WIDTH, 50, { isStatic: true });
-        let leftwall = Bodies.rectangle(0, centerY, 50, HEIGHT, { isStatic: true });
-        let rightwall = Bodies.rectangle(WIDTH, centerY, 50, HEIGHT, { isStatic: true });
-        centerBody = Bodies.circle(centerX, centerY, 3);
+        faceBody = Bodies.circle(centerX, centerY, 30);
+        faceBody.mass = 5;
+        faceBody.collisionFilter.mask = 1;
+        faceBody.collisionFilter.category = 1;
+        centerBody = Bodies.circle(centerX, centerY, 1);
+        centerBody.collisionFilter.category = 2;
+
+        for (let i = 0; i < 7; i++) {
+            let radius = Math.floor(Math.random() * 5) + 15;
+            let smallBody = Bodies.circle(centerX, centerY, radius);
+            smallBody.mass = 3;
+            smallBody.collisionFilter.mask = 5;
+            smallBody.collisionFilter.category = 4;
+            smallBodies.push(smallBody);
+        }
+
         let dTheta = Math.PI * 2 / pointsNum;
 
         let centerToInner = {
-            stiffness: 0.001,
-            damping: 0.05
+            stiffness: 0.0001,
+            damping: 0.03
         }
 
         let innerNeighbors = {
@@ -122,7 +142,9 @@ export default function Scene(canvas) {
             let outerX = centerX + outerRadius * Math.cos(theta);
             let outerY = centerY + outerRadius * Math.sin(theta);
             let anchor = new Two.Anchor(outerX, outerY, 0, 0, 0, 0, "l");
+            let anchorOffset = new Two.Anchor(outerX + anchorOffset, outerY + anchorOffset, 0, 0, 0, 0, "l");
             anchors.push(anchor);
+            anchorOffsets.push(anchorOffset)
 
             let anchorOuterBody = Bodies.circle(outerX, outerY, 3);
             let outerConstraint = Matter.Constraint.create({
@@ -132,6 +154,7 @@ export default function Scene(canvas) {
                 stiffness: innerToOuter.stiffness,
                 damping: innerToOuter.damping
             });
+
             World.add(engine.world, outerConstraint);
             anchorOuterBodies.push(anchorOuterBody);
 
@@ -185,25 +208,9 @@ export default function Scene(canvas) {
                 }
             }
         }
-        World.add(engine.world, [centerBody, ...anchorBodies, ...anchorOuterBodies, ground, ceiling, leftwall, rightwall]);
-        // engine.world.gravity.scale = 0;
+        World.add(engine.world, [faceBody, ...smallBodies, centerBody, ...anchorBodies, ...anchorOuterBodies]);
+        engine.world.gravity.scale = 0;
 
-        mouse = Matter.Mouse.create(canvas);
-        mouse.pixelRatio = devicePixelRatio;
-        mouseConstraint = Matter.MouseConstraint.create(engine, {
-            element: canvas,
-            mouse: mouse,
-            // constraint: {
-            //     render: {
-            //         visible: false
-            //     },
-            //     stiffness:0.8
-            // }
-        });
-        World.add(engine.world, mouseConstraint);
-        render.mouse = mouse;
-
-        console.log(mouseConstraint);
         blobGrad = new Two.RadialGradient(
             0, 0,
             outerRadius,
@@ -212,38 +219,139 @@ export default function Scene(canvas) {
             new Two.Stop(1, blobColor.bodyBlue, 1)]
         );
 
+        blobShadow = two.makeCurve(anchorOffsets);
+        blobShadow.fill = "#ccd0c3";
+        blobShadow.opacity = 0.5;
+        blobShadow.noStroke();
+
         blob = two.makeCurve(anchors);
         blob.fill = blobGrad;
         blob.noStroke();
 
-        blobFace = two.makeEllipse(centerBody.position.x, centerBody.position.y, 30, 25);
+
+        blobFace = two.makeEllipse(faceBody.position.x, faceBody.position.y, 30, 25);
         blobFace.fill = blobColor.face;
         blobFace.noStroke();
 
-        blobLeftEye = two.makeRoundedRectangle(centerBody.position.x - 10, centerBody.position.y, 6, 6, 3);
+        blobLeftEye = two.makeRoundedRectangle(faceBody.position.x - 10, faceBody.position.y, 6, 6, 3);
         blobLeftEye.fill = blobColor.bodyGreen;
         blobLeftEye.noStroke();
 
-        blobRightEye = two.makeRoundedRectangle(centerBody.position.x + 10, centerBody.position.y, 6, 6, 3);
+        blobRightEye = two.makeRoundedRectangle(faceBody.position.x + 10, faceBody.position.y, 6, 6, 3);
         blobRightEye.fill = blobColor.bodyGreen;
         blobRightEye.noStroke();
 
-        blobMouth = two.makeRoundedRectangle(centerBody.position.x, centerBody.position.y + 4, 10, 10, 5);
+        blobMouth = two.makeRoundedRectangle(faceBody.position.x, faceBody.position.y + 4, 10, 10, 5);
         blobMouth.fill = blobColor.bodyGreen;
         blobMouth.noStroke();
     }
 
-    function getBubbles(bubbleNum) {
-        for (let i = 0; i < bubbleNum; i++) {
-            let bubble = two.makeCircle();
-            bubble.noStroke();
+    function addObstacles() {
+        let ground = Bodies.rectangle(centerX, HEIGHT, WIDTH, 50, { isStatic: true });
+        let ceiling = Bodies.rectangle(centerX, 0, WIDTH, 50, { isStatic: true });
+        let leftwall = Bodies.rectangle(0, centerY, 50, HEIGHT, { isStatic: true });
+        let rightwall = Bodies.rectangle(WIDTH, centerY, 50, HEIGHT, { isStatic: true });
+
+        let stuff = Bodies.circle(WIDTH * 3 / 4, HEIGHT * 1 / 4, 50, { isStatic: true });
+        let stuff2 = Bodies.circle(WIDTH * 1 / 4, HEIGHT * 3 / 4, 70, { isStatic: true });
+        let stuff3 = Bodies.circle(WIDTH * 7 / 11, HEIGHT * 4 / 5, 80, { isStatic: true });
+        let stuff4 = Bodies.circle(WIDTH * 5 / 6, HEIGHT * 1 / 2, 60, { isStatic: true });
+        let stuff5 = Bodies.circle(WIDTH * 4 / 11, HEIGHT * 1 / 4, 60, { isStatic: true });
+        let stuff6 = Bodies.circle(WIDTH * 1 / 7, HEIGHT * 3 / 7, 50, { isStatic: true });
+
+        stuffList.push(stuff);
+        stuffList.push(stuff2);
+        stuffList.push(stuff3);
+        stuffList.push(stuff4);
+        stuffList.push(stuff5);
+        stuffList.push(stuff6);
+
+        World.add(engine.world, [...stuffList]);
+
+        // shadow
+        let offset = 6;
+        let s1 = two.makeCircle(stuff.position.x + offset, stuff.position.y + offset, 50).noStroke();
+        s1.fill = "#d5d8cf";
+
+        let s2 = two.makeCircle(stuff2.position.x + offset, stuff2.position.y + offset, 70).noStroke();
+        s2.fill = "#d5d8cf";
+
+        let s3 = two.makeCircle(stuff3.position.x + offset, stuff3.position.y + offset, 80).noStroke();
+        s3.fill = "#d5d8cf";
+
+        let s4 = two.makeCircle(stuff4.position.x + offset, stuff4.position.y + offset, 60).noStroke();
+        s4.fill = "#d5d8cf";
+
+        let s5 = two.makeCircle(stuff5.position.x + offset, stuff5.position.y + offset, 60).noStroke();
+        s5.fill = "#d5d8cf";
+
+        let s6 = two.makeCircle(stuff6.position.x + offset, stuff6.position.y + offset, 50).noStroke();
+        s6.fill = "#d5d8cf";
+
+        // pillars
+        two.makeCircle(stuff.position.x, stuff.position.y, 50).noStroke();
+        two.makeCircle(stuff2.position.x, stuff2.position.y, 70).noStroke();
+        two.makeCircle(stuff3.position.x, stuff3.position.y, 80).noStroke();
+        two.makeCircle(stuff4.position.x, stuff4.position.y, 60).noStroke();
+        two.makeCircle(stuff5.position.x, stuff5.position.y, 60).noStroke();
+        two.makeCircle(stuff6.position.x, stuff6.position.y, 50).noStroke();
+    }
+
+    function makeConfetti(x, y) {
+        let num = Math.floor(Math.random() * 5) + 3;
+        let confettiGroup = [];
+
+        for (let i = 0; i < num; i++) {
+            let size = Math.floor(Math.random() * 10) + 3;
+            let offsetX = Math.floor(Math.random() * 20) - 20;
+            let offsetY = Math.floor(Math.random() * 20) - 20;
+            let positionX = x + offsetX;
+            let positionY = y + offsetY;
+            let confetti = two.makeRectangle(positionX, positionY, size, size);
+            confetti.rotation = Math.floor(Math.random() * 360);
+            confetti.noStroke();
+            confetti.fill = confettiColor[i % confettiColor.length];
+            confettiGroup.push(confetti);
+        }
+        confettis.push(confettiGroup);
+    }
+
+    function followConfetti(myBody, targetX, targetY) {
+        let targetPosition = Matter.Vector.create(targetX, targetY);
+        let targetAngle = Matter.Vector.angle(myBody.position, targetPosition);
+        let force = 0.001;
+
+        Matter.Body.applyForce(myBody, myBody.position, {
+            x: Math.cos(targetAngle) * force,
+            y: Math.sin(targetAngle) * force
+        });
+    }
+
+    function moveSmallBodies() {
+        let force = 0.001;
+        for (let i = 0; i < smallBodies.length; i++) {
+            let random = Math.random() * Math.PI * 2;
+            Matter.Body.applyForce(smallBodies[i], smallBodies[i].position, {
+                x: Math.cos(random) * force,
+                y: Math.sin(random) * force
+            });
         }
     }
 
+    function moveFace() {
+        let force = 0.001;
+        let random = Math.random() * Math.PI * 2;
+        Matter.Body.applyForce(faceBody, faceBody.position, {
+            x: Math.cos(random) * force,
+            y: Math.sin(random) * force
+        });
+    }
+
     this.start = function () {
+        addObstacles();
         initBlob();
         Engine.run(engine);
-        Render.run(render);
+        // Render.run(render);
     }
 
     this.update = function () {
@@ -251,21 +359,48 @@ export default function Scene(canvas) {
             x: centerBody.position.x,
             y: centerBody.position.y,
         };
+
         blob.translation.set(centerPos.x, centerPos.y);
+        blobShadow.translation.set(centerPos.x, centerPos.y);
+        
         for (let i = 0; i < anchors.length; i++) {
             anchors[i].x = anchorOuterBodies[i].position.x - centerPos.x;
             anchors[i].y = anchorOuterBodies[i].position.y - centerPos.y;
+
+            anchorOffsets[i].x = anchors[i].x + anchorOffset;
+            anchorOffsets[i].y = anchors[i].y + anchorOffset;
         }
 
-        if (mouseConstraint.body) {
-            console.log("body is clicked");
+        // console.log(blobGrad);
+        blobGrad.focal.set(
+            faceBody.position.x - centerPos.x,
+            faceBody.position.y - centerPos.y
+        ).multiply(0.1);
+
+        blobFace.translation.set(faceBody.position.x, faceBody.position.y);
+        blobLeftEye.translation.set(faceBody.position.x - 10, faceBody.position.y);
+        blobRightEye.translation.set(faceBody.position.x + 10, faceBody.position.y);
+        blobMouth.translation.set(faceBody.position.x, faceBody.position.y + 3);
+
+        for (let i = 0; i < confettis.length; i++) {
+            for (let j = 0; j < confettis[i].length; j++) {
+                let conf = confettis[i][j];
+                let randomSpeed = Math.random() * 0.01;
+                conf.rotation += randomSpeed;
+            }
         }
 
-        blobFace.translation.set(centerBody.position.x, centerBody.position.y);
-        blobLeftEye.translation.set(centerBody.position.x - 10, centerBody.position.y);
-        blobRightEye.translation.set(centerBody.position.x + 10, centerBody.position.y);
-        blobMouth.translation.set(centerBody.position.x, centerBody.position.y + 3);
-        // two.update();
+        if (confettis.length > 0) {
+            let targetPos = {
+                x: confettis[confettis.length - 1][0].translation.x,
+                y: confettis[confettis.length - 1][0].translation.y
+            };
+
+            followConfetti(faceBody, targetPos.x, targetPos.y);
+        }
+        moveFace();
+        moveSmallBodies();
+        two.update();
     }
 
     this.onWindowResize = function () {
@@ -283,7 +418,11 @@ export default function Scene(canvas) {
         two.update();
     }
 
-    this.onMouseClick = function () {
+    this.onMouseClick = function (e) {
         console.log("on mouse click");
+        let x = parseInt(e.clientX);
+        let y = parseInt(e.clientY);
+        makeConfetti(x, y);
+        followConfetti(faceBody, x, y);
     }
 }
