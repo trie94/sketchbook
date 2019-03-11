@@ -12,10 +12,10 @@ export default function Scene(canvas) {
     let centerY = HEIGHT / 2;
     let radius = 100;
     let outerRadius = radius + 30;
-    let pointsNum = 30;
+    let pointsNum = 8;
     // two
     let anchors = [];
-    // matter
+
     let centerBody;
     let anchorBodies = [];
     let anchorOuterBodies = [];
@@ -24,10 +24,11 @@ export default function Scene(canvas) {
     let blobLeftEye;
     let blobRightEye;
     let blobMouth;
+    let blobGrad;
 
     let blobColor = {
-        bodyGreen: "#9dded5",
-        bodyBlue: "#9dded5",
+        bodyGreen: "#a4dfcd",
+        bodyBlue: "#9bd0dd",
         face: "#edffff"
     }
     let bubbles = [];
@@ -65,17 +66,17 @@ export default function Scene(canvas) {
         let ceiling = Bodies.rectangle(centerX, 0, WIDTH, 50, { isStatic: true });
         let leftwall = Bodies.rectangle(0, centerY, 50, HEIGHT, { isStatic: true });
         let rightwall = Bodies.rectangle(WIDTH, centerY, 50, HEIGHT, { isStatic: true });
-        centerBody = Bodies.circle(centerX, centerY, 3);
+        centerBody = Bodies.circle(centerX, centerY, 1);
         let dTheta = Math.PI * 2 / pointsNum;
 
         let centerToInner = {
-            stiffness: 0.05,
+            stiffness: 0.001,
             damping: 0.05
         }
 
         let innerNeighbors = {
             length: Math.sin(dTheta / 2) * radius * 2,
-            stiffness: 0.05,
+            stiffness: 0.7,
             damping: 0.05
         }
 
@@ -93,7 +94,7 @@ export default function Scene(canvas) {
 
         let innerToOuter = {
             length: Math.sqrt((outerX - x) * (outerX - x) + (outerY - y) * (outerY - y)),
-            stiffness: 0.5,
+            stiffness: 0.7,
             damping: 0.05
         }
 
@@ -182,10 +183,18 @@ export default function Scene(canvas) {
             }
         }
         World.add(engine.world, [centerBody, ...anchorBodies, ...anchorOuterBodies, ground, ceiling, leftwall, rightwall]);
-        // engine.world.gravity.scale = 0.0001;
+        // engine.world.gravity.scale = 0;
+
+        blobGrad = new Two.RadialGradient(
+            0, 0,
+            outerRadius,
+            [new Two.Stop(0, blobColor.bodyGreen, 1),
+            new Two.Stop(0.7, blobColor.bodyGreen, 1),
+            new Two.Stop(1, blobColor.bodyBlue, 1)]
+        );
 
         blob = two.makeCurve(anchors);
-        blob.fill = blobColor.bodyGreen;
+        blob.fill = blobGrad;
         blob.noStroke();
 
         blobFace = two.makeEllipse(centerBody.position.x, centerBody.position.y, 30, 25);
@@ -200,7 +209,7 @@ export default function Scene(canvas) {
         blobRightEye.fill = blobColor.bodyGreen;
         blobRightEye.noStroke();
 
-        blobMouth = two.makeRoundedRectangle(centerBody.position.x, centerBody.position.y+4, 10, 10, 5);
+        blobMouth = two.makeRoundedRectangle(centerBody.position.x, centerBody.position.y + 4, 10, 10, 5);
         blobMouth.fill = blobColor.bodyGreen;
         blobMouth.noStroke();
     }
@@ -220,17 +229,20 @@ export default function Scene(canvas) {
     }
 
     this.update = function () {
+        let centerPos = {
+            x: centerBody.position.x,
+            y: centerBody.position.y,
+        };
+        blob.translation.set(centerPos.x, centerPos.y);
         for (let i = 0; i < anchors.length; i++) {
-            blob.vertices[i].x = anchorOuterBodies[i].position.x - centerX;
-            blob.vertices[i].y = anchorOuterBodies[i].position.y - centerY;
-            anchors[i].x = anchorOuterBodies[i].position.x - centerX;
-            anchors[i].y = anchorOuterBodies[i].position.y - centerY;
+            anchors[i].x = anchorOuterBodies[i].position.x - centerPos.x;
+            anchors[i].y = anchorOuterBodies[i].position.y - centerPos.y;
         }
-        // console.log(blobFace);
+
         blobFace.translation.set(centerBody.position.x, centerBody.position.y);
         blobLeftEye.translation.set(centerBody.position.x - 10, centerBody.position.y);
         blobRightEye.translation.set(centerBody.position.x + 10, centerBody.position.y);
-        blobMouth.translation.set(centerBody.position.x, centerBody.position.y+3);
+        blobMouth.translation.set(centerBody.position.x, centerBody.position.y + 3);
         two.update();
     }
 
