@@ -34,6 +34,8 @@ export default function Scene(canvas) {
     let blobMouth;
     let blobGrad;
 
+    let tick = 1;
+
     let blobColor = {
         bodyGreen: "#a4dfcd",
         bodyBlue: "#9bd0dd",
@@ -75,7 +77,7 @@ export default function Scene(canvas) {
 
     function initBlob() {
         faceBody = Bodies.circle(centerX, centerY, 30);
-        faceBody.mass = 5;
+        faceBody.mass = 7;
         faceBody.collisionFilter.mask = 1;
         faceBody.collisionFilter.category = 1;
         centerBody = Bodies.circle(centerX, centerY, 1);
@@ -224,6 +226,8 @@ export default function Scene(canvas) {
         blobShadow.opacity = 0.5;
         blobShadow.noStroke();
 
+        addObstacles();
+
         blob = two.makeCurve(anchors);
         blob.fill = blobGrad;
         blob.noStroke();
@@ -251,13 +255,14 @@ export default function Scene(canvas) {
         let ceiling = Bodies.rectangle(centerX, 0, WIDTH, 50, { isStatic: true });
         let leftwall = Bodies.rectangle(0, centerY, 50, HEIGHT, { isStatic: true });
         let rightwall = Bodies.rectangle(WIDTH, centerY, 50, HEIGHT, { isStatic: true });
+        let sizeMultiplier = WIDTH / 100;
 
-        let stuff = Bodies.circle(WIDTH * 3 / 4, HEIGHT * 1 / 4, 50, { isStatic: true });
-        let stuff2 = Bodies.circle(WIDTH * 1 / 4, HEIGHT * 3 / 4, 70, { isStatic: true });
-        let stuff3 = Bodies.circle(WIDTH * 7 / 11, HEIGHT * 4 / 5, 80, { isStatic: true });
-        let stuff4 = Bodies.circle(WIDTH * 5 / 6, HEIGHT * 1 / 2, 60, { isStatic: true });
-        let stuff5 = Bodies.circle(WIDTH * 4 / 11, HEIGHT * 1 / 4, 60, { isStatic: true });
-        let stuff6 = Bodies.circle(WIDTH * 1 / 7, HEIGHT * 3 / 7, 50, { isStatic: true });
+        let stuff = Bodies.circle(WIDTH * 3 / 4, HEIGHT * 1 / 4, 5 * sizeMultiplier, { isStatic: true });
+        let stuff2 = Bodies.circle(WIDTH * 1 / 4, HEIGHT * 3 / 4, 7 * sizeMultiplier, { isStatic: true });
+        let stuff3 = Bodies.circle(WIDTH * 7 / 11, HEIGHT * 4 / 5, 8 * sizeMultiplier, { isStatic: true });
+        let stuff4 = Bodies.circle(WIDTH * 5 / 6, HEIGHT * 1 / 2, 6 * sizeMultiplier, { isStatic: true });
+        let stuff5 = Bodies.circle(WIDTH * 4 / 11, HEIGHT * 1 / 4, 6 * sizeMultiplier, { isStatic: true });
+        let stuff6 = Bodies.circle(WIDTH * 1 / 7, HEIGHT * 3 / 7, 5 * sizeMultiplier, { isStatic: true });
 
         stuffList.push(stuff);
         stuffList.push(stuff2);
@@ -270,31 +275,31 @@ export default function Scene(canvas) {
 
         // shadow
         let offset = 6;
-        let s1 = two.makeCircle(stuff.position.x + offset, stuff.position.y + offset, 50).noStroke();
+        let s1 = two.makeCircle(stuff.position.x + offset, stuff.position.y + offset, 5 * sizeMultiplier).noStroke();
         s1.fill = "#d5d8cf";
 
-        let s2 = two.makeCircle(stuff2.position.x + offset, stuff2.position.y + offset, 70).noStroke();
+        let s2 = two.makeCircle(stuff2.position.x + offset, stuff2.position.y + offset, 7 * sizeMultiplier).noStroke();
         s2.fill = "#d5d8cf";
 
-        let s3 = two.makeCircle(stuff3.position.x + offset, stuff3.position.y + offset, 80).noStroke();
+        let s3 = two.makeCircle(stuff3.position.x + offset, stuff3.position.y + offset, 8 * sizeMultiplier).noStroke();
         s3.fill = "#d5d8cf";
 
-        let s4 = two.makeCircle(stuff4.position.x + offset, stuff4.position.y + offset, 60).noStroke();
+        let s4 = two.makeCircle(stuff4.position.x + offset, stuff4.position.y + offset, 6 * sizeMultiplier).noStroke();
         s4.fill = "#d5d8cf";
 
-        let s5 = two.makeCircle(stuff5.position.x + offset, stuff5.position.y + offset, 60).noStroke();
+        let s5 = two.makeCircle(stuff5.position.x + offset, stuff5.position.y + offset, 6 * sizeMultiplier).noStroke();
         s5.fill = "#d5d8cf";
 
-        let s6 = two.makeCircle(stuff6.position.x + offset, stuff6.position.y + offset, 50).noStroke();
+        let s6 = two.makeCircle(stuff6.position.x + offset, stuff6.position.y + offset, 5 * sizeMultiplier).noStroke();
         s6.fill = "#d5d8cf";
 
         // pillars
-        two.makeCircle(stuff.position.x, stuff.position.y, 50).noStroke();
-        two.makeCircle(stuff2.position.x, stuff2.position.y, 70).noStroke();
-        two.makeCircle(stuff3.position.x, stuff3.position.y, 80).noStroke();
-        two.makeCircle(stuff4.position.x, stuff4.position.y, 60).noStroke();
-        two.makeCircle(stuff5.position.x, stuff5.position.y, 60).noStroke();
-        two.makeCircle(stuff6.position.x, stuff6.position.y, 50).noStroke();
+        two.makeCircle(stuff.position.x, stuff.position.y, 5 * sizeMultiplier).noStroke();
+        two.makeCircle(stuff2.position.x, stuff2.position.y, 7 * sizeMultiplier).noStroke();
+        two.makeCircle(stuff3.position.x, stuff3.position.y, 8 * sizeMultiplier).noStroke();
+        two.makeCircle(stuff4.position.x, stuff4.position.y, 6 * sizeMultiplier).noStroke();
+        two.makeCircle(stuff5.position.x, stuff5.position.y, 6 * sizeMultiplier).noStroke();
+        two.makeCircle(stuff6.position.x, stuff6.position.y, 5 * sizeMultiplier).noStroke();
     }
 
     function makeConfetti(x, y) {
@@ -348,10 +353,10 @@ export default function Scene(canvas) {
     }
 
     this.start = function () {
-        addObstacles();
         initBlob();
         Engine.run(engine);
         // Render.run(render);
+        console.log(blob);
     }
 
     this.update = function () {
@@ -362,7 +367,7 @@ export default function Scene(canvas) {
 
         blob.translation.set(centerPos.x, centerPos.y);
         blobShadow.translation.set(centerPos.x, centerPos.y);
-        
+
         for (let i = 0; i < anchors.length; i++) {
             anchors[i].x = anchorOuterBodies[i].position.x - centerPos.x;
             anchors[i].y = anchorOuterBodies[i].position.y - centerPos.y;
@@ -371,7 +376,6 @@ export default function Scene(canvas) {
             anchorOffsets[i].y = anchors[i].y + anchorOffset;
         }
 
-        // console.log(blobGrad);
         blobGrad.focal.set(
             faceBody.position.x - centerPos.x,
             faceBody.position.y - centerPos.y
@@ -385,7 +389,7 @@ export default function Scene(canvas) {
         for (let i = 0; i < confettis.length; i++) {
             for (let j = 0; j < confettis[i].length; j++) {
                 let conf = confettis[i][j];
-                let randomSpeed = Math.random() * 0.01;
+                let randomSpeed = Math.random() * 0.05;
                 conf.rotation += randomSpeed;
             }
         }
@@ -397,6 +401,22 @@ export default function Scene(canvas) {
             };
 
             followConfetti(faceBody, targetPos.x, targetPos.y);
+
+            let distance = Math.sqrt((faceBody.position.x - targetPos.x) * (faceBody.position.x - targetPos.x) + (faceBody.position.y - targetPos.y) * (faceBody.position.y - targetPos.y));
+
+            if (distance <= 20) {
+                if (tick < 0) {
+                    let conf = confettis[confettis.length - 1][0];
+                    two.remove(conf);
+                    confettis[confettis.length - 1].shift();
+                    if (confettis[confettis.length - 1].length === 0) {
+                        confettis.pop();
+                    }
+
+                    tick = 1;
+                }
+            }
+            tick -= two.timeDelta * 0.01;
         }
         moveFace();
         moveSmallBodies();
