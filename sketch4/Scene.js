@@ -12,13 +12,25 @@ export default function Scene(canvas) {
     let centerY = HEIGHT / 2;
     let radius = 100;
     let outerRadius = radius + 30;
-    let pointsNum = 15;
+    let pointsNum = 30;
     // two
     let anchors = [];
     // matter
+    let centerBody;
     let anchorBodies = [];
     let anchorOuterBodies = [];
     let blob;
+    let blobFace;
+    let blobLeftEye;
+    let blobRightEye;
+    let blobMouth;
+
+    let blobColor = {
+        bodyGreen: "#9dded5",
+        bodyBlue: "#9dded5",
+        face: "#edffff"
+    }
+    let bubbles = [];
 
     let two = new Two({
         width: WIDTH,
@@ -42,24 +54,28 @@ export default function Scene(canvas) {
         engine: engine,
         options: {
             width: WIDTH,
-            height: HEIGHT
+            height: HEIGHT,
+            // hasBounds: true
         }
     });
     Render.setPixelRatio(render, "auto");
 
     function initBlob() {
-        let ground = Bodies.rectangle(centerX, HEIGHT, 800, 50, { isStatic: true });
-        let centerBody = Bodies.circle(centerX, centerY, 3);
+        let ground = Bodies.rectangle(centerX, HEIGHT, WIDTH, 50, { isStatic: true });
+        let ceiling = Bodies.rectangle(centerX, 0, WIDTH, 50, { isStatic: true });
+        let leftwall = Bodies.rectangle(0, centerY, 50, HEIGHT, { isStatic: true });
+        let rightwall = Bodies.rectangle(WIDTH, centerY, 50, HEIGHT, { isStatic: true });
+        centerBody = Bodies.circle(centerX, centerY, 3);
         let dTheta = Math.PI * 2 / pointsNum;
 
         let centerToInner = {
-            stiffness: 0.04,
-            damping: 0.05,
+            stiffness: 0.05,
+            damping: 0.05
         }
 
         let innerNeighbors = {
             length: Math.sin(dTheta / 2) * radius * 2,
-            stiffness: 0.02,
+            stiffness: 0.05,
             damping: 0.05
         }
 
@@ -85,8 +101,6 @@ export default function Scene(canvas) {
             let theta = Math.PI * 2 * i / pointsNum;
             let x = centerX + radius * Math.cos(theta);
             let y = centerY + radius * Math.sin(theta);
-            let anchor = new Two.Anchor(x, y, 0, 0, 0, 0, "l");
-            anchors.push(anchor);
 
             // inner
             let anchorBody = Bodies.circle(x, y, 3, { density: 0.001 });
@@ -103,6 +117,8 @@ export default function Scene(canvas) {
             // outer
             let outerX = centerX + outerRadius * Math.cos(theta);
             let outerY = centerY + outerRadius * Math.sin(theta);
+            let anchor = new Two.Anchor(outerX, outerY, 0, 0, 0, 0, "l");
+            anchors.push(anchor);
 
             let anchorOuterBody = Bodies.circle(outerX, outerY, 3);
             let outerConstraint = Matter.Constraint.create({
@@ -165,20 +181,57 @@ export default function Scene(canvas) {
                 }
             }
         }
+        World.add(engine.world, [centerBody, ...anchorBodies, ...anchorOuterBodies, ground, ceiling, leftwall, rightwall]);
+        // engine.world.gravity.scale = 0.0001;
 
-        blob = two.makePath(anchors);
-        World.add(engine.world, [centerBody, ...anchorBodies, ...anchorOuterBodies, ground]);
-        // engine.world.gravity.scale = 0;
+        blob = two.makeCurve(anchors);
+        blob.fill = blobColor.bodyGreen;
+        blob.noStroke();
+
+        blobFace = two.makeEllipse(centerBody.position.x, centerBody.position.y, 30, 25);
+        blobFace.fill = blobColor.face;
+        blobFace.noStroke();
+
+        blobLeftEye = two.makeRoundedRectangle(centerBody.position.x - 10, centerBody.position.y, 6, 6, 3);
+        blobLeftEye.fill = blobColor.bodyGreen;
+        blobLeftEye.noStroke();
+
+        blobRightEye = two.makeRoundedRectangle(centerBody.position.x + 10, centerBody.position.y, 6, 6, 3);
+        blobRightEye.fill = blobColor.bodyGreen;
+        blobRightEye.noStroke();
+
+        blobMouth = two.makeRoundedRectangle(centerBody.position.x, centerBody.position.y+4, 10, 10, 5);
+        blobMouth.fill = blobColor.bodyGreen;
+        blobMouth.noStroke();
+    }
+
+    function getBubbles(bubbleNum) {
+        for (let i = 0; i < bubbleNum; i++) {
+            let bubble = two.makeCircle();
+            bubble.noStroke();
+        }
     }
 
     this.start = function () {
         initBlob();
-        // two.render();
+        two.update();
         Engine.run(engine);
-        Render.run(render);
+        // Render.run(render);
     }
 
     this.update = function () {
+        for (let i = 0; i < anchors.length; i++) {
+            blob.vertices[i].x = anchorOuterBodies[i].position.x - centerX;
+            blob.vertices[i].y = anchorOuterBodies[i].position.y - centerY;
+            anchors[i].x = anchorOuterBodies[i].position.x - centerX;
+            anchors[i].y = anchorOuterBodies[i].position.y - centerY;
+        }
+        // console.log(blobFace);
+        blobFace.translation.set(centerBody.position.x, centerBody.position.y);
+        blobLeftEye.translation.set(centerBody.position.x - 10, centerBody.position.y);
+        blobRightEye.translation.set(centerBody.position.x + 10, centerBody.position.y);
+        blobMouth.translation.set(centerBody.position.x, centerBody.position.y+3);
+        two.update();
     }
 
     this.onWindowResize = function () {
@@ -191,7 +244,9 @@ export default function Scene(canvas) {
         two.width = WIDTH;
         two.height = HEIGHT;
 
-        // two.render();
+        render.width = WIDTH;
+        render.height = HEIGHT;
+        two.update();
     }
 
     this.onMouseClick = function () {
