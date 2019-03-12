@@ -23711,7 +23711,7 @@ function Scene(canvas) {
     var centerY = HEIGHT / 2;
     var radius = 100;
     var outerRadius = radius + 10;
-    var pointsNum = 20;
+    var pointsNum = 24;
     // two
     var anchors = [];
     var anchorOffset = 8;
@@ -23731,6 +23731,12 @@ function Scene(canvas) {
     var blobRightEye = void 0;
     var blobMouth = void 0;
     var blobGrad = void 0;
+
+    var bubbles = [];
+    var bubbleRenderTimer = 2;
+
+    var blink = 0;
+    var nomnom = 0;
 
     var tick = 1;
 
@@ -23781,7 +23787,7 @@ function Scene(canvas) {
         centerBody = Bodies.circle(centerX, centerY, 1);
         centerBody.collisionFilter.category = 2;
 
-        for (var i = 0; i < 7; i++) {
+        for (var i = 0; i < 10; i++) {
             var _radius = Math.floor(Math.random() * 5) + 15;
             var smallBody = Bodies.circle(centerX, centerY, _radius);
             smallBody.mass = 3;
@@ -23817,7 +23823,7 @@ function Scene(canvas) {
 
         var innerToOuter = {
             length: Math.sqrt((outerX - x) * (outerX - x) + (outerY - y) * (outerY - y)),
-            stiffness: 0.7,
+            stiffness: 0.9,
             damping: 0.05
         };
 
@@ -23939,6 +23945,13 @@ function Scene(canvas) {
         blobMouth = two.makeRoundedRectangle(faceBody.position.x, faceBody.position.y + 4, 10, 10, 5);
         blobMouth.fill = blobColor.bodyGreen;
         blobMouth.noStroke();
+
+        // bubbles 
+        for (var _i2 = 0; _i2 < 3; _i2++) {
+            var size = Math.floor(Math.random() * 5) + 3;
+            bubbles[_i2] = two.makeCircle(smallBodies[_i2].position.x, smallBodies[_i2].position.y, size).noStroke();
+            bubbles[_i2].opacity = 0.45;
+        }
     }
 
     function addObstacles() {
@@ -24043,11 +24056,29 @@ function Scene(canvas) {
         });
     }
 
+    function animateFace() {
+        blobLeftEye.height = Math.cos(blink) * 1 + 5;
+        // blobLeftEye.width = Math.cos(blink) * 1 + 5;
+
+        blobRightEye.height = Math.cos(blink) * 1 + 5;
+        // blobRightEye.width = Math.cos(blink) * 1 + 5;
+
+        if (confettis.length > 0) {
+            blobMouth.height = Math.sin(nomnom) * 2 + 10;
+        } else {
+            blobMouth.height = 10;
+        }
+
+        blobFace.width = Math.cos(blink) * 1 + 50;
+        blobFace.height = Math.cos(blink) * 1 + 45;
+
+        blink += 0.03;
+    }
+
     this.start = function () {
         initBlob();
         Engine.run(engine);
         // Render.run(render);
-        console.log(blob);
     };
 
     this.update = function () {
@@ -24074,9 +24105,13 @@ function Scene(canvas) {
         blobRightEye.translation.set(faceBody.position.x + 10, faceBody.position.y);
         blobMouth.translation.set(faceBody.position.x, faceBody.position.y + 3);
 
-        for (var _i2 = 0; _i2 < confettis.length; _i2++) {
-            for (var j = 0; j < confettis[_i2].length; j++) {
-                var conf = confettis[_i2][j];
+        for (var _i3 = 0; _i3 < bubbles.length; _i3++) {
+            bubbles[_i3].translation.set(smallBodies[_i3].position.x, smallBodies[_i3].position.y);
+        }
+
+        for (var _i4 = 0; _i4 < confettis.length; _i4++) {
+            for (var j = 0; j < confettis[_i4].length; j++) {
+                var conf = confettis[_i4][j];
                 var randomSpeed = Math.random() * 0.05;
                 conf.rotation += randomSpeed;
             }
@@ -24092,7 +24127,7 @@ function Scene(canvas) {
 
             var distance = Math.sqrt((faceBody.position.x - targetPos.x) * (faceBody.position.x - targetPos.x) + (faceBody.position.y - targetPos.y) * (faceBody.position.y - targetPos.y));
 
-            if (distance <= 20) {
+            if (distance <= 30) {
                 if (tick < 0) {
                     var _conf = confettis[confettis.length - 1][0];
                     two.remove(_conf);
@@ -24100,13 +24135,15 @@ function Scene(canvas) {
                     if (confettis[confettis.length - 1].length === 0) {
                         confettis.pop();
                     }
-
                     tick = 1;
                 }
+                nomnom++;
             }
             tick -= two.timeDelta * 0.01;
         }
+
         moveFace();
+        animateFace();
         moveSmallBodies();
         two.update();
     };
