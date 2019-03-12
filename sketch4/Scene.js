@@ -89,7 +89,7 @@ export default function Scene(canvas) {
         centerBody = Bodies.circle(centerX, centerY, 1);
         centerBody.collisionFilter.category = 2;
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 5; i++) {
             let radius = Math.floor(Math.random() * 5) + 15;
             let smallBody = Bodies.circle(centerX, centerY, radius);
             smallBody.mass = 3;
@@ -270,7 +270,7 @@ export default function Scene(canvas) {
         let rightwall = Bodies.rectangle(WIDTH, centerY, 50, HEIGHT, { isStatic: true });
         let sizeMultiplier = WIDTH / 100;
 
-        let stuff = Bodies.circle(WIDTH * 3 / 4, HEIGHT * 1 / 4, 5 * sizeMultiplier, { isStatic: true });
+        let stuff = Bodies.circle(WIDTH * 5 / 7, HEIGHT * 1 / 4, 5 * sizeMultiplier, { isStatic: true });
         let stuff2 = Bodies.circle(WIDTH * 1 / 4, HEIGHT * 3 / 4, 7 * sizeMultiplier, { isStatic: true });
         let stuff3 = Bodies.circle(WIDTH * 7 / 11, HEIGHT * 4 / 5, 8 * sizeMultiplier, { isStatic: true });
         let stuff4 = Bodies.circle(WIDTH * 5 / 6, HEIGHT * 1 / 2, 6 * sizeMultiplier, { isStatic: true });
