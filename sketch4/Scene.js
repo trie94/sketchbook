@@ -13,7 +13,7 @@ export default function Scene(canvas) {
     let centerY = HEIGHT / 2;
     let radius = 100;
     let outerRadius = radius + 10;
-    let pointsNum = 20;
+    let pointsNum = 24;
     // two
     let anchors = [];
     let anchorOffset = 8;
@@ -33,6 +33,12 @@ export default function Scene(canvas) {
     let blobRightEye;
     let blobMouth;
     let blobGrad;
+
+    let bubbles = [];
+    let bubbleRenderTimer = 2;
+
+    let blink = 0;
+    let nomnom = 0;
 
     let tick = 1;
 
@@ -83,7 +89,7 @@ export default function Scene(canvas) {
         centerBody = Bodies.circle(centerX, centerY, 1);
         centerBody.collisionFilter.category = 2;
 
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 10; i++) {
             let radius = Math.floor(Math.random() * 5) + 15;
             let smallBody = Bodies.circle(centerX, centerY, radius);
             smallBody.mass = 3;
@@ -119,7 +125,7 @@ export default function Scene(canvas) {
 
         let innerToOuter = {
             length: Math.sqrt((outerX - x) * (outerX - x) + (outerY - y) * (outerY - y)),
-            stiffness: 0.7,
+            stiffness: 0.9,
             damping: 0.05
         }
 
@@ -248,6 +254,13 @@ export default function Scene(canvas) {
         blobMouth = two.makeRoundedRectangle(faceBody.position.x, faceBody.position.y + 4, 10, 10, 5);
         blobMouth.fill = blobColor.bodyGreen;
         blobMouth.noStroke();
+
+        // bubbles 
+        for (let i = 0; i < 3; i++) {
+            let size = Math.floor(Math.random() * 5) + 3;
+            bubbles[i] = two.makeCircle(smallBodies[i].position.x, smallBodies[i].position.y, size).noStroke();
+            bubbles[i].opacity = 0.45;
+        }
     }
 
     function addObstacles() {
@@ -352,11 +365,29 @@ export default function Scene(canvas) {
         });
     }
 
+    function animateFace() {
+        blobLeftEye.height = Math.cos(blink) * 1 + 5;
+        // blobLeftEye.width = Math.cos(blink) * 1 + 5;
+
+        blobRightEye.height = Math.cos(blink) * 1 + 5;
+        // blobRightEye.width = Math.cos(blink) * 1 + 5;
+
+        if (confettis.length > 0) {
+            blobMouth.height = Math.sin(nomnom) * 2 + 10;
+        } else {
+            blobMouth.height = 10;
+        }
+
+        blobFace.width = Math.cos(blink) * 1 + 50;
+        blobFace.height = Math.cos(blink) * 1 + 45;
+
+        blink += 0.03;
+    }
+
     this.start = function () {
         initBlob();
         Engine.run(engine);
         // Render.run(render);
-        console.log(blob);
     }
 
     this.update = function () {
@@ -386,6 +417,10 @@ export default function Scene(canvas) {
         blobRightEye.translation.set(faceBody.position.x + 10, faceBody.position.y);
         blobMouth.translation.set(faceBody.position.x, faceBody.position.y + 3);
 
+        for (let i = 0; i < bubbles.length; i++) {
+            bubbles[i].translation.set(smallBodies[i].position.x, smallBodies[i].position.y);
+        }
+
         for (let i = 0; i < confettis.length; i++) {
             for (let j = 0; j < confettis[i].length; j++) {
                 let conf = confettis[i][j];
@@ -404,7 +439,7 @@ export default function Scene(canvas) {
 
             let distance = Math.sqrt((faceBody.position.x - targetPos.x) * (faceBody.position.x - targetPos.x) + (faceBody.position.y - targetPos.y) * (faceBody.position.y - targetPos.y));
 
-            if (distance <= 20) {
+            if (distance <= 30) {
                 if (tick < 0) {
                     let conf = confettis[confettis.length - 1][0];
                     two.remove(conf);
@@ -412,13 +447,15 @@ export default function Scene(canvas) {
                     if (confettis[confettis.length - 1].length === 0) {
                         confettis.pop();
                     }
-
                     tick = 1;
                 }
+                nomnom++;
             }
             tick -= two.timeDelta * 0.01;
         }
+
         moveFace();
+        animateFace();
         moveSmallBodies();
         two.update();
     }
