@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "a7bf2bbe2e08d1af020c";
+/******/ 	var hotCurrentHash = "35172212313eeb3f8340";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -980,7 +980,7 @@ function init() {
     addSketchElem(sketchWrapper, "sketch2", "Shell");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
-    addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
+    // addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
 }
 
 function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
