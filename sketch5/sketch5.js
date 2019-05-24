@@ -1,4 +1,4 @@
-(window["webpackJsonp"] = window["webpackJsonp"] || []).push([[2],{
+(window["webpackJsonp"] = window["webpackJsonp"] || []).push([[5],{
 
 /***/ "./BaseSketch.js":
 /***/ (function(module, exports, __webpack_require__) {
@@ -50123,147 +50123,7 @@ function LensFlare() {
 
 /***/ }),
 
-/***/ "./shaders/clouds.frag":
-/***/ (function(module, exports) {
-
-module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nuniform vec3 rimColor;\nuniform float rimPower;\nvarying vec3 viewPos;\nvarying vec3 viewNormal;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nvoid main() {\n    float rim = clamp(dot(normalize(viewNormal), normalize(-viewPos)), 0.0, 1.0);\n    rim = pow(rim, rimPower);\n    gl_FragColor = vec4(rimColor, rim);\n}\n"
-
-/***/ }),
-
-/***/ "./shaders/clouds.vert":
-/***/ (function(module, exports) {
-
-module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNormal;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nuniform float scale;\nuniform float freq;\nuniform float time;\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  { \n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g;\n  vec3 i1 = min( g.xyz, l.zxy );\n  vec3 i2 = max( g.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289(i); \n  vec4 p = permute( permute( permute( \n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) \n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), \n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\n\nvoid main()\n{\n    vec3 pos = position;\n    worldPos = (modelMatrix * vec4(position, 1.0)).xyz;\n    worldNormal = normalize(mat3(modelMatrix) * normal);\n    \n    float moveSpeedX = time * 0.5;\n    float moveSpeedY = time * 0.3;\n    float moveSpeedZ = time * 0.2;\n\n    float xs = scale * snoise(vec3(worldNormal.xy * freq, moveSpeedX));\n    float ys = scale * snoise(vec3(worldNormal.yz * freq, moveSpeedY));\n    float zs = scale * snoise(vec3(worldNormal.xz * freq, moveSpeedZ));\n\n    pos.x = pos.x + xs;\n    pos.y = pos.y + ys;\n    pos.z = pos.z + zs;\n    \n    vec4 viewPosition = modelViewMatrix * vec4( pos, 1.0 );\n    viewPos = viewPosition.xyz;\n    vec3 vNormal = normalize(normalMatrix * normal);\n    viewNormal = vNormal;\n   \n    worldNormal = normalize(mat3(modelMatrix) * normal);\n    gl_Position = projectionMatrix * viewPosition;\n}"
-
-/***/ }),
-
-/***/ "./shaders/gradient.frag":
-/***/ (function(module, exports) {
-
-module.exports = "#define GLSLIFY 1\nvarying vec3 localPosition;\nuniform vec3 uColorA;\nuniform vec3 uColorB;\n\nvoid main() {\n    gl_FragColor = vec4(\n        mix(uColorA, uColorB, clamp(normalize(localPosition).y * 0.5 + 0.5, 0., 1.)),\n        // vec3(fract(normalize(localPosition).y * 0.5 + 0.5)),\n        1.\n    );\n}"
-
-/***/ }),
-
-/***/ "./shaders/gradient.vert":
-/***/ (function(module, exports) {
-
-module.exports = "#define GLSLIFY 1\nvarying vec3 localPosition;\n\nvoid main() {\n    localPosition = position;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n}"
-
-/***/ }),
-
-/***/ "./sketch2/Blob.js":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = Blob;
-
-var _three = __webpack_require__("./node_modules/three/build/three.module.js");
-
-var THREE = _interopRequireWildcard(_three);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function Blob() {
-    var time = void 0;
-    var blobObj = new THREE.Object3D();
-
-    var softBlobGeo = new THREE.SphereGeometry(95, 50, 50);
-    this.softBlobMat = new THREE.ShaderMaterial({
-        uniforms: {
-            color: { type: "c", value: new THREE.Color(0xfbffe0) },
-            rimColor: { type: "c", value: new THREE.Color(0x555a63) },
-            scale: { type: "f", value: 10 },
-            freq: { type: "f", value: 1.5 },
-            time: { type: "f", value: 0.0 },
-            rimPower: { type: "f", value: 3 }
-        },
-        vertexShader: __webpack_require__("./shaders/clouds.vert"),
-        fragmentShader: __webpack_require__("./shaders/clouds.frag"),
-        transparent: true,
-        // blending: THREE.MultiplyBlending,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-    });
-
-    var softBlobMesh = new THREE.Mesh(softBlobGeo, this.softBlobMat);
-
-    // angled one
-    var angledBlobGeo = new THREE.SphereGeometry(85, 30, 20);
-    this.angledBlobMat = new THREE.ShaderMaterial({
-        uniforms: {
-            color: { type: "c", value: new THREE.Color(0xfbffe0) },
-            rimColor: { type: "c", value: new THREE.Color(0x555a63) },
-            scale: { type: "f", value: 10 },
-            freq: { type: "f", value: 10 },
-            time: { type: "f", value: 0.0 },
-            rimPower: { type: "f", value: 2 }
-        },
-        vertexShader: __webpack_require__("./shaders/clouds.vert"),
-        fragmentShader: __webpack_require__("./shaders/clouds.frag"),
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-    });
-
-    var angledBlobMesh = new THREE.Mesh(angledBlobGeo, this.angledBlobMat);
-    blobObj.add(angledBlobMesh);
-
-    var blobGeoLayer = new THREE.SphereGeometry(50, 30, 30);
-    this.blobMatLayer = new THREE.ShaderMaterial({
-        uniforms: {
-            color: { type: "c", value: new THREE.Color(0x999cff) },
-            rimColor: { type: "c", value: new THREE.Color(0xfbffe0) },
-            scale: { type: "f", value: 0.0 },
-            time: { type: "f", value: 0.0 },
-            rimPower: { type: "f", value: 10 }
-        },
-        vertexShader: __webpack_require__("./shaders/clouds.vert"),
-        fragmentShader: __webpack_require__("./shaders/clouds.frag"),
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-    });
-
-    var blobMeshLayer = new THREE.Mesh(blobGeoLayer, this.blobMatLayer);
-    blobObj.add(blobMeshLayer);
-
-    var blobGeoLayer2 = new THREE.SphereGeometry(110, 80, 80);
-    this.blobMatLayer2 = new THREE.ShaderMaterial({
-        uniforms: {
-            color: { type: "c", value: new THREE.Color(0x181c23) },
-            rimColor: { type: "c", value: new THREE.Color(0x181c23) },
-            scale: { type: "f", value: 0.0 },
-            time: { type: "f", value: 0.0 },
-            rimPower: { type: "f", value: 0.5 }
-        },
-        vertexShader: __webpack_require__("./shaders/clouds.vert"),
-        fragmentShader: __webpack_require__("./shaders/clouds.frag"),
-        transparent: true,
-        blending: THREE.MultiplyBlending,
-        depthWrite: false
-    });
-
-    this.getBlob = function () {
-        return blobObj;
-    };
-
-    this.update = function () {
-        time = Date.now() / 1000 % 120000;
-        this.softBlobMat.uniforms.time.value = time;
-        this.angledBlobMat.uniforms.time.value = time;
-        this.blobMatLayer.uniforms.time.value = time;
-        this.blobMatLayer.uniforms.scale.value = time * 0.0001;
-    };
-}
-
-/***/ }),
-
-/***/ "./sketch2/Scene.js":
+/***/ "./sketch5/Scene.js":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50278,38 +50138,23 @@ var _three = __webpack_require__("./node_modules/three/build/three.module.js");
 
 var THREE = _interopRequireWildcard(_three);
 
-var _background = __webpack_require__("./sketch2/background.js");
-
-var _background2 = _interopRequireDefault(_background);
-
-var _Blob = __webpack_require__("./sketch2/Blob.js");
-
-var _Blob2 = _interopRequireDefault(_Blob);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 var OrbitControls = __webpack_require__("./node_modules/three-orbit-controls/index.js")(THREE);
+
 function Scene(canvas) {
-    var clock = new THREE.Clock();
     var HEIGHT = window.innerHeight;
     var WIDTH = window.innerWidth;
 
     // scene subjects
-
     var scene = createScene();
     var renderer = createRenderer();
     var camera = createCamera();
     var controls = createControl();
-    var skybox = (0, _background2.default)();
-
-    // blob
-    var blob = new _Blob2.default();
-    var blobMesh = blob.getBlob();
 
     function createScene() {
         var scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0xf7d9aa, 80, 500);
         return scene;
     }
 
@@ -50332,7 +50177,7 @@ function Scene(canvas) {
         var farPlane = 10000;
         var camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(0, 0, 300);
+        camera.position.set(0, 60, 120);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
@@ -50341,19 +50186,18 @@ function Scene(canvas) {
     function createControl() {
         var controls = new OrbitControls(camera, renderer.domElement);
         controls.target = new THREE.Vector3(0, 15, 0);
-        // controls.maxPolarAngle = Math.PI / 2;
-        controls.maxDistance = 1000;
+        controls.maxPolarAngle = Math.PI / 2;
+        controls.maxDistance = 150;
+        controls.minDistance = 50;
 
         return controls;
     }
 
     this.start = function () {
-        scene.add(skybox);
-        scene.add(blobMesh);
+        console.log("start");
     };
 
     this.update = function () {
-        blob.update();
         renderer.render(scene, camera);
     };
 
@@ -50370,12 +50214,14 @@ function Scene(canvas) {
         renderer.setSize(WIDTH, HEIGHT);
     };
 
-    this.onMouseClick = function () {};
+    this.onMouseClick = function () {
+        console.log("click");
+    };
 }
 
 /***/ }),
 
-/***/ "./sketch2/background.js":
+/***/ "./sketch5/index.js":
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -50384,55 +50230,9 @@ function Scene(canvas) {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.default = skybox;
+exports.default = Sketch5;
 
-var _three = __webpack_require__("./node_modules/three/build/three.module.js");
-
-var THREE = _interopRequireWildcard(_three);
-
-var _gradient = __webpack_require__("./shaders/gradient.vert");
-
-var _gradient2 = _interopRequireDefault(_gradient);
-
-var _gradient3 = __webpack_require__("./shaders/gradient.frag");
-
-var _gradient4 = _interopRequireDefault(_gradient3);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function skybox() {
-    var gradObj = new THREE.Object3D();
-    var gradMesh = new THREE.Mesh(new THREE.BoxGeometry(10000, 10000, 10000), new THREE.ShaderMaterial({
-        uniforms: {
-            uColorA: { value: new THREE.Color(0x4b6ba4) },
-            uColorB: { value: new THREE.Color(0x151628) }
-        },
-        vertexShader: _gradient2.default,
-        fragmentShader: _gradient4.default,
-        side: THREE.BackSide
-    }));
-
-    gradObj.add(gradMesh);
-
-    return gradObj;
-}
-
-/***/ }),
-
-/***/ "./sketch2/index.js":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = Sketch2;
-
-var _Scene = __webpack_require__("./sketch2/Scene.js");
+var _Scene = __webpack_require__("./sketch5/Scene.js");
 
 var _Scene2 = _interopRequireDefault(_Scene);
 
@@ -50442,13 +50242,13 @@ var _BaseSketch2 = _interopRequireDefault(_BaseSketch);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function Sketch2() {
+function Sketch5() {
     var canvas = document.getElementById('canvas');
     var scene = new _Scene2.default(canvas);
-    Sketch2.prototype = new _BaseSketch2.default(scene);
+    Sketch5.prototype = new _BaseSketch2.default(scene);
 }
 
 /***/ })
 
 }]);
-//# sourceMappingURL=sketch2.js.map
+//# sourceMappingURL=sketch5.js.map

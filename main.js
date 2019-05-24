@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "1e88f15df90bab76cf6b";
+/******/ 	var hotCurrentHash = "a7bf2bbe2e08d1af020c";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -744,7 +744,7 @@
 /******/
 /******/ 	// script path function
 /******/ 	function jsonpScriptSrc(chunkId) {
-/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch1","2":"sketch2","3":"sketch3","4":"sketch4"}[chunkId]||chunkId) + "/" + ({"1":"sketch1","2":"sketch2","3":"sketch3","4":"sketch4"}[chunkId]||chunkId) + ".js"
+/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch1","2":"sketch2","3":"sketch3","4":"sketch4","5":"sketch5"}[chunkId]||chunkId) + "/" + ({"1":"sketch1","2":"sketch2","3":"sketch3","4":"sketch4","5":"sketch5"}[chunkId]||chunkId) + ".js"
 /******/ 	}
 /******/
 /******/ 	// The require function
@@ -946,6 +946,9 @@ var sketches = {
     },
     sketch4: function sketch4() {
         return __webpack_require__.e(/* import() | sketch4 */ 4).then(__webpack_require__.t.bind(null, "./sketch4/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
+    },
+    sketch5: function sketch5() {
+        return __webpack_require__.e(/* import() | sketch5 */ 5).then(__webpack_require__.t.bind(null, "./sketch5/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
     }
 };
 
@@ -977,6 +980,7 @@ function init() {
     addSketchElem(sketchWrapper, "sketch2", "Shell");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
+    addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
 }
 
 function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
