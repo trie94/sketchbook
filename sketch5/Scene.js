@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 const OrbitControls = require('three-orbit-controls')(THREE);
+import Cat from './cat';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
@@ -10,6 +11,8 @@ export default function Scene(canvas) {
     const renderer = createRenderer();
     const camera = createCamera();
     const controls = createControl();
+    const cat = new Cat().getCat();
+    const cat2 = new Cat().getCat();
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -36,7 +39,7 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(0, 60, 120);
+        camera.position.set(0, 0, 120);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
@@ -44,8 +47,8 @@ export default function Scene(canvas) {
 
     function createControl() {
         const controls = new OrbitControls(camera, renderer.domElement);
-        controls.target = new THREE.Vector3(0, 15, 0);
-        controls.maxPolarAngle = Math.PI / 2;
+        controls.target = new THREE.Vector3(0, 0, 0);
+        // controls.maxPolarAngle = Math.PI / 2;
         controls.maxDistance = 150;
         controls.minDistance = 50;
 
@@ -54,6 +57,10 @@ export default function Scene(canvas) {
 
     this.start = function () {
         console.log("start");
+        scene.add(cat);
+        cat2.position.z = -30;
+        cat2.position.y = 20;
+        scene.add(cat2);
     }
 
     this.update = function () {
