@@ -1,14 +1,15 @@
 import * as THREE from 'three';
 const OrbitControls = require('three-orbit-controls')(THREE);
+const FBXLoader = require('three-fbx-loader');
 import catVert from './cat.vert';
 import catFrag from './cat.frag';
+import catModel from './catBody.fbx';
+
 
 export default function Cat() {
-
-    const catObj = new THREE.Object3D();
+    const loader = new FBXLoader();
 
     // cat body
-    const catGeo = new THREE.SphereGeometry(20, 10, 10);
     const catMat = new THREE.ShaderMaterial({
         uniforms: {
             color: { type: "c", value: new THREE.Color(0xb7edff) },
@@ -22,11 +23,11 @@ export default function Cat() {
         depthTest: false
     });
 
-    const catMesh = new THREE.Mesh(catGeo, catMat);
-    catObj.add(catMesh);
-
-    this.getCat = function () {
-        console.log("meow");
-        return catObj;
+    this.loadCat = function (scene) {
+        loader.load(catModel, function (object3d) {
+            // console.log(object3d.children[0]);
+            object3d.children[0].material = catMat;
+            scene.add(object3d);
+        });
     }
 }

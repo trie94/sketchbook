@@ -11,8 +11,7 @@ export default function Scene(canvas) {
     const renderer = createRenderer();
     const camera = createCamera();
     const controls = createControl();
-    const cat = new Cat().getCat();
-    const cat2 = new Cat().getCat();
+    const cat = new Cat();
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -39,7 +38,7 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(0, 0, 120);
+        camera.position.set(0, 0, 50);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
@@ -57,10 +56,8 @@ export default function Scene(canvas) {
 
     this.start = function () {
         console.log("start");
-        scene.add(cat);
-        cat2.position.z = -30;
-        cat2.position.y = 20;
-        scene.add(cat2);
+        // scene.add(cat);
+        cat.loadCat(scene);
     }
 
     this.update = function () {
