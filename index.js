@@ -27,7 +27,7 @@ const sketches = {
     sketch2: () => import(/* webpackChunkName: "sketch2" */ "./sketch2").then(document.getElementById(sketchName).style.color = "white"),
     sketch3: () => import(/* webpackChunkName: "sketch3" */ "./sketch3").then(document.getElementById(sketchName).style.color = "#635a40"),
     sketch4: () => import(/* webpackChunkName: "sketch4" */ "./sketch4").then(document.getElementById(sketchName).style.color = "#81d9f9"),
-    sketch5: () => import(/* webpackChunkName: "sketch5" */ "./sketch5").then(document.getElementById(sketchName).style.color = "#81d9f9"),
+    sketch5: () => import(/* webpackChunkName: "sketch5" */ "./sketch5").then(document.getElementById(sketchName).style.color = "white"),
 };
 
 let sketchName = window.location.pathname;

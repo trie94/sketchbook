@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 const OrbitControls = require('three-orbit-controls')(THREE);
 import Cat from './cat';
+import Skybox from './background';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
@@ -12,6 +13,7 @@ export default function Scene(canvas) {
     const camera = createCamera();
     const controls = createControl();
     const cat = new Cat();
+    const skybox = Skybox();
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -27,6 +29,7 @@ export default function Scene(canvas) {
         renderer.gammaOutput = true;
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.BasicShadowMap;
+        renderer.sortObjects = false;
 
         return renderer;
     }
@@ -56,8 +59,10 @@ export default function Scene(canvas) {
 
     this.start = function () {
         console.log("start");
-        // scene.add(cat);
+        scene.add(skybox);
+        let cat1 = cat.loadCat(scene);
         cat.loadCat(scene);
+        scene.remove(cat1);
     }
 
     this.update = function () {
