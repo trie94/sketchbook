@@ -59,12 +59,12 @@ export default function Scene(canvas) {
 
     this.start = function () {
         console.log("start");
-        cat.loadCat(scene);
         scene.add(skybox);
+        cat.loadCat(scene);
     }
 
     this.update = function () {
-        // cat.update();
+        cat.update();
         renderer.render(scene, camera);
     }
 
