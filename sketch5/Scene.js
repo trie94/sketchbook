@@ -17,7 +17,7 @@ export default function Scene(canvas) {
 
     function createScene() {
         const scene = new THREE.Scene();
-        scene.fog = new THREE.Fog(0xf7d9aa, 80, 500);
+        // scene.fog = new THREE.Fog(0xf7d9aa, 80, 500);
         return scene;
     }
 
@@ -52,20 +52,19 @@ export default function Scene(canvas) {
         controls.target = new THREE.Vector3(0, 0, 0);
         // controls.maxPolarAngle = Math.PI / 2;
         controls.maxDistance = 150;
-        controls.minDistance = 50;
+        controls.minDistance = 30;
 
         return controls;
     }
 
     this.start = function () {
         console.log("start");
-        scene.add(skybox);
-        let cat1 = cat.loadCat(scene);
         cat.loadCat(scene);
-        scene.remove(cat1);
+        scene.add(skybox);
     }
 
     this.update = function () {
+        // cat.update();
         renderer.render(scene, camera);
     }
 
