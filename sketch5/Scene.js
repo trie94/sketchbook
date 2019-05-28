@@ -41,7 +41,7 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(0, 0, 50);
+        camera.position.set(20, 0, 20);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
@@ -52,7 +52,7 @@ export default function Scene(canvas) {
         controls.target = new THREE.Vector3(0, 0, 0);
         // controls.maxPolarAngle = Math.PI / 2;
         controls.maxDistance = 150;
-        controls.minDistance = 30;
+        controls.minDistance = 20;
 
         return controls;
     }

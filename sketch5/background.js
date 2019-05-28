@@ -17,6 +17,5 @@ export default function skybox() {
 
     const testMat = new THREE.MeshBasicMaterial({ color: 0x5984f9, side: THREE.BackSide });
     const gradMesh = new THREE.Mesh(gradgeo, gradMat);
-    console.log("skybox", gradMesh);
     return gradMesh;
 }
