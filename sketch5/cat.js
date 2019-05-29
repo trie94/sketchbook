@@ -134,7 +134,7 @@ export default function Cat() {
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
                 // scene.add(facePlane);
-                console.log(cat);
+                // console.log(cat);
             });
         });
     }

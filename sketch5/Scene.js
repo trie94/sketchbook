@@ -58,7 +58,7 @@ export default function Scene(canvas) {
     }
 
     this.start = function () {
-        console.log("start");
+        // console.log("start");
         scene.add(skybox);
         cat.loadCat(scene);
     }
@@ -82,6 +82,6 @@ export default function Scene(canvas) {
     }
 
     this.onMouseClick = function () {
-        console.log("click");
+        // console.log("click");
     }
 }
