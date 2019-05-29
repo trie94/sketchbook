@@ -3,6 +3,7 @@ const FBXLoader = require('three-fbx-loader');
 import catVert from './cat.vert';
 import catFrag from './cat.frag';
 import catRig from './cat-everything.fbx';
+import catFace from './face.png';
 
 export default function Cat() {
     let cat;
@@ -10,8 +11,18 @@ export default function Cat() {
     let tailBones = [];
     let frontLegBones = [];
     let backLegBones = [];
+    let earBones = [];
 
+    const textureLoader = new THREE.TextureLoader();
     const loader = new FBXLoader();
+    const testMat = new THREE.MeshBasicMaterial({
+        color: 0xb7edff,
+        // transparent: true,
+        // alphaTest: 0.5,
+        // side: THREE.DoubleSide,
+        // skinning: true
+    });
+
     // cat body
     const catMat = new THREE.ShaderMaterial({
         uniforms: {
@@ -25,9 +36,6 @@ export default function Cat() {
         vertexShader: catVert,
         fragmentShader: catFrag,
         transparent: true,
-        // depthTest: false,
-        // depthWrite: false,
-        // opacity: 0.7,
         blending: THREE.AdditiveBlending,
         skinning: true
     });
@@ -51,7 +59,23 @@ export default function Cat() {
         skinning: true
     });
 
-    const testMat = new THREE.MeshBasicMaterial({ color: 0xb7edff, skinning: true });
+    const cubeGeo = new THREE.BoxGeometry(3, 3, 3);
+    const cube = new THREE.Mesh(cubeGeo, testMat);
+    cube.position.z = 15;
+
+    textureLoader.load(
+        catFace,
+        function (texture) {
+            // texture.encoding = THREE.sRGBEncoding;
+            // testMat.alphaMap = texture;
+            testMat.map = texture;
+            // catMat.alphaMap = texture;
+        },
+        undefined,
+        function (err) {
+            console.error('An error happened.');
+        }
+    );
 
     this.loadCat = function (scene) {
         loader.load(catRig, function (object) {
@@ -62,8 +86,8 @@ export default function Cat() {
                     if (child.isMesh) {
                         // console.log(child.name);
                         if (child.name == "BodyModel") {
-                            child.material = catMat;
-                            // child.material = testMat;
+                            // child.material = catMat;
+                            child.material = testMat;
                         } else {
                             child.material = catLimbMat;
                             // child.material = testMat;
@@ -79,29 +103,35 @@ export default function Cat() {
                     }
                     if (child.name.includes('L_FrontLeg_CoreModel') || child.name.includes('R_FrontLeg_CoreModel')) {
                         frontLegBones.push(child);
-                        console.log(frontLegBones);
+                        // console.log(frontLegBones);
                     }
                     if (child.name.includes('L_BackLeg_CoreModel') || child.name.includes('R_BackLeg_CoreModel')) {
                         backLegBones.push(child);
-                        console.log(backLegBones);
+                        // console.log(backLegBones);
+                    }
+                    if (child.name.includes('L_Ear_CoreModel') || child.name.includes('R_Ear_CoreModel')) {
+                        earBones.push(child);
+                        // console.log(earBones);
                     }
                 });
                 cat = object;
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
-                // console.log(cat);
+                scene.add(cube);
+                console.log(cat);
             });
         });
     }
 
     this.update = function () {
         if (cat == null) return;
-        const tailAngle = Math.sin(time);
+        const tailAngle = Math.cos(time);
         const angle = Math.sin(time * 3);
+        const earAngle = Math.cos(time * 2);
 
         time = Date.now() / 1000 % 120000;
-        catMat.uniforms.time.value = time;
-        catMat.uniforms.scale.value = time * 0.0000015;
+        catMat.uniforms.time.value = time * 2;
+        catMat.uniforms.scale.value = time * 0.000001;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
 
@@ -116,5 +146,11 @@ export default function Cat() {
         frontLegBones[1].rotation.y = (Math.PI * angle) / 6;
         backLegBones[0].rotation.y = (Math.PI * angle) / 6 + 1;
         backLegBones[1].rotation.y = -(Math.PI * angle) / 6 - 1;
+
+        // move ears
+        earBones[0].rotation.z = (Math.PI * earAngle) / 16;
+        earBones[0].children[0].rotation.y = (Math.PI * earAngle) / 16;
+        earBones[1].rotation.z = (Math.PI * earAngle) / 16;
+        earBones[1].children[0].rotation.y = (Math.PI * earAngle) / 16;
     }
 }
