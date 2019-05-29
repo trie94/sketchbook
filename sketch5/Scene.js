@@ -52,7 +52,7 @@ export default function Scene(canvas) {
         controls.target = new THREE.Vector3(0, 0, 0);
         // controls.maxPolarAngle = Math.PI / 2;
         controls.maxDistance = 50;
-        // controls.minDistance = 20;
+        controls.minDistance = 20;
 
         return controls;
     }
