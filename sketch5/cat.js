@@ -21,7 +21,8 @@ export default function Cat() {
     const basicMat = new THREE.MeshBasicMaterial({
         colorWrite: false,
         // color: 0xb7edff,
-        transparent: false
+        transparent: false,
+        skinning: true
     });
 
     // cat body
@@ -38,6 +39,23 @@ export default function Cat() {
         fragmentShader: catFrag,
         transparent: true,
         blending: THREE.AdditiveBlending,
+        skinning: true
+    });
+
+    // cat body
+    const catMatDepth = new THREE.ShaderMaterial({
+        uniforms: {
+            color: { type: "c", value: new THREE.Color(0xb7edff) },
+            rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
+            rimPower: { type: "f", value: 4.0 },
+            scale: { type: "f", value: 0.0 },
+            time: { type: "f", value: 0.0 },
+            freq: { type: "f", value: 0.6 }
+        },
+        vertexShader: catVert,
+        fragmentShader: catFrag,
+        transparent: false,
+        colorWrite: false,
         skinning: true
     });
 
@@ -69,6 +87,7 @@ export default function Cat() {
         color: 0xb7edff,
         // transparent: true,
         alphaTest: 0.5,
+        depthTest: false
         // side: THREE.DoubleSide
     });
     const facePlane = new THREE.Mesh(plane, faceMat);
@@ -100,7 +119,7 @@ export default function Cat() {
                             child.geometry.clearGroups();
                             child.geometry.addGroup(0, Infinity, 0);
                             child.geometry.addGroup(0, Infinity, 1);
-                            let materials = [basicMat, catMat];
+                            let materials = [catMatDepth, catMat];
                             child.material = materials;
                         } else {
                             child.material = catLimbMat;
@@ -145,6 +164,8 @@ export default function Cat() {
         time = Date.now() / 1000 % 120000;
         catMat.uniforms.time.value = time * 2;
         catMat.uniforms.scale.value = time * 0.000001;
+        catMatDepth.uniforms.time.value = time * 2;
+        catMatDepth.uniforms.scale.value = time * 0.000001;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
 
