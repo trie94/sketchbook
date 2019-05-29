@@ -107015,14 +107015,35 @@ var _face = __webpack_require__("./sketch5/face.png");
 
 var _face2 = _interopRequireDefault(_face);
 
+var _face3 = __webpack_require__("./sketch5/face2.png");
+
+var _face4 = _interopRequireDefault(_face3);
+
+var _face5 = __webpack_require__("./sketch5/face3.png");
+
+var _face6 = _interopRequireDefault(_face5);
+
+var _face7 = __webpack_require__("./sketch5/face4.png");
+
+var _face8 = _interopRequireDefault(_face7);
+
+var _face9 = __webpack_require__("./sketch5/face5.png");
+
+var _face10 = _interopRequireDefault(_face9);
+
+var _face11 = __webpack_require__("./sketch5/face6.png");
+
+var _face12 = _interopRequireDefault(_face11);
+
+var _face13 = __webpack_require__("./sketch5/face7.png");
+
+var _face14 = _interopRequireDefault(_face13);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 var FBXLoader = __webpack_require__("./node_modules/three-fbx-loader/index.js");
-
-// import bodyTexture from './texture.png';
-
 function Cat() {
     var cat = void 0;
     var time = void 0;
@@ -107030,14 +107051,19 @@ function Cat() {
     var frontLegBones = [];
     var backLegBones = [];
     var earBones = [];
-    var texture = void 0;
+    var faceTextures = [];
+    var tick = 0;
+    var faceIndex = 0;
 
+    var clock = new THREE.Clock();
     var textureLoader = new THREE.TextureLoader();
     var loader = new FBXLoader();
-    var testMat = new THREE.MeshBasicMaterial({
-        color: 0xb7edff
-        // transparent: true,
-        // alphaTest: 0.5
+
+    var basicMat = new THREE.MeshBasicMaterial({
+        colorWrite: false,
+        // color: 0xb7edff,
+        transparent: false,
+        skinning: true
     });
 
     // cat body
@@ -107054,6 +107080,23 @@ function Cat() {
         fragmentShader: _cat4.default,
         transparent: true,
         blending: THREE.AdditiveBlending,
+        skinning: true
+    });
+
+    // cat body
+    var catMatDepth = new THREE.ShaderMaterial({
+        uniforms: {
+            color: { type: "c", value: new THREE.Color(0xb7edff) },
+            rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
+            rimPower: { type: "f", value: 4.0 },
+            scale: { type: "f", value: 0.0 },
+            time: { type: "f", value: 0.0 },
+            freq: { type: "f", value: 0.6 }
+        },
+        vertexShader: _cat2.default,
+        fragmentShader: _cat4.default,
+        transparent: false,
+        colorWrite: false,
         skinning: true
     });
 
@@ -107077,14 +107120,16 @@ function Cat() {
     });
 
     var cubeGeo = new THREE.BoxGeometry(3, 3, 3);
-    var cube = new THREE.Mesh(cubeGeo, testMat);
+    var cube = new THREE.Mesh(cubeGeo, basicMat);
     cube.position.z = -15;
 
     var plane = new THREE.PlaneGeometry(3.5, 3.5, 1);
     var faceMat = new THREE.MeshBasicMaterial({
         color: 0xb7edff,
-        // transparent: true,
-        alphaTest: 0.5
+        transparent: true,
+        alphaTest: 0.5,
+        depthTest: false
+        // blending: THREE.MultiplyBlending
         // side: THREE.DoubleSide
     });
     var facePlane = new THREE.Mesh(plane, faceMat);
@@ -107092,16 +107137,16 @@ function Cat() {
     facePlane.position.y = 3.6;
     facePlane.rotation.x = -0.3;
 
-    textureLoader.load(_face2.default, function (text) {
-        // texture.encoding = THREE.sRGBEncoding;
-        // testMat.alphaMap = text;
-        // testMat.map = texture;
-        // catMat.alphaMap = text;
-        faceMat.map = text;
-        texture = text;
-    }, undefined, function (err) {
-        console.error('An error happened.');
-    });
+    faceTextures.push(textureLoader.load(_face2.default));
+    faceTextures.push(textureLoader.load(_face4.default));
+    // faceTextures.push(textureLoader.load(catFace3));
+    // faceTextures.push(textureLoader.load(catFace4));
+    faceTextures.push(textureLoader.load(_face10.default));
+    faceTextures.push(textureLoader.load(_face12.default));
+    faceTextures.push(textureLoader.load(_face14.default));
+
+    // default
+    faceMat.map = faceTextures[faceIndex];
 
     this.loadCat = function (scene) {
         loader.load(_catEverything2.default, function (object) {
@@ -107111,13 +107156,14 @@ function Cat() {
                     // console.log(child.name);
                     if (child.isMesh) {
                         if (child.name == "BodyModel") {
-                            child.material = catMat;
-                            // child.material = testMat;
-                            // child.material.map = texture;
+                            // child.material = catMat;
+                            child.geometry.clearGroups();
+                            child.geometry.addGroup(0, Infinity, 0);
+                            child.geometry.addGroup(0, Infinity, 1);
+                            var materials = [catMatDepth, catMat];
+                            child.material = materials;
                         } else {
                             child.material = catLimbMat;
-                            // child.material = testMat;
-                            // child.material.map = texture;
                         }
                     }
                     if (child.name.includes('Tail_CoreModel')) {
@@ -107142,11 +107188,10 @@ function Cat() {
                     }
                 });
                 object.add(facePlane);
+                // assign object to global cat
                 cat = object;
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
-                // scene.add(facePlane);
-                // console.log(cat);
             });
         });
     };
@@ -107160,6 +107205,8 @@ function Cat() {
         time = Date.now() / 1000 % 120000;
         catMat.uniforms.time.value = time * 2;
         catMat.uniforms.scale.value = time * 0.000001;
+        catMatDepth.uniforms.time.value = time * 2;
+        catMatDepth.uniforms.scale.value = time * 0.000001;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
 
@@ -107183,6 +107230,14 @@ function Cat() {
 
         // move face
         facePlane.position.x = Math.PI * earAngle / 8;
+
+        // update face
+        if (tick < 0) {
+            faceIndex = (faceIndex + 1) % faceTextures.length;
+            faceMat.map = faceTextures[faceIndex];
+            tick = 1;
+        }
+        tick -= clock.getDelta() * 5;
     };
 }
 
@@ -107199,6 +107254,48 @@ module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNor
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__.p + "sketch5/face.png";
+
+/***/ }),
+
+/***/ "./sketch5/face2.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch5/face2.png";
+
+/***/ }),
+
+/***/ "./sketch5/face3.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch5/face3.png";
+
+/***/ }),
+
+/***/ "./sketch5/face4.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch5/face4.png";
+
+/***/ }),
+
+/***/ "./sketch5/face5.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch5/face5.png";
+
+/***/ }),
+
+/***/ "./sketch5/face6.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch5/face6.png";
+
+/***/ }),
+
+/***/ "./sketch5/face7.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch5/face7.png";
 
 /***/ }),
 
