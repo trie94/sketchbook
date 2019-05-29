@@ -106893,7 +106893,7 @@ function Scene(canvas) {
     }
 
     this.start = function () {
-        console.log("start");
+        // console.log("start");
         scene.add(skybox);
         cat.loadCat(scene);
     };
@@ -106917,7 +106917,7 @@ function Scene(canvas) {
     };
 
     this.onMouseClick = function () {
-        console.log("click");
+        // console.log("click");
     };
 }
 
@@ -107146,7 +107146,7 @@ function Cat() {
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
                 // scene.add(facePlane);
-                console.log(cat);
+                // console.log(cat);
             });
         });
     };
