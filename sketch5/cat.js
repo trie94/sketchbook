@@ -5,15 +5,15 @@ import catFrag from './cat.frag';
 import catRig from './cat-everything.fbx';
 import catFace from './face.png';
 import catFace2 from './face2.png';
-import catFace3 from './face3.png';
-import catFace4 from './face4.png';
+// import catFace3 from './face3.png';
+// import catFace4 from './face4.png';
 import catFace5 from './face5.png';
 import catFace6 from './face6.png';
 import catFace7 from './face7.png';
 
 export default function Cat() {
     let cat;
-    let time;
+    let time = 0;
     let tailBones = [];
     let frontLegBones = [];
     let backLegBones = [];
@@ -127,8 +127,7 @@ export default function Cat() {
                             child.geometry.clearGroups();
                             child.geometry.addGroup(0, Infinity, 0);
                             child.geometry.addGroup(0, Infinity, 1);
-                            let materials = [catMatDepth, catMat];
-                            child.material = materials;
+                            child.material = [catMatDepth, catMat];
                         } else {
                             child.material = catLimbMat;
                         }
@@ -165,17 +164,18 @@ export default function Cat() {
 
     this.update = function () {
         if (cat == null) return;
+        time = Date.now() / 1000 % 120000;
         const tailAngle = Math.cos(time);
         const angle = Math.sin(time * 3);
         const earAngle = Math.cos(time * 2);
 
-        time = Date.now() / 1000 % 120000;
         catMat.uniforms.time.value = time * 2;
-        catMat.uniforms.scale.value = time * 0.000001;
+        catMat.uniforms.scale.value = time * 0.00003;
         catMatDepth.uniforms.time.value = time * 2;
-        catMatDepth.uniforms.scale.value = time * 0.000001;
+        catMatDepth.uniforms.scale.value = time * 0.00003;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
+        // console.log(catMat.uniforms.time.value);
 
         // move tail
         tailBones[0].rotation.y = (Math.PI * tailAngle) / 16 + 1.5;
