@@ -107197,9 +107197,9 @@ function Cat() {
         var earAngle = Math.cos(time * 2);
 
         catMat.uniforms.time.value = time * 2;
-        catMat.uniforms.scale.value = time * 0.00003;
+        catMat.uniforms.scale.value = time * 0.00001;
         catMatDepth.uniforms.time.value = time * 2;
-        catMatDepth.uniforms.scale.value = time * 0.00003;
+        catMatDepth.uniforms.scale.value = time * 0.00001;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
         // console.log(catMat.uniforms.time.value);
