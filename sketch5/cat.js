@@ -4,7 +4,12 @@ import catVert from './cat.vert';
 import catFrag from './cat.frag';
 import catRig from './cat-everything.fbx';
 import catFace from './face.png';
-// import bodyTexture from './texture.png';
+import catFace2 from './face2.png';
+import catFace3 from './face3.png';
+import catFace4 from './face4.png';
+import catFace5 from './face5.png';
+import catFace6 from './face6.png';
+import catFace7 from './face7.png';
 
 export default function Cat() {
     let cat;
@@ -13,8 +18,11 @@ export default function Cat() {
     let frontLegBones = [];
     let backLegBones = [];
     let earBones = [];
-    let texture;
+    let faceTextures = [];
+    let tick = 0;
+    let faceIndex = 0;
 
+    const clock = new THREE.Clock();
     const textureLoader = new THREE.TextureLoader();
     const loader = new FBXLoader();
 
@@ -85,9 +93,10 @@ export default function Cat() {
     const plane = new THREE.PlaneGeometry(3.5, 3.5, 1);
     const faceMat = new THREE.MeshBasicMaterial({
         color: 0xb7edff,
-        // transparent: true,
+        transparent: true,
         alphaTest: 0.5,
-        depthTest: false
+        depthTest: false,
+        // blending: THREE.MultiplyBlending
         // side: THREE.DoubleSide
     });
     const facePlane = new THREE.Mesh(plane, faceMat);
@@ -95,17 +104,16 @@ export default function Cat() {
     facePlane.position.y = 3.6;
     facePlane.rotation.x = -0.3;
 
-    textureLoader.load(
-        catFace,
-        function (text) {
-            faceMat.map = text;
-            texture = text;
-        },
-        undefined,
-        function (err) {
-            console.error('An error happened.');
-        }
-    );
+    faceTextures.push(textureLoader.load(catFace));
+    faceTextures.push(textureLoader.load(catFace2));
+    // faceTextures.push(textureLoader.load(catFace3));
+    // faceTextures.push(textureLoader.load(catFace4));
+    faceTextures.push(textureLoader.load(catFace5));
+    faceTextures.push(textureLoader.load(catFace6));
+    faceTextures.push(textureLoader.load(catFace7));
+
+    // default
+    faceMat.map = faceTextures[faceIndex];
 
     this.loadCat = function (scene) {
         loader.load(catRig, function (object) {
@@ -189,5 +197,13 @@ export default function Cat() {
 
         // move face
         facePlane.position.x = (Math.PI * earAngle) / 8;
+
+        // update face
+        if (tick < 0) {
+            faceIndex = (faceIndex + 1) % faceTextures.length;
+            faceMat.map = faceTextures[faceIndex];
+            tick = 1;
+        }
+        tick -= clock.getDelta() * 5;
     }
 }
