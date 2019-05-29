@@ -107019,34 +107019,28 @@ var _face3 = __webpack_require__("./sketch5/face2.png");
 
 var _face4 = _interopRequireDefault(_face3);
 
-var _face5 = __webpack_require__("./sketch5/face3.png");
+var _face5 = __webpack_require__("./sketch5/face5.png");
 
 var _face6 = _interopRequireDefault(_face5);
 
-var _face7 = __webpack_require__("./sketch5/face4.png");
+var _face7 = __webpack_require__("./sketch5/face6.png");
 
 var _face8 = _interopRequireDefault(_face7);
 
-var _face9 = __webpack_require__("./sketch5/face5.png");
+var _face9 = __webpack_require__("./sketch5/face7.png");
 
 var _face10 = _interopRequireDefault(_face9);
-
-var _face11 = __webpack_require__("./sketch5/face6.png");
-
-var _face12 = _interopRequireDefault(_face11);
-
-var _face13 = __webpack_require__("./sketch5/face7.png");
-
-var _face14 = _interopRequireDefault(_face13);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 var FBXLoader = __webpack_require__("./node_modules/three-fbx-loader/index.js");
+// import catFace3 from './face3.png';
+// import catFace4 from './face4.png';
 function Cat() {
     var cat = void 0;
-    var time = void 0;
+    var time = 0;
     var tailBones = [];
     var frontLegBones = [];
     var backLegBones = [];
@@ -107141,9 +107135,9 @@ function Cat() {
     faceTextures.push(textureLoader.load(_face4.default));
     // faceTextures.push(textureLoader.load(catFace3));
     // faceTextures.push(textureLoader.load(catFace4));
+    faceTextures.push(textureLoader.load(_face6.default));
+    faceTextures.push(textureLoader.load(_face8.default));
     faceTextures.push(textureLoader.load(_face10.default));
-    faceTextures.push(textureLoader.load(_face12.default));
-    faceTextures.push(textureLoader.load(_face14.default));
 
     // default
     faceMat.map = faceTextures[faceIndex];
@@ -107160,8 +107154,7 @@ function Cat() {
                             child.geometry.clearGroups();
                             child.geometry.addGroup(0, Infinity, 0);
                             child.geometry.addGroup(0, Infinity, 1);
-                            var materials = [catMatDepth, catMat];
-                            child.material = materials;
+                            child.material = [catMatDepth, catMat];
                         } else {
                             child.material = catLimbMat;
                         }
@@ -107198,17 +107191,18 @@ function Cat() {
 
     this.update = function () {
         if (cat == null) return;
+        time = Date.now() / 1000 % 120000;
         var tailAngle = Math.cos(time);
         var angle = Math.sin(time * 3);
         var earAngle = Math.cos(time * 2);
 
-        time = Date.now() / 1000 % 120000;
         catMat.uniforms.time.value = time * 2;
-        catMat.uniforms.scale.value = time * 0.000001;
+        catMat.uniforms.scale.value = time * 0.00003;
         catMatDepth.uniforms.time.value = time * 2;
-        catMatDepth.uniforms.scale.value = time * 0.000001;
+        catMatDepth.uniforms.scale.value = time * 0.00003;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
+        // console.log(catMat.uniforms.time.value);
 
         // move tail
         tailBones[0].rotation.y = Math.PI * tailAngle / 16 + 1.5;
@@ -107261,20 +107255,6 @@ module.exports = __webpack_require__.p + "sketch5/face.png";
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__.p + "sketch5/face2.png";
-
-/***/ }),
-
-/***/ "./sketch5/face3.png":
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__.p + "sketch5/face3.png";
-
-/***/ }),
-
-/***/ "./sketch5/face4.png":
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__.p + "sketch5/face4.png";
 
 /***/ }),
 
