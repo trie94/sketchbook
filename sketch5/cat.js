@@ -17,10 +17,11 @@ export default function Cat() {
 
     const textureLoader = new THREE.TextureLoader();
     const loader = new FBXLoader();
-    const testMat = new THREE.MeshBasicMaterial({
-        color: 0xb7edff,
-        // transparent: true,
-        // alphaTest: 0.5
+
+    const basicMat = new THREE.MeshBasicMaterial({
+        colorWrite: false,
+        // color: 0xb7edff,
+        transparent: false
     });
 
     // cat body
@@ -60,10 +61,10 @@ export default function Cat() {
     });
 
     const cubeGeo = new THREE.BoxGeometry(3, 3, 3);
-    const cube = new THREE.Mesh(cubeGeo, testMat);
+    const cube = new THREE.Mesh(cubeGeo, basicMat);
     cube.position.z = -15;
 
-    const plane = new THREE.PlaneGeometry(3.5,3.5,1);
+    const plane = new THREE.PlaneGeometry(3.5, 3.5, 1);
     const faceMat = new THREE.MeshBasicMaterial({
         color: 0xb7edff,
         // transparent: true,
@@ -78,10 +79,6 @@ export default function Cat() {
     textureLoader.load(
         catFace,
         function (text) {
-            // texture.encoding = THREE.sRGBEncoding;
-            // testMat.alphaMap = text;
-            // testMat.map = texture;
-            // catMat.alphaMap = text;
             faceMat.map = text;
             texture = text;
         },
@@ -99,13 +96,14 @@ export default function Cat() {
                     // console.log(child.name);
                     if (child.isMesh) {
                         if (child.name == "BodyModel") {
-                            child.material = catMat;
-                            // child.material = testMat;
-                            // child.material.map = texture;
+                            // child.material = catMat;
+                            child.geometry.clearGroups();
+                            child.geometry.addGroup(0, Infinity, 0);
+                            child.geometry.addGroup(0, Infinity, 1);
+                            let materials = [basicMat, catMat];
+                            child.material = materials;
                         } else {
                             child.material = catLimbMat;
-                            // child.material = testMat;
-                            // child.material.map = texture;
                         }
                     }
                     if (child.name.includes('Tail_CoreModel')) {
@@ -129,12 +127,11 @@ export default function Cat() {
                         // console.log(earBones);
                     }
                 });
-                object.add(facePlane)
+                object.add(facePlane);
+                // assign object to global cat
                 cat = object;
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
-                // scene.add(facePlane);
-                // console.log(cat);
             });
         });
     }
