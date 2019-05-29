@@ -50140,7 +50140,7 @@ module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNor
 /***/ "./shaders/gradient.frag":
 /***/ (function(module, exports) {
 
-module.exports = "#define GLSLIFY 1\nvarying vec3 localPosition;\nuniform vec3 uColorA;\nuniform vec3 uColorB;\n\nvoid main() {\n    gl_FragColor = vec4(\n        mix(uColorA, uColorB, clamp(normalize(localPosition).y * 0.5 + 0.5, 0., 1.)),\n        // vec3(fract(normalize(localPosition).y * 0.5 + 0.5)),\n        1.\n    );\n}"
+module.exports = "#define GLSLIFY 1\nvarying vec3 localPosition;\nuniform vec3 uColorA;\nuniform vec3 uColorB;\n\nvoid main() {\n    gl_FragColor = vec4(\n        mix(uColorA, uColorB, clamp(normalize(localPosition).y * 0.5 + 0.5, 0., 1.)),\n        1.\n    );\n}"
 
 /***/ }),
 

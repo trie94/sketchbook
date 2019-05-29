@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "35172212313eeb3f8340";
+/******/ 	var hotCurrentHash = "ce61d6d3ca8fb6c28471";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -948,7 +948,7 @@ var sketches = {
         return __webpack_require__.e(/* import() | sketch4 */ 4).then(__webpack_require__.t.bind(null, "./sketch4/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
     },
     sketch5: function sketch5() {
-        return __webpack_require__.e(/* import() | sketch5 */ 5).then(__webpack_require__.t.bind(null, "./sketch5/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
+        return __webpack_require__.e(/* import() | sketch5 */ 5).then(__webpack_require__.t.bind(null, "./sketch5/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     }
 };
 
@@ -980,7 +980,7 @@ function init() {
     addSketchElem(sketchWrapper, "sketch2", "Shell");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
-    // addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
+    addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
 }
 
 function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
