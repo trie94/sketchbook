@@ -1,5 +1,4 @@
 varying vec3 viewPos;
-varying vec3 viewNormal;
 varying vec3 worldPos;
 varying vec3 worldNormal;
 
@@ -99,28 +98,31 @@ float snoise(vec3 v)
                                 dot(p2,x2), dot(p3,x3) ) );
   }
 
+  float surface3 (vec3 coord) {
+      float n = 0.0;
+      n += 1.0 * (snoise(coord));
+      n += 0.5 * (snoise(coord * 2.0));
+      n += 0.25 * (snoise(coord * 4.0));
+      n += 0.125 * (snoise(coord * 8.0));
 
-void main()
-{
+      return n;
+  }
+
+varying vec2 vUv;
+
+void main() {
     vec3 pos = position;
     worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
     worldNormal = normalize(mat3(modelMatrix) * normal);
-    
-    // float moveSpeedX = time * 0.5;
-    // float moveSpeedY = time * 0.3;
-    // float moveSpeedZ = time * 0.2;
 
-    // float xs = scale * snoise(vec3(worldNormal.xy * freq, time));
-    // float ys = scale * snoise(vec3(worldNormal.yz * freq, time));
-    float zs = scale * snoise(vec3(worldNormal.xz * freq, time));
+    vUv = uv;
+    vec3 coord = vec3(vUv, freq);
+    float n = surface3(coord);
 
-    // pos.x = pos.x + xs;
-    // pos.y = pos.y + ys;
-    pos.z = pos.z + zs;
-    
-    vec4 viewPosition = modelViewMatrix * vec4( pos, 1.0 );
-    viewPos = viewPosition.xyz;
-    vec3 vNormal = normalize(normalMatrix * normal);
-    viewNormal = vNormal;
-    gl_Position = projectionMatrix * viewPosition;
+    pos.x = pos.x + n;
+    pos.y = pos.y + n;
+    // pos.z = pos.z + n;
+    pos.z = pos.z + n * 2.0 * scale;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );
 }

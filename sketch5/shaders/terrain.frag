@@ -1,13 +1,11 @@
 uniform vec3 color;
-uniform vec3 rimColor;
-uniform float rimPower;
 varying vec3 viewPos;
-varying vec3 viewNormal;
+varying vec2 vUv;
+uniform vec3 fog;
 
 void main() {
-    float rim = clamp(dot(normalize(viewNormal), normalize(-viewPos)), 0.0, 1.0);
-    // rim = 1.0 - rim;
-    rim = pow(rim, rimPower);
-    vec3 color = mix(color, rimColor, rim);
-    gl_FragColor = vec4(rimColor, rim);
+    float f = 1.0 - distance(vUv,vec2(0.5));
+    f = pow(f, 2.0);
+    vec3 fgColor = mix(fog, color, f);
+    gl_FragColor = vec4(fgColor, 1.0);
 }
