@@ -1,15 +1,13 @@
 import * as THREE from 'three';
 const FBXLoader = require('three-fbx-loader');
-import catVert from './cat.vert';
-import catFrag from './cat.frag';
-import catRig from './cat-everything.fbx';
-import catFace from './face.png';
-import catFace2 from './face2.png';
-// import catFace3 from './face3.png';
-// import catFace4 from './face4.png';
-import catFace5 from './face5.png';
-import catFace6 from './face6.png';
-import catFace7 from './face7.png';
+import catVert from './shaders/cat.vert';
+import catFrag from './shaders/cat.frag';
+import catRig from './assets/cat-everything.fbx';
+import catFace from './assets/face.png';
+import catFace2 from './assets/face2.png';
+import catFace5 from './assets/face5.png';
+import catFace6 from './assets/face6.png';
+import catFace7 from './assets/face7.png';
 
 export default function Cat() {
     let cat;
@@ -134,7 +132,7 @@ export default function Cat() {
                     }
                     if (child.name.includes('Tail_CoreModel')) {
                         let tempBone = child;
-                        console.log(tempBone);
+                        // reposition the tail
                         tempBone.position.z = 1;
                         while (tempBone != null) {
                             tailBones.push(tempBone);
