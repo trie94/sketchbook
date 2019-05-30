@@ -168,7 +168,7 @@ void main()
     worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
     worldNormal = normalize(mat3(modelMatrix) * objectNormal);
     
-    float moveSpeedX = time * 0.3;
+    float moveSpeedX = time * 0.1;
     float moveSpeedY = time * 0.3;
     float moveSpeedZ = time * 0.3;
 

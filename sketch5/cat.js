@@ -39,7 +39,7 @@ export default function Cat() {
             color: { type: "c", value: new THREE.Color(0xb7edff) },
             rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
             rimPower: { type: "f", value: 4.0 },
-            scale: { type: "f", value: 0.0 },
+            scale: { type: "f", value: 0.072 },
             time: { type: "f", value: 0.0 },
             freq: { type: "f", value: 0.6 }
         },
@@ -56,7 +56,7 @@ export default function Cat() {
             color: { type: "c", value: new THREE.Color(0xb7edff) },
             rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
             rimPower: { type: "f", value: 4.0 },
-            scale: { type: "f", value: 0.0 },
+            scale: { type: "f", value: 0.072 },
             time: { type: "f", value: 0.0 },
             freq: { type: "f", value: 0.6 }
         },
@@ -134,6 +134,8 @@ export default function Cat() {
                     }
                     if (child.name.includes('Tail_CoreModel')) {
                         let tempBone = child;
+                        console.log(tempBone);
+                        tempBone.position.z = 1;
                         while (tempBone != null) {
                             tailBones.push(tempBone);
                             tempBone = tempBone.children[0];
@@ -170,9 +172,9 @@ export default function Cat() {
         const earAngle = Math.cos(time * 2);
 
         catMat.uniforms.time.value = time * 2;
-        catMat.uniforms.scale.value = time * 0.00001;
+        // catMat.uniforms.scale.value = 0.075;
         catMatDepth.uniforms.time.value = time * 2;
-        catMatDepth.uniforms.scale.value = time * 0.00001;
+        // catMatDepth.uniforms.scale.value = 0.075;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
         // console.log(catMat.uniforms.time.value);
@@ -202,7 +204,11 @@ export default function Cat() {
         if (tick < 0) {
             faceIndex = (faceIndex + 1) % faceTextures.length;
             faceMat.map = faceTextures[faceIndex];
-            tick = 1;
+            if (faceIndex == 0) {
+                tick = 10;
+            } else {
+                tick = 1;
+            }
         }
         tick -= clock.getDelta() * 5;
     }
