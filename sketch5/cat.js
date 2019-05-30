@@ -5,9 +5,8 @@ import catFrag from './shaders/cat.frag';
 import catRig from './assets/cat-everything.fbx';
 import catFace from './assets/face.png';
 import catFace2 from './assets/face2.png';
-import catFace5 from './assets/face5.png';
-import catFace6 from './assets/face6.png';
-import catFace7 from './assets/face7.png';
+import catFace3 from './assets/face3.png';
+import catFace4 from './assets/face4.png';
 
 export default function Cat() {
     let cat;
@@ -18,6 +17,10 @@ export default function Cat() {
     let earBones = [];
     let faceTextures = [];
     let tick = 0;
+    let moveTick = 0;
+    let axis = new THREE.Vector3(0, 0, 0);
+    let front = new THREE.Vector3(0, 0, 1);
+    let pt, radians, tangent;
     let faceIndex = 0;
 
     const clock = new THREE.Clock();
@@ -36,7 +39,7 @@ export default function Cat() {
         uniforms: {
             color: { type: "c", value: new THREE.Color(0xb7edff) },
             rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
-            rimPower: { type: "f", value: 4.0 },
+            rimPower: { type: "f", value: 2.5 },
             scale: { type: "f", value: 0.072 },
             time: { type: "f", value: 0.0 },
             freq: { type: "f", value: 0.6 }
@@ -69,10 +72,29 @@ export default function Cat() {
         uniforms: {
             color: { type: "c", value: new THREE.Color(0xb7edff) },
             rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
-            rimPower: { type: "f", value: 1.0 },
+            rimPower: { type: "f", value: 0.7 },
             scale: { type: "f", value: 0.0 },
             time: { type: "f", value: 0.0 },
             freq: { type: "f", value: 0.8 }
+        },
+        vertexShader: catVert,
+        fragmentShader: catFrag,
+        transparent: true,
+        // depthTest: false,
+        depthWrite: false,
+        // opacity: 0.7,
+        blending: THREE.AdditiveBlending,
+        skinning: true
+    });
+
+    const catTailMat = new THREE.ShaderMaterial({
+        uniforms: {
+            color: { type: "c", value: new THREE.Color(0xb7edff) },
+            rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
+            rimPower: { type: "f", value: 1.0 },
+            scale: { type: "f", value: 0.0 },
+            time: { type: "f", value: 0.0 },
+            freq: { type: "f", value: 0.5 }
         },
         vertexShader: catVert,
         fragmentShader: catFrag,
@@ -104,11 +126,8 @@ export default function Cat() {
 
     faceTextures.push(textureLoader.load(catFace));
     faceTextures.push(textureLoader.load(catFace2));
-    // faceTextures.push(textureLoader.load(catFace3));
-    // faceTextures.push(textureLoader.load(catFace4));
-    faceTextures.push(textureLoader.load(catFace5));
-    faceTextures.push(textureLoader.load(catFace6));
-    faceTextures.push(textureLoader.load(catFace7));
+    faceTextures.push(textureLoader.load(catFace3));
+    faceTextures.push(textureLoader.load(catFace4));
 
     // default
     faceMat.map = faceTextures[faceIndex];
@@ -126,6 +145,8 @@ export default function Cat() {
                             child.geometry.addGroup(0, Infinity, 0);
                             child.geometry.addGroup(0, Infinity, 1);
                             child.material = [catMatDepth, catMat];
+                        } else if (child.name.includes("TailModel")) {
+                            child.material = catTailMat;
                         } else {
                             child.material = catLimbMat;
                         }
@@ -158,11 +179,17 @@ export default function Cat() {
                 cat = object;
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
+                // console.log(cat);
             });
         });
     }
 
-    this.update = function () {
+    this.getCatPos = function () {
+        if (cat == null) return cat;
+        return cat.position;
+    }
+
+    this.update = function (path) {
         if (cat == null) return;
         time = Date.now() / 1000 % 120000;
         const tailAngle = Math.cos(time);
@@ -175,6 +202,8 @@ export default function Cat() {
         // catMatDepth.uniforms.scale.value = 0.075;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
+        catTailMat.uniforms.time.value = time * 5;
+        catTailMat.uniforms.scale.value = time * 0.0000005;
         // console.log(catMat.uniforms.time.value);
 
         // move tail
@@ -203,11 +232,25 @@ export default function Cat() {
             faceIndex = (faceIndex + 1) % faceTextures.length;
             faceMat.map = faceTextures[faceIndex];
             if (faceIndex == 0) {
-                tick = 10;
+                tick = 20;
             } else {
                 tick = 1;
             }
         }
-        tick -= clock.getDelta() * 5;
+        tick -= clock.getDelta() * 8;
+        moveTick = (moveTick >= 0.998) ? 0 : moveTick += 0.0001;
+
+        // set the marker position
+        pt = path.getPoint(moveTick);
+        // set the marker position
+        cat.position.set(pt.x, pt.y, pt.z);
+        // get the tangent to the curve
+        tangent = path.getTangent(moveTick).normalize();
+        // calculate the axis to rotate around
+        axis.crossVectors(front, tangent).normalize();
+        // calcluate the angle between the up vector and the tangent
+        radians = Math.acos(front.dot(tangent));
+        // set the quaternion
+        cat.quaternion.setFromAxisAngle(axis, radians);
     }
 }

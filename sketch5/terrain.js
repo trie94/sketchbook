@@ -12,7 +12,7 @@ export default function terrain() {
             fog: { type: "c", value: new THREE.Color(0x66c1ff) },
             scale: { type: "f", value: 200.0 },
             time: { type: "f", value: 0.0 },
-            freq: { type: "f", value: 100.0 }
+            freq: { type: "f", value: 80.0 }
         },
         vertexShader: terrainVert,
         fragmentShader: terrainFrag
@@ -22,8 +22,9 @@ export default function terrain() {
     const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
 
     terrainMesh.rotation.x = -Math.PI / 2;
-    terrainMesh.rotation.z = Math.PI / 2;
-    terrainMesh.position.y = -50;
+    // terrainMesh.rotation.z = Math.PI / 2;
+    terrainMesh.position.y = -380;
+    // terrainMesh.position.x = -130;
 
     this.addTerrain = function (scene) {
         scene.add(terrainMesh);

@@ -3,6 +3,7 @@ const OrbitControls = require('three-orbit-controls')(THREE);
 import Cat from './cat';
 import Skybox from './background';
 import Terrain from './terrain';
+import Path from './path';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
@@ -16,6 +17,8 @@ export default function Scene(canvas) {
     const cat = new Cat();
     const skybox = Skybox();
     const terrain = new Terrain();
+    const path = new Path();
+    let tick = 0;
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -43,7 +46,7 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(20, 0, 20);
+        camera.position.set(20, 50, 20);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
@@ -53,7 +56,7 @@ export default function Scene(canvas) {
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.target = new THREE.Vector3(0, 0, 0);
         controls.maxPolarAngle = Math.PI / 2;
-        controls.maxDistance = 70;
+        // controls.maxDistance = 70;
         controls.minDistance = 20;
 
         return controls;
@@ -64,11 +67,23 @@ export default function Scene(canvas) {
         scene.add(skybox);
         terrain.addTerrain(scene);
         cat.loadCat(scene);
+        // scene.add(path.debug());
     }
 
     this.update = function () {
-        cat.update();
-        terrain.update();
+        cat.update(path.getSpline());
+        let catPos = cat.getCatPos();
+
+        if (catPos != null) {
+            camera.lookAt(catPos);
+            camera.position.x = catPos.x + Math.sin(tick) * 50;
+            camera.position.y = catPos.y;
+            camera.position.z = catPos.z + Math.cos(tick) * 30;
+            
+            // let target = new THREE.Vector3(catPos.x + Math.sin(tick) * 50, catPos.y, catPos.z + Math.cos(tick) * 30);
+            // camera.position.lerp(target, 0.5);
+            tick += 0.001;
+        }
         renderer.render(scene, camera);
     }
 

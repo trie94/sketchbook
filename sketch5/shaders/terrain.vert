@@ -100,10 +100,10 @@ float snoise(vec3 v)
 
   float surface3 (vec3 coord) {
       float n = 0.0;
-      n += 1.0 * (snoise(coord));
-      n += 0.5 * (snoise(coord * 2.0));
-      n += 0.25 * (snoise(coord * 4.0));
-      n += 0.125 * (snoise(coord * 8.0));
+      n += 1.0 * abs(snoise(coord));
+      n += 0.5 * abs(snoise(coord * 2.0));
+      n += 0.25 * abs(snoise(coord * 4.0));
+      n += 0.125 * abs(snoise(coord * 8.0));
 
       return n;
   }
