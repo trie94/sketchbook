@@ -106854,7 +106854,7 @@ function Scene(canvas) {
     var scene = createScene();
     var renderer = createRenderer();
     var camera = createCamera();
-    var controls = createControl();
+    // const controls = createControl();
     var cat = new _cat2.default();
     var skybox = (0, _background2.default)();
     var terrain = new _terrain2.default();
