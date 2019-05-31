@@ -106825,10 +106825,6 @@ var _three = __webpack_require__("./node_modules/three/build/three.module.js");
 
 var THREE = _interopRequireWildcard(_three);
 
-var _cat = __webpack_require__("./sketch5/cat.js");
-
-var _cat2 = _interopRequireDefault(_cat);
-
 var _background = __webpack_require__("./sketch5/background.js");
 
 var _background2 = _interopRequireDefault(_background);
@@ -106844,6 +106840,10 @@ var _path2 = _interopRequireDefault(_path);
 var _simpleParticles = __webpack_require__("./sketch5/simpleParticles.js");
 
 var _simpleParticles2 = _interopRequireDefault(_simpleParticles);
+
+var _cat = __webpack_require__("./sketch5/cat.js");
+
+var _cat2 = _interopRequireDefault(_cat);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -106863,7 +106863,7 @@ function Scene(canvas) {
     var cat = new _cat2.default();
     var skybox = (0, _background2.default)();
     var terrain = new _terrain2.default();
-    var particles = new _simpleParticles2.default();
+    // const particles = new Particles();
     var path = new _path2.default();
     var tick = 0;
 
@@ -106913,7 +106913,7 @@ function Scene(canvas) {
         // console.log("start");
         scene.add(skybox);
         terrain.addTerrain(scene);
-        scene.add(particles);
+        // scene.add(particles);
         cat.loadCat(scene);
 
         if (debug) {
@@ -107496,21 +107496,21 @@ function simpleParticles() {
 
     var MAX = 100;
     var geo = new THREE.BufferGeometry();
-    var initialPositions = [];
-    var velocities = [];
-    var accelerations = [];
+    // const initialPositions = [];
+    // const velocities = [];
+    // const accelerations = [];
 
-    for (var i = 0; i < MAX; i++) {
-        initialPositions.push(rand(-0.5, 0.5));
-        initialPositions.push(rand(-4, -3));
-        initialPositions.push(rand(-1, 1));
-        velocities.push(rand(-0.5, 0.5));
-        velocities.push(10.0);
-        velocities.push(rand(-1, 1));
-        accelerations.push(0);
-        accelerations.push(-9.8);
-        accelerations.push(0);
-    }
+    // for (let i = 0; i < MAX; i++) {
+    //     initialPositions.push(rand(-0.5, 0.5));
+    //     initialPositions.push(rand(-4, -3));
+    //     initialPositions.push(rand(-1, 1));
+    //     velocities.push(rand(-0.5, 0.5));
+    //     velocities.push(10.0);
+    //     velocities.push(rand(-1, 1));
+    //     accelerations.push(0);
+    //     accelerations.push(-9.8);
+    //     accelerations.push(0);
+    // }
     var mat = new THREE.ShaderMaterial({
         uniforms: {
             time: { value: 12.0 }
