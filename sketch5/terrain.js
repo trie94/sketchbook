@@ -12,7 +12,8 @@ export default function terrain() {
             color: { type: "c", value: new THREE.Color(0x254984) },
             fog: { type: "c", value: new THREE.Color(0x66c1ff) },
             scale: { type: "f", value: 200.0 },
-            time: { type: "f", value: 0.0 },
+            time1: { type: "f", value: 0.0 },
+            time2: { type: "f", value: 0.0 },
             freq: { type: "f", value: 80.0 },
             caustics: {
                 type: "t", value: new THREE.TextureLoader().load(causticsTexture, function (texture) {
@@ -39,8 +40,9 @@ export default function terrain() {
     this.update = function () {
         // let time = clock.getDelta();
         let time = Date.now() / 1000 % 120000;
-        terrainMat.uniforms.time.value = Math.cos(time) * 0.005;
-        terrainMat.uniforms.intensity.value = Math.cos(time * 0.1) * 0.5;
+        terrainMat.uniforms.time1.value = Math.cos(time) * 0.005;
+        terrainMat.uniforms.time2.value = Math.sin(time) * 0.002;
+        terrainMat.uniforms.intensity.value = Math.cos(time * 0.1) * 0.05;
         // console.log(terrainMat.uniforms.time.value);
         // terrainMesh.rotation.x -= 0.001;
     }

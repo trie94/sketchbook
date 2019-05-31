@@ -4,7 +4,8 @@ varying vec3 worldNormal;
 
 uniform float scale;
 uniform float freq;
-uniform float time;
+uniform float time1;
+uniform float time2;
 
 vec3 mod289(vec3 x) {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -110,6 +111,7 @@ float snoise(vec3 v)
 
 varying vec2 vUv;
 varying vec2 v_texcoord;
+varying vec2 v_texcoord2;
 
 void main() {
     vec3 pos = position;
@@ -119,7 +121,8 @@ void main() {
     vUv = uv;
     vec3 coord = vec3(vUv, freq);
     float n = surface3(coord);
-    v_texcoord = uv + time;
+    v_texcoord = uv + time1;
+    v_texcoord2 = uv - time2;
 
     pos.x = pos.x + n;
     pos.y = pos.y + n;
