@@ -33,8 +33,9 @@ export default function terrain() {
     terrainMesh.rotation.x = -Math.PI / 2;
     terrainMesh.position.y = -380;
 
-    this.addTerrain = function (scene) {
-        scene.add(terrainMesh);
+    this.addTerrain = function () {
+        // scene.add(terrainMesh);
+        return terrainMesh;
     }
 
     this.update = function () {

@@ -9,7 +9,7 @@ import catFace3 from './assets/face3.png';
 import catFace4 from './assets/face4.png';
 
 export default function Cat() {
-    let cat;
+    let cat = null;
     let time = 0;
     let tailBones = [];
     let frontLegBones = [];
@@ -123,6 +123,7 @@ export default function Cat() {
     facePlane.position.z = 6.5;
     facePlane.position.y = 3.6;
     facePlane.rotation.x = -0.3;
+    // facePlane.renderOrder = 100;
 
     faceTextures.push(textureLoader.load(catFace));
     faceTextures.push(textureLoader.load(catFace2));
@@ -135,50 +136,53 @@ export default function Cat() {
     this.loadCat = function (scene) {
         loader.load(catRig, function (object) {
             loader.load(catRig, function (object) {
-                // apply shader material
-                object.traverse(function (child) {
-                    // console.log(child.name);
-                    if (child.isMesh) {
-                        if (child.name == "BodyModel") {
-                            // child.material = catMat;
-                            child.geometry.clearGroups();
-                            child.geometry.addGroup(0, Infinity, 0);
-                            child.geometry.addGroup(0, Infinity, 1);
-                            child.material = [catMatDepth, catMat];
-                        } else if (child.name.includes("TailModel")) {
-                            child.material = catTailMat;
-                        } else {
-                            child.material = catLimbMat;
+                loader.load(catRig, function (object) {
+                    // apply shader material
+                    object.traverse(function (child) {
+                        // console.log(child.name);
+                        if (child.isMesh) {
+                            if (child.name == "BodyModel") {
+                                // child.material = catMat;
+                                child.geometry.clearGroups();
+                                child.geometry.addGroup(0, Infinity, 0);
+                                child.geometry.addGroup(0, Infinity, 1);
+                                child.material = [catMatDepth, catMat];
+                            } else if (child.name.includes("TailModel")) {
+                                child.material = catTailMat;
+                            } else {
+                                child.material = catLimbMat;
+                            }
                         }
-                    }
-                    if (child.name.includes('Tail_CoreModel')) {
-                        let tempBone = child;
-                        // reposition the tail
-                        tempBone.position.z = 1;
-                        while (tempBone != null) {
-                            tailBones.push(tempBone);
-                            tempBone = tempBone.children[0];
+                        if (child.name.includes('Tail_CoreModel')) {
+                            let tempBone = child;
+                            // reposition the tail
+                            tempBone.position.z = 1;
+                            while (tempBone != null) {
+                                tailBones.push(tempBone);
+                                tempBone = tempBone.children[0];
+                            }
+                            // console.log(tailBones);
                         }
-                        // console.log(tailBones);
-                    }
-                    if (child.name.includes('L_FrontLeg_CoreModel') || child.name.includes('R_FrontLeg_CoreModel')) {
-                        frontLegBones.push(child);
-                        // console.log(frontLegBones);
-                    }
-                    if (child.name.includes('L_BackLeg_CoreModel') || child.name.includes('R_BackLeg_CoreModel')) {
-                        backLegBones.push(child);
-                        // console.log(backLegBones);
-                    }
-                    if (child.name.includes('L_Ear_CoreModel') || child.name.includes('R_Ear_CoreModel')) {
-                        earBones.push(child);
-                        // console.log(earBones);
-                    }
+                        if (child.name.includes('L_FrontLeg_CoreModel') || child.name.includes('R_FrontLeg_CoreModel')) {
+                            frontLegBones.push(child);
+                            // console.log(frontLegBones);
+                        }
+                        if (child.name.includes('L_BackLeg_CoreModel') || child.name.includes('R_BackLeg_CoreModel')) {
+                            backLegBones.push(child);
+                            // console.log(backLegBones);
+                        }
+                        if (child.name.includes('L_Ear_CoreModel') || child.name.includes('R_Ear_CoreModel')) {
+                            earBones.push(child);
+                            // console.log(earBones);
+                        }
+                    });
+                    object.add(facePlane);
+                    // assign object to global cat
+                    cat = object;
+                    // cat.matrixWorldNeedsUpdate = true;
+                    scene.add(cat);
+                    // console.log(cat);
                 });
-                object.add(facePlane);
-                // assign object to global cat
-                cat = object;
-                cat.matrixWorldNeedsUpdate = true;
-                scene.add(cat);
             });
         });
     }

@@ -3,8 +3,8 @@ const OrbitControls = require('three-orbit-controls')(THREE);
 import Skybox from './background';
 import Terrain from './terrain';
 import Path from './path';
-import Particles from './simpleParticles';
 import Cat from './cat';
+import ParticleGenerator from './particleGenerator';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
@@ -19,9 +19,11 @@ export default function Scene(canvas) {
     const cat = new Cat();
     const skybox = Skybox();
     const terrain = new Terrain();
-    // const particles = new Particles();
     const path = new Path();
+
+    let particleGenerator = null;
     let tick = 0;
+    let timer = 3;
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -66,21 +68,21 @@ export default function Scene(canvas) {
     }
 
     this.start = function () {
-        // console.log("start");
+        console.log("start");
         scene.add(skybox);
-        terrain.addTerrain(scene);
-        // scene.add(particles);
+        scene.add(terrain.addTerrain());
         cat.loadCat(scene);
 
         if (debug) {
             scene.add(path.debug());
         }
+        renderer.autoClear = true;
     }
 
     this.update = function () {
+        terrain.update();
         cat.update(path.getSpline());
         let catPos = cat.getCatPos();
-        terrain.update();
 
         if (!debug) {
             if (catPos != null) {
@@ -88,8 +90,24 @@ export default function Scene(canvas) {
                 camera.position.x = catPos.x + Math.sin(tick) * 50;
                 camera.position.y = catPos.y;
                 camera.position.z = catPos.z + Math.cos(tick) * 30;
-                tick += 0.001;
+                // console.log(catPos);
             }
+        }
+        tick += 0.001;
+        timer -= tick;
+
+        if (timer < 0) {
+            if (particleGenerator == null) {
+                particleGenerator = new ParticleGenerator();
+                scene.add(particleGenerator.particleSystem);
+                particleGenerator.particleSystem.position.set(0, -10, 0);
+                console.log("spawn particles", particleGenerator.particleSystem);
+            }
+        }
+
+        if (particleGenerator) {
+            particleGenerator.update();
+            // console.log("hey?");
         }
         renderer.render(scene, camera);
     }
