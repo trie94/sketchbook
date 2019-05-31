@@ -43,6 +43,27 @@ function BaseSketch(scene) {
 
 /***/ }),
 
+/***/ "./assets/particle2.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "assets/particle2.png";
+
+/***/ }),
+
+/***/ "./assets/particleS2.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "assets/particleS2.png";
+
+/***/ }),
+
+/***/ "./assets/perlin-512.png":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "assets/perlin-512.png";
+
+/***/ }),
+
 /***/ "./node_modules/pako/index.js":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -106810,6 +106831,405 @@ module.exports = "#define GLSLIFY 1\nvarying vec3 localPosition;\n\nvoid main() 
 
 /***/ }),
 
+/***/ "./sketch5/GPUParticleSystem.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _three = __webpack_require__("./node_modules/three/build/three.module.js");
+
+var THREE = _interopRequireWildcard(_three);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+THREE.GPUParticleSystem = function (options) {
+
+	var self = this;
+	options = options || {};
+
+	// parse options and use defaults
+	self.PARTICLE_COUNT = options.maxParticles || 1000000;
+	self.PARTICLE_CONTAINERS = options.containerCount || 1;
+
+	self.PARTICLE_NOISE_TEXTURE = options.particleNoiseTex || null;
+	self.PARTICLE_SPRITE_TEXTURE = options.particleSpriteTex || null;
+
+	self.PARTICLES_PER_CONTAINER = Math.ceil(self.PARTICLE_COUNT / self.PARTICLE_CONTAINERS);
+	self.PARTICLE_CURSOR = 0;
+	self.time = 0;
+
+	// Custom vertex and fragement shader
+	var GPUParticleShader = {
+
+		vertexShader: ['precision highp float;', 'const vec4 bitSh = vec4(256. * 256. * 256., 256. * 256., 256., 1.);', 'const vec4 bitMsk = vec4(0.,vec3(1./256.0));', 'const vec4 bitShifts = vec4(1.) / bitSh;', '#define FLOAT_MAX	1.70141184e38', '#define FLOAT_MIN	1.17549435e-38', 'lowp vec4 encode_float(highp float v) {', 'highp float av = abs(v);', '//Handle special cases', 'if(av < FLOAT_MIN) {', 'return vec4(0.0, 0.0, 0.0, 0.0);', '} else if(v > FLOAT_MAX) {', 'return vec4(127.0, 128.0, 0.0, 0.0) / 255.0;', '} else if(v < -FLOAT_MAX) {', 'return vec4(255.0, 128.0, 0.0, 0.0) / 255.0;', '}', 'highp vec4 c = vec4(0,0,0,0);', '//Compute exponent and mantissa', 'highp float e = floor(log2(av));', 'highp float m = av * pow(2.0, -e) - 1.0;',
+
+		//Unpack mantissa
+		'c[1] = floor(128.0 * m);', 'm -= c[1] / 128.0;', 'c[2] = floor(32768.0 * m);', 'm -= c[2] / 32768.0;', 'c[3] = floor(8388608.0 * m);', '//Unpack exponent', 'highp float ebias = e + 127.0;', 'c[0] = floor(ebias / 2.0);', 'ebias -= c[0] * 2.0;', 'c[1] += floor(ebias) * 128.0;', '//Unpack sign bit', 'c[0] += 128.0 * step(0.0, -v);', '//Scale back to range', 'return c / 255.0;', '}', 'vec4 pack(const in float depth)', '{', 'const vec4 bit_shift = vec4(256.0*256.0*256.0, 256.0*256.0, 256.0, 1.0);', 'const vec4 bit_mask	= vec4(0.0, 1.0/256.0, 1.0/256.0, 1.0/256.0);', 'vec4 res = mod(depth*bit_shift*vec4(255), vec4(256))/vec4(255);', 'res -= res.xxyz * bit_mask;', 'return res;', '}', 'float unpack(const in vec4 rgba_depth)', '{', 'const vec4 bit_shift = vec4(1.0/(256.0*256.0*256.0), 1.0/(256.0*256.0), 1.0/256.0, 1.0);', 'float depth = dot(rgba_depth, bit_shift);', 'return depth;', '}', 'uniform float uTime;', 'uniform float uScale;', 'uniform sampler2D tNoise;', 'attribute vec4 particlePositionsStartTime;', 'attribute vec4 particleVelColSizeLife;', 'attribute vec3 particleVelocity;', 'attribute float particleTurbulence;', 'varying vec4 vColor;', 'varying float lifeLeft;', 'void main() {', '// unpack things from our attributes', 'vColor = encode_float( particleVelColSizeLife.y );', '// convert our velocity back into a value we can use',
+		//'vec4 velTurb = encode_float( particleVelColSizeLife.x );',
+		'vec3 velocity = particleVelocity;', 'float turbulence = particleTurbulence;', 'vec3 newPosition;', 'float timeElapsed = uTime - particlePositionsStartTime.a;', 'lifeLeft = 1. - (timeElapsed / particleVelColSizeLife.w);', 'gl_PointSize = ( uScale * particleVelColSizeLife.z ) * lifeLeft;',
+
+		// 'velocity.x = ( velocity.x - .5 ) * 3.;',
+		// 'velocity.y = ( velocity.y - .5 ) * 3.;',
+		// 'velocity.z = ( velocity.z - .5 ) * 3.;',
+
+		'newPosition = particlePositionsStartTime.xyz + ( velocity * 10. ) * ( uTime - particlePositionsStartTime.a );', 'vec3 noise = texture2D( tNoise, vec2( newPosition.x * .015 + (uTime * .05), newPosition.y * .02 + (uTime * .015) )).rgb;', 'vec3 noiseVel = ( noise.rgb - .5 ) * 30.;', 'newPosition = mix(newPosition, newPosition + vec3(noiseVel * ( turbulence * 5. ) ), (timeElapsed / particleVelColSizeLife.a) );', 'if( velocity.y > 0. && velocity.y < .05 ) {', 'lifeLeft = 0.;', '}', 'if( velocity.x < -1.45 ) {', 'lifeLeft = 0.;', '}', 'if( timeElapsed > 0. ) {', 'gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );', '} else {', 'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );', 'lifeLeft = 0.;', 'gl_PointSize = 0.;', '}', '}'].join("\n"),
+
+		fragmentShader: ['float scaleLinear(float value, vec2 valueDomain) {', 'return (value - valueDomain.x) / (valueDomain.y - valueDomain.x);', '}', 'float scaleLinear(float value, vec2 valueDomain, vec2 valueRange) {', 'return mix(valueRange.x, valueRange.y, scaleLinear(value, valueDomain));', '}', 'varying vec4 vColor;', 'varying float lifeLeft;', 'uniform sampler2D tSprite;', 'void main() {', 'float alpha = 0.;', 'if( lifeLeft > .995 ) {', 'alpha = scaleLinear( lifeLeft, vec2(1., .995), vec2(0., 1.));//mix( 0., 1., ( lifeLeft - .95 ) * 100. ) * .75;', '} else {', 'alpha = lifeLeft * .75;', '}', 'vec4 tex = texture2D( tSprite, gl_PointCoord );', 'gl_FragColor = vec4( vColor.rgb * tex.a, alpha * tex.a );',
+		// 'gl_FragColor = vec4( 1.0 );',
+		'}'].join("\n")
+
+	};
+
+	// preload a million random numbers for speed
+	self.rand = [];
+
+	for (var i = 1e5; i > 0; i--) {
+		self.rand.push(Math.random() - 0.5);
+	}
+
+	self.random = function () {
+		return ++i >= self.rand.length ? self.rand[i = 1] : self.rand[i];
+	};
+
+	var textureLoader = new THREE.TextureLoader();
+	var perlinNoise = __webpack_require__("./assets/perlin-512.png");
+	var particleImg = __webpack_require__("./assets/particle2.png");
+	var particleImg2 = __webpack_require__("./assets/particleS2.png");
+
+	// perlin texture used to drive turbulence
+	self.particleNoiseTex = self.PARTICLE_NOISE_TEXTURE || textureLoader.load(perlinNoise);
+	self.particleNoiseTex.wrapS = self.particleNoiseTex.wrapT = THREE.RepeatWrapping;
+
+	// sprite texture rendered for each particle
+	self.particleSpriteTex = self.PARTICLE_SPRITE_TEXTURE || textureLoader.load(particleImg);
+	self.particleSpriteTex.wrapS = self.particleSpriteTex.wrapT = THREE.RepeatWrapping;
+
+	// particle system shader material definition
+	self.particleShaderMat = new THREE.ShaderMaterial({
+		transparent: true,
+		depthWrite: false,
+		uniforms: {
+			"uTime": {
+				value: 0.0
+			},
+			"uScale": {
+				value: 1.0
+			},
+			"tNoise": {
+				value: self.particleNoiseTex
+			},
+			"tSprite": {
+				value: self.particleSpriteTex
+			}
+		},
+		blending: THREE.AdditiveBlending,
+		vertexShader: GPUParticleShader.vertexShader,
+		fragmentShader: GPUParticleShader.fragmentShader
+	});
+
+	// define defaults for all values
+	self.particleShaderMat.defaultAttributeValues.particlePositionsStartTime = [0, 0, 0, 0];
+	self.particleShaderMat.defaultAttributeValues.particleVelColSizeLife = [0, 0, 0, 0];
+
+	self.particleContainers = [];
+
+	// extend Object3D
+	THREE.Object3D.apply(this, arguments);
+
+	this.init = function () {
+
+		for (var i = 0; i < self.PARTICLE_CONTAINERS; i++) {
+
+			var c = new THREE.GPUParticleContainer(self.PARTICLES_PER_CONTAINER, self);
+			self.particleContainers.push(c);
+			self.add(c);
+		}
+	};
+
+	this.spawnParticle = function (options) {
+
+		self.PARTICLE_CURSOR++;
+		if (self.PARTICLE_CURSOR >= self.PARTICLE_COUNT) {
+			self.PARTICLE_CURSOR = 1;
+		}
+
+		var currentContainer = self.particleContainers[Math.floor(self.PARTICLE_CURSOR / self.PARTICLES_PER_CONTAINER)];
+
+		currentContainer.spawnParticle(options);
+	};
+
+	this.update = function (time) {
+		for (var i = 0; i < self.PARTICLE_CONTAINERS; i++) {
+
+			self.particleContainers[i].update(time);
+		}
+	};
+
+	this.init();
+}; /*
+    * GPU Particle System
+    * @author flimshaw - Charlie Hoey - http://charliehoey.com
+    *
+    * A simple to use, general purpose GPU system. Particles are spawn-and-forget with
+    * several options available, and do not require monitoring or cleanup after spawning.
+    * Because the paths of all particles are completely deterministic once spawned, the scale
+    * and direction of time is also variable.
+    *
+    * Currently uses a static wrapping perlin noise texture for turbulence, and a small png texture for
+    * particles, but adding support for a particle texture atlas or changing to a different type of turbulence
+    * would be a fairly light day's work.
+    *
+    * Shader and javascript packing code derrived from several Stack Overflow examples.
+    *
+    */
+
+// var THREE = THREE || require('three');
+
+
+THREE.GPUParticleSystem.prototype = Object.create(THREE.Object3D.prototype);
+THREE.GPUParticleSystem.prototype.constructor = THREE.GPUParticleSystem;
+
+// Subclass for particle containers, allows for very large arrays to be spread out
+THREE.GPUParticleContainer = function (maxParticles, particleSystem) {
+
+	var self = this;
+	self.PARTICLE_COUNT = maxParticles || 100000;
+	self.PARTICLE_CURSOR = 0;
+	self.time = 0;
+	self.DPR = window.devicePixelRatio;
+	self.GPUParticleSystem = particleSystem;
+
+	var particlesPerArray = Math.floor(self.PARTICLE_COUNT / self.MAX_ATTRIBUTES);
+
+	// extend Object3D
+	THREE.Object3D.apply(this, arguments);
+
+	// construct a couple small arrays used for packing variables into floats etc
+	var UINT8_VIEW = new Uint8Array(4);
+	var FLOAT_VIEW = new Float32Array(UINT8_VIEW.buffer);
+
+	// UTILITY FUNCTIONS
+
+	// decodes 4 8-bit values into a single 32 bit float value
+	function decodeFloat(x, y, z, w) {
+		UINT8_VIEW[0] = Math.floor(w);
+		UINT8_VIEW[1] = Math.floor(z);
+		UINT8_VIEW[2] = Math.floor(y);
+		UINT8_VIEW[3] = Math.floor(x);
+		return FLOAT_VIEW[0];
+	}
+
+	function componentToHex(c) {
+		var hex = c.toString(16);
+		return hex.length == 1 ? "0" + hex : hex;
+	}
+
+	function rgbToHex(r, g, b) {
+		return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+	}
+
+	function hexToRgb(hex) {
+		var r = hex >> 16;
+		var g = (hex & 0x00FF00) >> 8;
+		var b = hex & 0x0000FF;
+
+		if (r > 0) r--;
+		if (g > 0) g--;
+		if (b > 0) b--;
+
+		return [r, g, b];
+	}
+
+	self.particles = [];
+	self.deadParticles = [];
+	self.particlesAvailableSlot = [];
+
+	// create a container for particles
+	self.particleUpdate = false;
+
+	// Geometry to hold particle system vertices
+	self.particleShaderGeo = new THREE.BufferGeometry();
+
+	// new hyper compressed attributes
+	self.particleVertices = new Float32Array(self.PARTICLE_COUNT * 3); // 3D position
+	self.particlePositionsStartTime = new Float32Array(self.PARTICLE_COUNT * 4); // start position + startTime
+	self.particleVelocity = new Float32Array(self.PARTICLE_COUNT * 3); // particle velocity
+	self.particleTurbulence = new Float32Array(self.PARTICLE_COUNT); // particle turbulence
+	self.particleVelColSizeLife = new Float32Array(self.PARTICLE_COUNT * 4); // particle velocity, color, size and lifetime packed into
+
+	for (var i = 0; i < self.PARTICLE_COUNT; i++) {
+		self.particlePositionsStartTime[i * 4 + 0] = 100; //x
+		self.particlePositionsStartTime[i * 4 + 1] = 0; //y
+		self.particlePositionsStartTime[i * 4 + 2] = 0.0; //z
+		self.particlePositionsStartTime[i * 4 + 3] = 0.0; //startTime
+
+		self.particleVertices[i * 3 + 0] = 0; //x
+		self.particleVertices[i * 3 + 1] = 0; //y
+		self.particleVertices[i * 3 + 2] = 0.0; //z
+
+		self.particleVelColSizeLife[i * 4 + 0] = decodeFloat(128, 128, 0, 0); //vel
+		self.particleVelColSizeLife[i * 4 + 1] = decodeFloat(0, 254, 0, 254); //color
+		self.particleVelColSizeLife[i * 4 + 2] = 1.0; //size
+		self.particleVelColSizeLife[i * 4 + 3] = 0.0; //lifespan
+	}
+
+	self.particleShaderGeo.addAttribute('position', new THREE.BufferAttribute(self.particleVertices, 3));
+	self.particleShaderGeo.addAttribute('particlePositionsStartTime', new THREE.BufferAttribute(self.particlePositionsStartTime, 4).setDynamic(true));
+	self.particleShaderGeo.addAttribute('particleVelColSizeLife', new THREE.BufferAttribute(self.particleVelColSizeLife, 4).setDynamic(true));
+	self.particleShaderGeo.addAttribute('particleVelocity', new THREE.BufferAttribute(self.particleVelocity, 3).setDynamic(true));
+	self.particleShaderGeo.addAttribute('particleTurbulence', new THREE.BufferAttribute(self.particleTurbulence, 1).setDynamic(true));
+
+	self.posStart = self.particleShaderGeo.getAttribute('particlePositionsStartTime');
+	self.velCol = self.particleShaderGeo.getAttribute('particleVelColSizeLife');
+	self.velocityAttr = self.particleShaderGeo.getAttribute('particleVelocity');
+	self.turbulenceAttr = self.particleShaderGeo.getAttribute('particleTurbulence');
+
+	self.particleShaderMat = self.GPUParticleSystem.particleShaderMat;
+
+	this.init = function () {
+		self.particleSystem = new THREE.Points(self.particleShaderGeo, self.particleShaderMat);
+		self.particleSystem.frustumCulled = false;
+		this.add(self.particleSystem);
+	};
+
+	var options = {},
+	    position = new THREE.Vector3(),
+	    velocity = new THREE.Vector3(),
+	    positionRandomness = 0.,
+	    velocityRandomness = 0.,
+	    color = 0xffffff,
+	    colorRandomness = 0.,
+	    turbulence = 0.5,
+	    lifetime = 0.,
+	    size = 0.,
+	    sizeRandomness = 0.,
+	    smoothPosition = false,
+	    i;
+
+	var maxVel = 2;
+	var maxSource = 250;
+	this.offset = 0;
+	this.count = 0;
+
+	this.spawnParticle = function (options) {
+
+		options = options || {};
+
+		// setup reasonable default values for all arguments
+		position = options.position !== undefined ? position.copy(options.position) : position.set(0., 0., 0.);
+		velocity = options.velocity !== undefined ? velocity.copy(options.velocity) : velocity.set(0., 0., 0.);
+		positionRandomness = options.positionRandomness !== undefined ? options.positionRandomness : 0.0;
+		velocityRandomness = options.velocityRandomness !== undefined ? options.velocityRandomness : 0.0;
+		color = options.color !== undefined ? options.color : 0xffffff;
+		colorRandomness = options.colorRandomness !== undefined ? options.colorRandomness : 1.0;
+		turbulence = options.turbulence !== undefined ? options.turbulence : 1.0;
+		lifetime = options.lifetime !== undefined ? options.lifetime : 5.0;
+		size = options.size !== undefined ? options.size : 10;
+		sizeRandomness = options.sizeRandomness !== undefined ? options.sizeRandomness : 0.0;
+		smoothPosition = options.smoothPosition !== undefined ? options.smoothPosition : false;
+
+		if (self.DPR !== undefined) size *= self.DPR;
+
+		i = self.PARTICLE_CURSOR;
+
+		self.posStart.array[i * 4 + 0] = position.x + particleSystem.random() * positionRandomness; // - ( velocity.x * particleSystem.random() ); //x
+		self.posStart.array[i * 4 + 1] = position.y + particleSystem.random() * positionRandomness; // - ( velocity.y * particleSystem.random() ); //y
+		self.posStart.array[i * 4 + 2] = position.z + particleSystem.random() * positionRandomness; // - ( velocity.z * particleSystem.random() ); //z
+		self.posStart.array[i * 4 + 3] = self.time + particleSystem.random() * 2e-2; //startTime
+
+		if (smoothPosition === true) {
+			self.posStart.array[i * 4 + 0] += -(velocity.x * particleSystem.random()); //x
+			self.posStart.array[i * 4 + 1] += -(velocity.y * particleSystem.random()); //y
+			self.posStart.array[i * 4 + 2] += -(velocity.z * particleSystem.random()); //z
+		}
+
+		var velX = velocity.x + particleSystem.random() * velocityRandomness;
+		var velY = velocity.y + particleSystem.random() * velocityRandomness;
+		var velZ = velocity.z + particleSystem.random() * velocityRandomness;
+
+		// convert turbulence rating to something we can pack into a vec4
+		// var turbulence = Math.floor(turbulence * 254);
+		//
+		// // clamp our value to between 0. and 1.
+		// velX = Math.floor(maxSource * ((velX - -maxVel) / (maxVel - -maxVel)));
+		// velY = Math.floor(maxSource * ((velY - -maxVel) / (maxVel - -maxVel)));
+		// velZ = Math.floor(maxSource * ((velZ - -maxVel) / (maxVel - -maxVel)));
+		//
+		// self.velCol.array[i * 4 + 0] = decodeFloat(velX, velY, velZ, turbulence); //vel
+		self.turbulenceAttr.array[i] = turbulence;
+		self.velocityAttr.array[i * 3 + 0] = velX;
+		self.velocityAttr.array[i * 3 + 1] = velY;
+		self.velocityAttr.array[i * 3 + 2] = velZ;
+
+		var rgb = hexToRgb(color);
+
+		for (var c = 0; c < rgb.length; c++) {
+			rgb[c] = Math.floor(rgb[c] + particleSystem.random() * colorRandomness * 254);
+			if (rgb[c] > 254) rgb[c] = 254;
+			if (rgb[c] < 0) rgb[c] = 0;
+		}
+
+		self.velCol.array[i * 4 + 1] = decodeFloat(rgb[0], rgb[1], rgb[2], 254); //color
+		self.velCol.array[i * 4 + 2] = size + particleSystem.random() * sizeRandomness; //size
+		self.velCol.array[i * 4 + 3] = lifetime; //lifespan
+
+		if (this.offset == 0) {
+			this.offset = self.PARTICLE_CURSOR;
+		}
+
+		self.count++;
+
+		self.PARTICLE_CURSOR++;
+
+		if (self.PARTICLE_CURSOR >= self.PARTICLE_COUNT) {
+			self.PARTICLE_CURSOR = 0;
+		}
+
+		self.particleUpdate = true;
+	};
+
+	this.update = function (time) {
+
+		self.time = time;
+		self.particleShaderMat.uniforms['uTime'].value = time;
+
+		this.geometryUpdate();
+	};
+
+	this.geometryUpdate = function () {
+		if (self.particleUpdate == true) {
+			self.particleUpdate = false;
+
+			// if we can get away with a partial buffer update, do so
+			if (self.offset + self.count < self.PARTICLE_COUNT) {
+				self.posStart.updateRange.offset = self.velCol.updateRange.offset = self.offset * 4;
+				self.posStart.updateRange.count = self.velCol.updateRange.count = self.count * 4;
+			} else {
+				self.posStart.updateRange.offset = 0;
+				self.posStart.updateRange.count = self.velCol.updateRange.count = self.PARTICLE_COUNT * 4;
+			}
+
+			self.posStart.needsUpdate = true;
+			self.velCol.needsUpdate = true;
+			self.velocityAttr.needsUpdate = true;
+			self.turbulenceAttr.needsUpdate = true;
+
+			self.offset = 0;
+			self.count = 0;
+		}
+	};
+
+	this.init();
+};
+
+THREE.GPUParticleContainer.prototype = Object.create(THREE.Object3D.prototype);
+THREE.GPUParticleContainer.prototype.constructor = THREE.GPUParticleContainer;
+
+module.exports = THREE.GPUParticleSystem;
+
+/***/ }),
+
 /***/ "./sketch5/Scene.js":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -106837,13 +107257,13 @@ var _path = __webpack_require__("./sketch5/path.js");
 
 var _path2 = _interopRequireDefault(_path);
 
-var _simpleParticles = __webpack_require__("./sketch5/simpleParticles.js");
-
-var _simpleParticles2 = _interopRequireDefault(_simpleParticles);
-
 var _cat = __webpack_require__("./sketch5/cat.js");
 
 var _cat2 = _interopRequireDefault(_cat);
+
+var _particleGenerator = __webpack_require__("./sketch5/particleGenerator.js");
+
+var _particleGenerator2 = _interopRequireDefault(_particleGenerator);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -106863,9 +107283,11 @@ function Scene(canvas) {
     var cat = new _cat2.default();
     var skybox = (0, _background2.default)();
     var terrain = new _terrain2.default();
-    // const particles = new Particles();
     var path = new _path2.default();
+
+    var particleGenerator = null;
     var tick = 0;
+    var timer = 3;
 
     function createScene() {
         var scene = new THREE.Scene();
@@ -106910,21 +107332,21 @@ function Scene(canvas) {
     }
 
     this.start = function () {
-        // console.log("start");
+        console.log("start");
         scene.add(skybox);
-        terrain.addTerrain(scene);
-        // scene.add(particles);
+        scene.add(terrain.addTerrain());
         cat.loadCat(scene);
 
         if (debug) {
             scene.add(path.debug());
         }
+        renderer.autoClear = true;
     };
 
     this.update = function () {
+        terrain.update();
         cat.update(path.getSpline());
         var catPos = cat.getCatPos();
-        terrain.update();
 
         if (!debug) {
             if (catPos != null) {
@@ -106932,8 +107354,24 @@ function Scene(canvas) {
                 camera.position.x = catPos.x + Math.sin(tick) * 50;
                 camera.position.y = catPos.y;
                 camera.position.z = catPos.z + Math.cos(tick) * 30;
-                tick += 0.001;
+                // console.log(catPos);
             }
+        }
+        tick += 0.001;
+        timer -= tick;
+
+        if (timer < 0) {
+            if (particleGenerator == null) {
+                particleGenerator = new _particleGenerator2.default();
+                scene.add(particleGenerator.particleSystem);
+                particleGenerator.particleSystem.position.set(0, -10, 0);
+                console.log("spawn particles", particleGenerator.particleSystem);
+            }
+        }
+
+        if (particleGenerator) {
+            particleGenerator.update();
+            // console.log("hey?");
         }
         renderer.render(scene, camera);
     };
@@ -107096,7 +107534,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 var FBXLoader = __webpack_require__("./node_modules/three-fbx-loader/index.js");
 function Cat() {
-    var cat = void 0;
+    var cat = null;
     var time = 0;
     var tailBones = [];
     var frontLegBones = [];
@@ -107212,6 +107650,7 @@ function Cat() {
     facePlane.position.z = 6.5;
     facePlane.position.y = 3.6;
     facePlane.rotation.x = -0.3;
+    // facePlane.renderOrder = 100;
 
     faceTextures.push(textureLoader.load(_face2.default));
     faceTextures.push(textureLoader.load(_face4.default));
@@ -107224,50 +107663,53 @@ function Cat() {
     this.loadCat = function (scene) {
         loader.load(_catEverything2.default, function (object) {
             loader.load(_catEverything2.default, function (object) {
-                // apply shader material
-                object.traverse(function (child) {
-                    // console.log(child.name);
-                    if (child.isMesh) {
-                        if (child.name == "BodyModel") {
-                            // child.material = catMat;
-                            child.geometry.clearGroups();
-                            child.geometry.addGroup(0, Infinity, 0);
-                            child.geometry.addGroup(0, Infinity, 1);
-                            child.material = [catMatDepth, catMat];
-                        } else if (child.name.includes("TailModel")) {
-                            child.material = catTailMat;
-                        } else {
-                            child.material = catLimbMat;
+                loader.load(_catEverything2.default, function (object) {
+                    // apply shader material
+                    object.traverse(function (child) {
+                        // console.log(child.name);
+                        if (child.isMesh) {
+                            if (child.name == "BodyModel") {
+                                // child.material = catMat;
+                                child.geometry.clearGroups();
+                                child.geometry.addGroup(0, Infinity, 0);
+                                child.geometry.addGroup(0, Infinity, 1);
+                                child.material = [catMatDepth, catMat];
+                            } else if (child.name.includes("TailModel")) {
+                                child.material = catTailMat;
+                            } else {
+                                child.material = catLimbMat;
+                            }
                         }
-                    }
-                    if (child.name.includes('Tail_CoreModel')) {
-                        var tempBone = child;
-                        // reposition the tail
-                        tempBone.position.z = 1;
-                        while (tempBone != null) {
-                            tailBones.push(tempBone);
-                            tempBone = tempBone.children[0];
+                        if (child.name.includes('Tail_CoreModel')) {
+                            var tempBone = child;
+                            // reposition the tail
+                            tempBone.position.z = 1;
+                            while (tempBone != null) {
+                                tailBones.push(tempBone);
+                                tempBone = tempBone.children[0];
+                            }
+                            // console.log(tailBones);
                         }
-                        // console.log(tailBones);
-                    }
-                    if (child.name.includes('L_FrontLeg_CoreModel') || child.name.includes('R_FrontLeg_CoreModel')) {
-                        frontLegBones.push(child);
-                        // console.log(frontLegBones);
-                    }
-                    if (child.name.includes('L_BackLeg_CoreModel') || child.name.includes('R_BackLeg_CoreModel')) {
-                        backLegBones.push(child);
-                        // console.log(backLegBones);
-                    }
-                    if (child.name.includes('L_Ear_CoreModel') || child.name.includes('R_Ear_CoreModel')) {
-                        earBones.push(child);
-                        // console.log(earBones);
-                    }
+                        if (child.name.includes('L_FrontLeg_CoreModel') || child.name.includes('R_FrontLeg_CoreModel')) {
+                            frontLegBones.push(child);
+                            // console.log(frontLegBones);
+                        }
+                        if (child.name.includes('L_BackLeg_CoreModel') || child.name.includes('R_BackLeg_CoreModel')) {
+                            backLegBones.push(child);
+                            // console.log(backLegBones);
+                        }
+                        if (child.name.includes('L_Ear_CoreModel') || child.name.includes('R_Ear_CoreModel')) {
+                            earBones.push(child);
+                            // console.log(earBones);
+                        }
+                    });
+                    object.add(facePlane);
+                    // assign object to global cat
+                    cat = object;
+                    // cat.matrixWorldNeedsUpdate = true;
+                    scene.add(cat);
+                    // console.log(cat);
                 });
-                object.add(facePlane);
-                // assign object to global cat
-                cat = object;
-                cat.matrixWorldNeedsUpdate = true;
-                scene.add(cat);
             });
         });
     };
@@ -107374,6 +107816,94 @@ function Sketch5() {
 
 /***/ }),
 
+/***/ "./sketch5/particleGenerator.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = ParticleGenerator;
+
+var _three = __webpack_require__("./node_modules/three/build/three.module.js");
+
+var THREE = _interopRequireWildcard(_three);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+THREE.GPUParticleSystem = __webpack_require__("./sketch5/GPUParticleSystem.js");
+
+function ParticleGenerator() {
+    var tick = 1;
+    var clock = new THREE.Clock(true);
+    var options = void 0,
+        spawnerOptions = void 0,
+        particleSystem = void 0;
+
+    this.particleSystem = new THREE.GPUParticleSystem({
+        maxParticles: 100
+    });
+    // particleSystem.init();
+    var position = [];
+
+    options = {
+        position: new THREE.Vector3(),
+        positionRandomness: 300,
+        velocity: new THREE.Vector3(),
+        velocityRandomness: 0.5,
+        color: 0xd8fcff,
+        colorRandomness: 0.2,
+        turbulence: 1,
+        lifetime: 100,
+        size: 20,
+        sizeRandomness: 20
+        // smoothPosition: true
+    };
+    spawnerOptions = {
+        spawnRate: 1,
+        horizontalSpeed: 0,
+        verticalSpeed: 0.5,
+        timeScale: 1
+    };
+
+    // let colors = [0xd8fcff, 0xd8f0ff, 0xf9ffd8, 0xd8fcff, 0xd8f0ff, 0xf9ffd8];
+    var colors = [0xd8fcff];
+
+    this.update = function () {
+        var delta = clock.getDelta() * spawnerOptions.timeScale;
+        tick += delta;
+        if (tick < 0) {
+            tick = 0;
+        };
+        if (delta > 0) {
+            for (var c in colors) {
+                var p = colors[c];
+                options.color = p;
+                // options.position.x = randomIntFromInterval(-100, 100);
+                // options.position.y = randomIntFromInterval(-100, 100);
+                // options.position.z = randomIntFromInterval(-100, 100);
+                // options.position.x = Math.sin(tick + (Math.PI * 0.5 * c) * spawnerOptions.horizontalSpeed) * 100;
+                // options.position.y = Math.cos(tick + (Math.PI * 0.5 * c) * spawnerOptions.verticalSpeed) * 100;
+                // options.position.z = Math.sin(tick + (Math.PI * 0.5 * c) * spawnerOptions.horizontalSpeed + spawnerOptions.verticalSpeed) * 0;
+
+                for (var x = 0; x < spawnerOptions.spawnRate * delta; x++) {
+                    this.particleSystem.spawnParticle(options);
+                }
+            }
+        }
+        this.particleSystem.update(tick);
+    };
+
+    function randomIntFromInterval(min, max) // min and max included
+    {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+}
+
+/***/ }),
+
 /***/ "./sketch5/path.js":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -107433,20 +107963,6 @@ module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNor
 
 /***/ }),
 
-/***/ "./sketch5/shaders/particle.frag":
-/***/ (function(module, exports) {
-
-module.exports = "#define GLSLIFY 1\n"
-
-/***/ }),
-
-/***/ "./sketch5/shaders/particle.vert":
-/***/ (function(module, exports) {
-
-module.exports = "#define GLSLIFY 1\n"
-
-/***/ }),
-
 /***/ "./sketch5/shaders/terrain.frag":
 /***/ (function(module, exports) {
 
@@ -107458,75 +107974,6 @@ module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nvarying vec3 viewPos;\
 /***/ (function(module, exports) {
 
 module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nuniform float scale;\nuniform float freq;\nuniform float time1;\nuniform float time2;\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  { \n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g;\n  vec3 i1 = min( g.xyz, l.zxy );\n  vec3 i2 = max( g.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289(i); \n  vec4 p = permute( permute( permute( \n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) \n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), \n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\n  float surface3 (vec3 coord) {\n      float n = 0.0;\n      n += 1.0 * abs(snoise(coord));\n      n += 0.5 * abs(snoise(coord * 2.0));\n      n += 0.25 * abs(snoise(coord * 4.0));\n      n += 0.125 * abs(snoise(coord * 8.0));\n\n      return n;\n  }\n\nvarying vec2 vUv;\nvarying vec2 v_texcoord;\nvarying vec2 v_texcoord2;\n\nvoid main() {\n    vec3 pos = position;\n    worldPos = (modelMatrix * vec4(position, 1.0)).xyz;\n    worldNormal = normalize(mat3(modelMatrix) * normal);\n\n    vUv = uv;\n    vec3 coord = vec3(vUv, freq);\n    float n = surface3(coord);\n    v_texcoord = uv + time1;\n    v_texcoord2 = uv - time2;\n\n    pos.x = pos.x + n;\n    pos.y = pos.y + n;\n    // pos.z = pos.z + n;\n    pos.z = pos.z + n * 2.0 * scale;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );\n}"
-
-/***/ }),
-
-/***/ "./sketch5/simpleParticles.js":
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.default = simpleParticles;
-
-var _three = __webpack_require__("./node_modules/three/build/three.module.js");
-
-var THREE = _interopRequireWildcard(_three);
-
-var _particle = __webpack_require__("./sketch5/shaders/particle.vert");
-
-var _particle2 = _interopRequireDefault(_particle);
-
-var _particle3 = __webpack_require__("./sketch5/shaders/particle.frag");
-
-var _particle4 = _interopRequireDefault(_particle3);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function simpleParticles() {
-
-    function rand(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-
-    var MAX = 100;
-    var geo = new THREE.BufferGeometry();
-    // const initialPositions = [];
-    // const velocities = [];
-    // const accelerations = [];
-
-    // for (let i = 0; i < MAX; i++) {
-    //     initialPositions.push(rand(-0.5, 0.5));
-    //     initialPositions.push(rand(-4, -3));
-    //     initialPositions.push(rand(-1, 1));
-    //     velocities.push(rand(-0.5, 0.5));
-    //     velocities.push(10.0);
-    //     velocities.push(rand(-1, 1));
-    //     accelerations.push(0);
-    //     accelerations.push(-9.8);
-    //     accelerations.push(0);
-    // }
-    var mat = new THREE.ShaderMaterial({
-        uniforms: {
-            time: { value: 12.0 }
-        },
-        vertexShader: _particle2.default,
-        fragmentShader: _particle4.default,
-        blending: THREE.AdditiveBlending,
-        depthTest: false,
-        transparent: true,
-        vertexColors: true
-    });
-
-    var mesh = new THREE.Points(geo, mat);
-    mesh.position.z = 100;
-    return mesh;
-}
 
 /***/ }),
 
@@ -107591,8 +108038,9 @@ function terrain() {
     terrainMesh.rotation.x = -Math.PI / 2;
     terrainMesh.position.y = -380;
 
-    this.addTerrain = function (scene) {
-        scene.add(terrainMesh);
+    this.addTerrain = function () {
+        // scene.add(terrainMesh);
+        return terrainMesh;
     };
 
     this.update = function () {
