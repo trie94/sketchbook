@@ -106841,6 +106841,10 @@ var _path = __webpack_require__("./sketch5/path.js");
 
 var _path2 = _interopRequireDefault(_path);
 
+var _simpleParticles = __webpack_require__("./sketch5/simpleParticles.js");
+
+var _simpleParticles2 = _interopRequireDefault(_simpleParticles);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -106859,6 +106863,7 @@ function Scene(canvas) {
     var cat = new _cat2.default();
     var skybox = (0, _background2.default)();
     var terrain = new _terrain2.default();
+    var particles = new _simpleParticles2.default();
     var path = new _path2.default();
     var tick = 0;
 
@@ -106908,7 +106913,9 @@ function Scene(canvas) {
         // console.log("start");
         scene.add(skybox);
         terrain.addTerrain(scene);
+        scene.add(particles);
         cat.loadCat(scene);
+
         if (debug) {
             scene.add(path.debug());
         }
@@ -107261,7 +107268,6 @@ function Cat() {
                 cat = object;
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
-                // console.log(cat);
             });
         });
     };
@@ -107427,6 +107433,20 @@ module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNor
 
 /***/ }),
 
+/***/ "./sketch5/shaders/particle.frag":
+/***/ (function(module, exports) {
+
+module.exports = "#define GLSLIFY 1\n"
+
+/***/ }),
+
+/***/ "./sketch5/shaders/particle.vert":
+/***/ (function(module, exports) {
+
+module.exports = "#define GLSLIFY 1\n"
+
+/***/ }),
+
 /***/ "./sketch5/shaders/terrain.frag":
 /***/ (function(module, exports) {
 
@@ -107438,6 +107458,75 @@ module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nvarying vec3 viewPos;\
 /***/ (function(module, exports) {
 
 module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nuniform float scale;\nuniform float freq;\nuniform float time1;\nuniform float time2;\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  { \n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g;\n  vec3 i1 = min( g.xyz, l.zxy );\n  vec3 i2 = max( g.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289(i); \n  vec4 p = permute( permute( permute( \n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) \n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), \n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\n  float surface3 (vec3 coord) {\n      float n = 0.0;\n      n += 1.0 * abs(snoise(coord));\n      n += 0.5 * abs(snoise(coord * 2.0));\n      n += 0.25 * abs(snoise(coord * 4.0));\n      n += 0.125 * abs(snoise(coord * 8.0));\n\n      return n;\n  }\n\nvarying vec2 vUv;\nvarying vec2 v_texcoord;\nvarying vec2 v_texcoord2;\n\nvoid main() {\n    vec3 pos = position;\n    worldPos = (modelMatrix * vec4(position, 1.0)).xyz;\n    worldNormal = normalize(mat3(modelMatrix) * normal);\n\n    vUv = uv;\n    vec3 coord = vec3(vUv, freq);\n    float n = surface3(coord);\n    v_texcoord = uv + time1;\n    v_texcoord2 = uv - time2;\n\n    pos.x = pos.x + n;\n    pos.y = pos.y + n;\n    // pos.z = pos.z + n;\n    pos.z = pos.z + n * 2.0 * scale;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );\n}"
+
+/***/ }),
+
+/***/ "./sketch5/simpleParticles.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = simpleParticles;
+
+var _three = __webpack_require__("./node_modules/three/build/three.module.js");
+
+var THREE = _interopRequireWildcard(_three);
+
+var _particle = __webpack_require__("./sketch5/shaders/particle.vert");
+
+var _particle2 = _interopRequireDefault(_particle);
+
+var _particle3 = __webpack_require__("./sketch5/shaders/particle.frag");
+
+var _particle4 = _interopRequireDefault(_particle3);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function simpleParticles() {
+
+    function rand(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    var MAX = 100;
+    var geo = new THREE.BufferGeometry();
+    var initialPositions = [];
+    var velocities = [];
+    var accelerations = [];
+
+    for (var i = 0; i < MAX; i++) {
+        initialPositions.push(rand(-0.5, 0.5));
+        initialPositions.push(rand(-4, -3));
+        initialPositions.push(rand(-1, 1));
+        velocities.push(rand(-0.5, 0.5));
+        velocities.push(10.0);
+        velocities.push(rand(-1, 1));
+        accelerations.push(0);
+        accelerations.push(-9.8);
+        accelerations.push(0);
+    }
+    var mat = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 12.0 }
+        },
+        vertexShader: _particle2.default,
+        fragmentShader: _particle4.default,
+        blending: THREE.AdditiveBlending,
+        depthTest: false,
+        transparent: true,
+        vertexColors: true
+    });
+
+    var mesh = new THREE.Points(geo, mat);
+    mesh.position.z = 100;
+    return mesh;
+}
 
 /***/ }),
 
