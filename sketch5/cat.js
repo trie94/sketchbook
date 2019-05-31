@@ -179,7 +179,6 @@ export default function Cat() {
                 cat = object;
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
-                // console.log(cat);
             });
         });
     }
