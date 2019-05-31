@@ -13,7 +13,7 @@ export default function Scene(canvas) {
     const scene = createScene();
     const renderer = createRenderer();
     const camera = createCamera();
-    const controls = createControl();
+    // const controls = createControl();
     const cat = new Cat();
     const skybox = Skybox();
     const terrain = new Terrain();
