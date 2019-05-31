@@ -106837,6 +106837,10 @@ var _terrain = __webpack_require__("./sketch5/terrain.js");
 
 var _terrain2 = _interopRequireDefault(_terrain);
 
+var _path = __webpack_require__("./sketch5/path.js");
+
+var _path2 = _interopRequireDefault(_path);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -106854,10 +106858,12 @@ function Scene(canvas) {
     var cat = new _cat2.default();
     var skybox = (0, _background2.default)();
     var terrain = new _terrain2.default();
+    var path = new _path2.default();
+    var tick = 0;
 
     function createScene() {
         var scene = new THREE.Scene();
-        // scene.fog = new THREE.Fog(0xf7d9aa, 80, 500);
+        // scene.fog = new THREE.Fog(0xf7d9aa, 1, 100);
         return scene;
     }
 
@@ -106881,7 +106887,7 @@ function Scene(canvas) {
         var farPlane = 10000;
         var camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(20, 0, 20);
+        camera.position.set(20, 50, 20);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
@@ -106890,8 +106896,8 @@ function Scene(canvas) {
     function createControl() {
         var controls = new OrbitControls(camera, renderer.domElement);
         controls.target = new THREE.Vector3(0, 0, 0);
-        // controls.maxPolarAngle = Math.PI / 2;
-        controls.maxDistance = 50;
+        controls.maxPolarAngle = Math.PI / 2;
+        // controls.maxDistance = 70;
         controls.minDistance = 20;
 
         return controls;
@@ -106900,13 +106906,25 @@ function Scene(canvas) {
     this.start = function () {
         // console.log("start");
         scene.add(skybox);
-        // terrain.addTerrain(scene);
+        terrain.addTerrain(scene);
         cat.loadCat(scene);
+        // scene.add(path.debug());
     };
 
     this.update = function () {
-        cat.update();
-        // terrain.update();
+        cat.update(path.getSpline());
+        var catPos = cat.getCatPos();
+
+        if (catPos != null) {
+            camera.lookAt(catPos);
+            camera.position.x = catPos.x + Math.sin(tick) * 50;
+            camera.position.y = catPos.y;
+            camera.position.z = catPos.z + Math.cos(tick) * 30;
+
+            // let target = new THREE.Vector3(catPos.x + Math.sin(tick) * 50, catPos.y, catPos.z + Math.cos(tick) * 30);
+            // camera.position.lerp(target, 0.5);
+            tick += 0.001;
+        }
         renderer.render(scene, camera);
     };
 
@@ -106951,24 +106969,17 @@ module.exports = __webpack_require__.p + "sketch5/assets/face2.png";
 
 /***/ }),
 
-/***/ "./sketch5/assets/face5.png":
+/***/ "./sketch5/assets/face3.png":
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__.p + "sketch5/assets/face5.png";
+module.exports = __webpack_require__.p + "sketch5/assets/face3.png";
 
 /***/ }),
 
-/***/ "./sketch5/assets/face6.png":
+/***/ "./sketch5/assets/face4.png":
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__.p + "sketch5/assets/face6.png";
-
-/***/ }),
-
-/***/ "./sketch5/assets/face7.png":
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__.p + "sketch5/assets/face7.png";
+module.exports = __webpack_require__.p + "sketch5/assets/face4.png";
 
 /***/ }),
 
@@ -107054,17 +107065,13 @@ var _face3 = __webpack_require__("./sketch5/assets/face2.png");
 
 var _face4 = _interopRequireDefault(_face3);
 
-var _face5 = __webpack_require__("./sketch5/assets/face5.png");
+var _face5 = __webpack_require__("./sketch5/assets/face3.png");
 
 var _face6 = _interopRequireDefault(_face5);
 
-var _face7 = __webpack_require__("./sketch5/assets/face6.png");
+var _face7 = __webpack_require__("./sketch5/assets/face4.png");
 
 var _face8 = _interopRequireDefault(_face7);
-
-var _face9 = __webpack_require__("./sketch5/assets/face7.png");
-
-var _face10 = _interopRequireDefault(_face9);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -107080,6 +107087,12 @@ function Cat() {
     var earBones = [];
     var faceTextures = [];
     var tick = 0;
+    var moveTick = 0;
+    var axis = new THREE.Vector3(0, 0, 0);
+    var front = new THREE.Vector3(0, 0, 1);
+    var pt = void 0,
+        radians = void 0,
+        tangent = void 0;
     var faceIndex = 0;
 
     var clock = new THREE.Clock();
@@ -107098,7 +107111,7 @@ function Cat() {
         uniforms: {
             color: { type: "c", value: new THREE.Color(0xb7edff) },
             rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
-            rimPower: { type: "f", value: 4.0 },
+            rimPower: { type: "f", value: 2.5 },
             scale: { type: "f", value: 0.072 },
             time: { type: "f", value: 0.0 },
             freq: { type: "f", value: 0.6 }
@@ -107131,10 +107144,29 @@ function Cat() {
         uniforms: {
             color: { type: "c", value: new THREE.Color(0xb7edff) },
             rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
-            rimPower: { type: "f", value: 1.0 },
+            rimPower: { type: "f", value: 0.7 },
             scale: { type: "f", value: 0.0 },
             time: { type: "f", value: 0.0 },
             freq: { type: "f", value: 0.8 }
+        },
+        vertexShader: _cat2.default,
+        fragmentShader: _cat4.default,
+        transparent: true,
+        // depthTest: false,
+        depthWrite: false,
+        // opacity: 0.7,
+        blending: THREE.AdditiveBlending,
+        skinning: true
+    });
+
+    var catTailMat = new THREE.ShaderMaterial({
+        uniforms: {
+            color: { type: "c", value: new THREE.Color(0xb7edff) },
+            rimColor: { type: "c", value: new THREE.Color(0xf4fdff) },
+            rimPower: { type: "f", value: 1.0 },
+            scale: { type: "f", value: 0.0 },
+            time: { type: "f", value: 0.0 },
+            freq: { type: "f", value: 0.5 }
         },
         vertexShader: _cat2.default,
         fragmentShader: _cat4.default,
@@ -107166,11 +107198,8 @@ function Cat() {
 
     faceTextures.push(textureLoader.load(_face2.default));
     faceTextures.push(textureLoader.load(_face4.default));
-    // faceTextures.push(textureLoader.load(catFace3));
-    // faceTextures.push(textureLoader.load(catFace4));
     faceTextures.push(textureLoader.load(_face6.default));
     faceTextures.push(textureLoader.load(_face8.default));
-    faceTextures.push(textureLoader.load(_face10.default));
 
     // default
     faceMat.map = faceTextures[faceIndex];
@@ -107188,6 +107217,8 @@ function Cat() {
                             child.geometry.addGroup(0, Infinity, 0);
                             child.geometry.addGroup(0, Infinity, 1);
                             child.material = [catMatDepth, catMat];
+                        } else if (child.name.includes("TailModel")) {
+                            child.material = catTailMat;
                         } else {
                             child.material = catLimbMat;
                         }
@@ -107220,11 +107251,17 @@ function Cat() {
                 cat = object;
                 cat.matrixWorldNeedsUpdate = true;
                 scene.add(cat);
+                // console.log(cat);
             });
         });
     };
 
-    this.update = function () {
+    this.getCatPos = function () {
+        if (cat == null) return cat;
+        return cat.position;
+    };
+
+    this.update = function (path) {
         if (cat == null) return;
         time = Date.now() / 1000 % 120000;
         var tailAngle = Math.cos(time);
@@ -107237,6 +107274,8 @@ function Cat() {
         // catMatDepth.uniforms.scale.value = 0.075;
         catLimbMat.uniforms.time.value = time * 5;
         catLimbMat.uniforms.scale.value = time * 0.0000015;
+        catTailMat.uniforms.time.value = time * 5;
+        catTailMat.uniforms.scale.value = time * 0.0000005;
         // console.log(catMat.uniforms.time.value);
 
         // move tail
@@ -107265,12 +107304,26 @@ function Cat() {
             faceIndex = (faceIndex + 1) % faceTextures.length;
             faceMat.map = faceTextures[faceIndex];
             if (faceIndex == 0) {
-                tick = 10;
+                tick = 20;
             } else {
                 tick = 1;
             }
         }
-        tick -= clock.getDelta() * 5;
+        tick -= clock.getDelta() * 8;
+        moveTick = moveTick >= 0.998 ? 0 : moveTick += 0.0001;
+
+        // set the marker position
+        pt = path.getPoint(moveTick);
+        // set the marker position
+        cat.position.set(pt.x, pt.y, pt.z);
+        // get the tangent to the curve
+        tangent = path.getTangent(moveTick).normalize();
+        // calculate the axis to rotate around
+        axis.crossVectors(front, tangent).normalize();
+        // calcluate the angle between the up vector and the tangent
+        radians = Math.acos(front.dot(tangent));
+        // set the quaternion
+        cat.quaternion.setFromAxisAngle(axis, radians);
     };
 }
 
@@ -107305,6 +107358,51 @@ function Sketch5() {
 
 /***/ }),
 
+/***/ "./sketch5/path.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = Path;
+
+var _three = __webpack_require__("./node_modules/three/build/three.module.js");
+
+var THREE = _interopRequireWildcard(_three);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function Path() {
+    var center = new THREE.Vector3(100, -30, 100);
+    var randomPoints = [];
+    var radius = 100;
+    var segmentCount = 30;
+
+    for (var i = 0; i <= segmentCount; i++) {
+        var theta = i / segmentCount * Math.PI * 2;
+        randomPoints.push(new THREE.Vector3(Math.cos(theta) * radius, Math.cos(theta) * radius * -0.3, Math.sin(theta) * radius));
+    }
+
+    var spline = new THREE.CatmullRomCurve3(randomPoints);
+    var points = spline.getPoints(50);
+    var pathGeo = new THREE.BufferGeometry().setFromPoints(points);
+    var pathMat = new THREE.LineBasicMaterial({ color: 0xff0000 });
+    var path = new THREE.Line(pathGeo, pathMat);
+
+    this.getSpline = function () {
+        return spline;
+    };
+
+    this.debug = function () {
+        return path;
+    };
+}
+
+/***/ }),
+
 /***/ "./sketch5/shaders/cat.frag":
 /***/ (function(module, exports) {
 
@@ -107322,14 +107420,14 @@ module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNor
 /***/ "./sketch5/shaders/terrain.frag":
 /***/ (function(module, exports) {
 
-module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nuniform vec3 rimColor;\nuniform float rimPower;\nvarying vec3 viewPos;\nvarying vec3 viewNormal;\n\nvoid main() {\n    float rim = clamp(dot(normalize(viewNormal), normalize(-viewPos)), 0.0, 1.0);\n    // rim = 1.0 - rim;\n    rim = pow(rim, rimPower);\n    vec3 color = mix(color, rimColor, rim);\n    gl_FragColor = vec4(rimColor, rim);\n}\n"
+module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nvarying vec3 viewPos;\nvarying vec2 vUv;\nuniform vec3 fog;\n\nvoid main() {\n    float f = 1.0 - distance(vUv,vec2(0.5));\n    f = pow(f, 2.0);\n    vec3 fgColor = mix(fog, color, f);\n    gl_FragColor = vec4(fgColor, 1.0);\n}\n"
 
 /***/ }),
 
 /***/ "./sketch5/shaders/terrain.vert":
 /***/ (function(module, exports) {
 
-module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNormal;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nuniform float scale;\nuniform float freq;\nuniform float time;\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  { \n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g;\n  vec3 i1 = min( g.xyz, l.zxy );\n  vec3 i2 = max( g.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289(i); \n  vec4 p = permute( permute( permute( \n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) \n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), \n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\n\nvoid main()\n{\n    vec3 pos = position;\n    worldPos = (modelMatrix * vec4(position, 1.0)).xyz;\n    worldNormal = normalize(mat3(modelMatrix) * normal);\n    \n    // float moveSpeedX = time * 0.5;\n    // float moveSpeedY = time * 0.3;\n    // float moveSpeedZ = time * 0.2;\n\n    // float xs = scale * snoise(vec3(worldNormal.xy * freq, time));\n    // float ys = scale * snoise(vec3(worldNormal.yz * freq, time));\n    float zs = scale * snoise(vec3(worldNormal.xz * freq, time));\n\n    // pos.x = pos.x + xs;\n    // pos.y = pos.y + ys;\n    pos.z = pos.z + zs;\n    \n    vec4 viewPosition = modelViewMatrix * vec4( pos, 1.0 );\n    viewPos = viewPosition.xyz;\n    vec3 vNormal = normalize(normalMatrix * normal);\n    viewNormal = vNormal;\n    gl_Position = projectionMatrix * viewPosition;\n}"
+module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nuniform float scale;\nuniform float freq;\nuniform float time;\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  { \n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g;\n  vec3 i1 = min( g.xyz, l.zxy );\n  vec3 i2 = max( g.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289(i); \n  vec4 p = permute( permute( permute( \n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) \n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), \n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\n  float surface3 (vec3 coord) {\n      float n = 0.0;\n      n += 1.0 * abs(snoise(coord));\n      n += 0.5 * abs(snoise(coord * 2.0));\n      n += 0.25 * abs(snoise(coord * 4.0));\n      n += 0.125 * abs(snoise(coord * 8.0));\n\n      return n;\n  }\n\nvarying vec2 vUv;\n\nvoid main() {\n    vec3 pos = position;\n    worldPos = (modelMatrix * vec4(position, 1.0)).xyz;\n    worldNormal = normalize(mat3(modelMatrix) * normal);\n\n    vUv = uv;\n    vec3 coord = vec3(vUv, freq);\n    float n = surface3(coord);\n\n    pos.x = pos.x + n;\n    pos.y = pos.y + n;\n    // pos.z = pos.z + n;\n    pos.z = pos.z + n * 2.0 * scale;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );\n}"
 
 /***/ }),
 
@@ -107362,38 +107460,37 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function terrain() {
     var clock = new THREE.Clock();
-    var terrainGeo = new THREE.SphereGeometry(100, 30, 30);
+    // const terrainGeo = new THREE.SphereGeometry(40, 50, 50);
+    var terrainGeo = new THREE.PlaneGeometry(1000, 1000, 90, 90);
     var terrainMat = new THREE.ShaderMaterial({
         uniforms: {
-            color: { type: "c", value: new THREE.Color(0x3e4547) },
-            rimColor: { type: "c", value: new THREE.Color(0x3e4547) },
-            rimPower: { type: "f", value: 1.0 },
-            scale: { type: "f", value: 30.0 },
+            color: { type: "c", value: new THREE.Color(0x254984) },
+            fog: { type: "c", value: new THREE.Color(0x66c1ff) },
+            scale: { type: "f", value: 200.0 },
             time: { type: "f", value: 0.0 },
-            freq: { type: "f", value: 5.0 }
+            freq: { type: "f", value: 80.0 }
         },
         vertexShader: _terrain2.default,
-        fragmentShader: _terrain4.default,
-        transparent: true,
-        // wireframe: true,
-        // side: THREE.BackSide,
-        depthTest: false
-        // blending: THREE.MultiplyBlending
+        fragmentShader: _terrain4.default
     });
 
-    var testMat = new THREE.MeshBasicMaterial({ color: 0x3e4547, side: THREE.FrontSide });
+    var testMat = new THREE.MeshBasicMaterial({ color: 0x254984, side: THREE.FrontSide });
     var terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+
     terrainMesh.rotation.x = -Math.PI / 2;
-    terrainMesh.position.y = -150;
+    // terrainMesh.rotation.z = Math.PI / 2;
+    terrainMesh.position.y = -380;
+    // terrainMesh.position.x = -130;
 
     this.addTerrain = function (scene) {
         scene.add(terrainMesh);
     };
 
     this.update = function () {
-        var time = clock.getDelta();
+        // let time = clock.getDelta();
         // let time = Date.now() / 1000 % 120000;
-        // terrainMat.uniforms.freq.value = time * 100;
+        // console.log(terrainMat.uniforms.time.value);
+        // terrainMesh.rotation.x -= 0.001;
     };
 }
 
