@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 const OrbitControls = require('three-orbit-controls')(THREE);
-import Cat from './cat';
 import Skybox from './background';
 import Terrain from './terrain';
 import Path from './path';
 import Particles from './simpleParticles';
+import Cat from './cat';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
@@ -19,7 +19,7 @@ export default function Scene(canvas) {
     const cat = new Cat();
     const skybox = Skybox();
     const terrain = new Terrain();
-    const particles = new Particles();
+    // const particles = new Particles();
     const path = new Path();
     let tick = 0;
 
@@ -69,7 +69,7 @@ export default function Scene(canvas) {
         // console.log("start");
         scene.add(skybox);
         terrain.addTerrain(scene);
-        scene.add(particles);
+        // scene.add(particles);
         cat.loadCat(scene);
 
         if (debug) {

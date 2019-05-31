@@ -10,21 +10,21 @@ export default function simpleParticles() {
 
     const MAX = 100;
     const geo = new THREE.BufferGeometry();
-    const initialPositions = [];
-    const velocities = [];
-    const accelerations = [];
+    // const initialPositions = [];
+    // const velocities = [];
+    // const accelerations = [];
 
-    for (let i = 0; i < MAX; i++) {
-        initialPositions.push(rand(-0.5, 0.5));
-        initialPositions.push(rand(-4, -3));
-        initialPositions.push(rand(-1, 1));
-        velocities.push(rand(-0.5, 0.5));
-        velocities.push(10.0);
-        velocities.push(rand(-1, 1));
-        accelerations.push(0);
-        accelerations.push(-9.8);
-        accelerations.push(0);
-    }
+    // for (let i = 0; i < MAX; i++) {
+    //     initialPositions.push(rand(-0.5, 0.5));
+    //     initialPositions.push(rand(-4, -3));
+    //     initialPositions.push(rand(-1, 1));
+    //     velocities.push(rand(-0.5, 0.5));
+    //     velocities.push(10.0);
+    //     velocities.push(rand(-1, 1));
+    //     accelerations.push(0);
+    //     accelerations.push(-9.8);
+    //     accelerations.push(0);
+    // }
     const mat = new THREE.ShaderMaterial({
         uniforms: {
             time: { value: 12.0 }
