@@ -4,7 +4,6 @@ import Cat from './cat';
 import Skybox from './background';
 import Terrain from './terrain';
 import Path from './path';
-import Caustics from './caustics';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
@@ -19,7 +18,6 @@ export default function Scene(canvas) {
     const cat = new Cat();
     const skybox = Skybox();
     const terrain = new Terrain();
-    // const caustics = new Caustics;
     const path = new Path();
     let tick = 0;
 
@@ -68,15 +66,17 @@ export default function Scene(canvas) {
     this.start = function () {
         // console.log("start");
         scene.add(skybox);
-        // scene.add(caustics);
         terrain.addTerrain(scene);
         cat.loadCat(scene);
-        // scene.add(path.debug());
+        if (debug) {
+            scene.add(path.debug());
+        }
     }
 
     this.update = function () {
         cat.update(path.getSpline());
         let catPos = cat.getCatPos();
+        terrain.update();
 
         if (!debug) {
             if (catPos != null) {

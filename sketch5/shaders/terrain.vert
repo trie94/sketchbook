@@ -109,6 +109,7 @@ float snoise(vec3 v)
   }
 
 varying vec2 vUv;
+varying vec2 v_texcoord;
 
 void main() {
     vec3 pos = position;
@@ -118,6 +119,7 @@ void main() {
     vUv = uv;
     vec3 coord = vec3(vUv, freq);
     float n = surface3(coord);
+    v_texcoord = uv + time;
 
     pos.x = pos.x + n;
     pos.y = pos.y + n;
