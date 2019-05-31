@@ -4,19 +4,22 @@ import Cat from './cat';
 import Skybox from './background';
 import Terrain from './terrain';
 import Path from './path';
+import Caustics from './caustics';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
 
+    let debug = false;
     // scene subjects
     const scene = createScene();
     const renderer = createRenderer();
     const camera = createCamera();
-    // const controls = createControl();
+    const controls = debug ? createControl() : null;
     const cat = new Cat();
     const skybox = Skybox();
     const terrain = new Terrain();
+    // const caustics = new Caustics;
     const path = new Path();
     let tick = 0;
 
@@ -55,7 +58,7 @@ export default function Scene(canvas) {
     function createControl() {
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.target = new THREE.Vector3(0, 0, 0);
-        controls.maxPolarAngle = Math.PI / 2;
+        // controls.maxPolarAngle = Math.PI / 2;
         // controls.maxDistance = 70;
         controls.minDistance = 20;
 
@@ -65,6 +68,7 @@ export default function Scene(canvas) {
     this.start = function () {
         // console.log("start");
         scene.add(skybox);
+        // scene.add(caustics);
         terrain.addTerrain(scene);
         cat.loadCat(scene);
         // scene.add(path.debug());
@@ -74,15 +78,14 @@ export default function Scene(canvas) {
         cat.update(path.getSpline());
         let catPos = cat.getCatPos();
 
-        if (catPos != null) {
-            camera.lookAt(catPos);
-            camera.position.x = catPos.x + Math.sin(tick) * 50;
-            camera.position.y = catPos.y;
-            camera.position.z = catPos.z + Math.cos(tick) * 30;
-            
-            // let target = new THREE.Vector3(catPos.x + Math.sin(tick) * 50, catPos.y, catPos.z + Math.cos(tick) * 30);
-            // camera.position.lerp(target, 0.5);
-            tick += 0.001;
+        if (!debug) {
+            if (catPos != null) {
+                camera.lookAt(catPos);
+                camera.position.x = catPos.x + Math.sin(tick) * 50;
+                camera.position.y = catPos.y;
+                camera.position.z = catPos.z + Math.cos(tick) * 30;
+                tick += 0.001;
+            }
         }
         renderer.render(scene, camera);
     }
