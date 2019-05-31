@@ -106850,11 +106850,12 @@ function Scene(canvas) {
     var HEIGHT = window.innerHeight;
     var WIDTH = window.innerWidth;
 
+    var debug = false;
     // scene subjects
     var scene = createScene();
     var renderer = createRenderer();
     var camera = createCamera();
-    // const controls = createControl();
+    var controls = debug ? createControl() : null;
     var cat = new _cat2.default();
     var skybox = (0, _background2.default)();
     var terrain = new _terrain2.default();
@@ -106896,7 +106897,7 @@ function Scene(canvas) {
     function createControl() {
         var controls = new OrbitControls(camera, renderer.domElement);
         controls.target = new THREE.Vector3(0, 0, 0);
-        controls.maxPolarAngle = Math.PI / 2;
+        // controls.maxPolarAngle = Math.PI / 2;
         // controls.maxDistance = 70;
         controls.minDistance = 20;
 
@@ -106908,22 +106909,24 @@ function Scene(canvas) {
         scene.add(skybox);
         terrain.addTerrain(scene);
         cat.loadCat(scene);
-        // scene.add(path.debug());
+        if (debug) {
+            scene.add(path.debug());
+        }
     };
 
     this.update = function () {
         cat.update(path.getSpline());
         var catPos = cat.getCatPos();
+        terrain.update();
 
-        if (catPos != null) {
-            camera.lookAt(catPos);
-            camera.position.x = catPos.x + Math.sin(tick) * 50;
-            camera.position.y = catPos.y;
-            camera.position.z = catPos.z + Math.cos(tick) * 30;
-
-            // let target = new THREE.Vector3(catPos.x + Math.sin(tick) * 50, catPos.y, catPos.z + Math.cos(tick) * 30);
-            // camera.position.lerp(target, 0.5);
-            tick += 0.001;
+        if (!debug) {
+            if (catPos != null) {
+                camera.lookAt(catPos);
+                camera.position.x = catPos.x + Math.sin(tick) * 50;
+                camera.position.y = catPos.y;
+                camera.position.z = catPos.z + Math.cos(tick) * 30;
+                tick += 0.001;
+            }
         }
         renderer.render(scene, camera);
     };
@@ -106952,6 +106955,13 @@ function Scene(canvas) {
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__.p + "sketch5/assets/cat-everything.fbx";
+
+/***/ }),
+
+/***/ "./sketch5/assets/caustics.jpg":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch5/assets/caustics.jpg";
 
 /***/ }),
 
@@ -107420,14 +107430,14 @@ module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNor
 /***/ "./sketch5/shaders/terrain.frag":
 /***/ (function(module, exports) {
 
-module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nvarying vec3 viewPos;\nvarying vec2 vUv;\nuniform vec3 fog;\n\nvoid main() {\n    float f = 1.0 - distance(vUv,vec2(0.5));\n    f = pow(f, 2.0);\n    vec3 fgColor = mix(fog, color, f);\n    gl_FragColor = vec4(fgColor, 1.0);\n}\n"
+module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nvarying vec3 viewPos;\nvarying vec2 vUv;\nuniform vec3 fog;\nuniform sampler2D caustics;\nuniform float texture_repeat;\nuniform float intensity;\nvarying vec2 v_texcoord;\nvarying vec2 v_texcoord2;\n\nvoid main() {\n    float f = 1.0 - distance(vUv,vec2(0.5));\n    f = pow(f, 2.0);\n    vec3 fgColor = mix(fog, color, f);\n    vec4 caustic_texture0 = texture2D(caustics, v_texcoord * texture_repeat);\n    vec4 caustic_texture1 = texture2D(caustics, v_texcoord2 * texture_repeat * 0.5);\n    caustic_texture0 = caustic_texture0 * (abs(vec4(intensity)) + vec4(0.25));\n    caustic_texture1 = caustic_texture1 * (abs(vec4(intensity)) + vec4(0.25));\n    gl_FragColor = vec4(fgColor, 1.0) + caustic_texture0 + caustic_texture1;\n}\n"
 
 /***/ }),
 
 /***/ "./sketch5/shaders/terrain.vert":
 /***/ (function(module, exports) {
 
-module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nuniform float scale;\nuniform float freq;\nuniform float time;\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  { \n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g;\n  vec3 i1 = min( g.xyz, l.zxy );\n  vec3 i2 = max( g.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289(i); \n  vec4 p = permute( permute( permute( \n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) \n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), \n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\n  float surface3 (vec3 coord) {\n      float n = 0.0;\n      n += 1.0 * abs(snoise(coord));\n      n += 0.5 * abs(snoise(coord * 2.0));\n      n += 0.25 * abs(snoise(coord * 4.0));\n      n += 0.125 * abs(snoise(coord * 8.0));\n\n      return n;\n  }\n\nvarying vec2 vUv;\n\nvoid main() {\n    vec3 pos = position;\n    worldPos = (modelMatrix * vec4(position, 1.0)).xyz;\n    worldNormal = normalize(mat3(modelMatrix) * normal);\n\n    vUv = uv;\n    vec3 coord = vec3(vUv, freq);\n    float n = surface3(coord);\n\n    pos.x = pos.x + n;\n    pos.y = pos.y + n;\n    // pos.z = pos.z + n;\n    pos.z = pos.z + n * 2.0 * scale;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );\n}"
+module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nuniform float scale;\nuniform float freq;\nuniform float time1;\nuniform float time2;\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  { \n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g;\n  vec3 i1 = min( g.xyz, l.zxy );\n  vec3 i2 = max( g.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289(i); \n  vec4 p = permute( permute( permute( \n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) \n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), \n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\n  float surface3 (vec3 coord) {\n      float n = 0.0;\n      n += 1.0 * abs(snoise(coord));\n      n += 0.5 * abs(snoise(coord * 2.0));\n      n += 0.25 * abs(snoise(coord * 4.0));\n      n += 0.125 * abs(snoise(coord * 8.0));\n\n      return n;\n  }\n\nvarying vec2 vUv;\nvarying vec2 v_texcoord;\nvarying vec2 v_texcoord2;\n\nvoid main() {\n    vec3 pos = position;\n    worldPos = (modelMatrix * vec4(position, 1.0)).xyz;\n    worldNormal = normalize(mat3(modelMatrix) * normal);\n\n    vUv = uv;\n    vec3 coord = vec3(vUv, freq);\n    float n = surface3(coord);\n    v_texcoord = uv + time1;\n    v_texcoord2 = uv - time2;\n\n    pos.x = pos.x + n;\n    pos.y = pos.y + n;\n    // pos.z = pos.z + n;\n    pos.z = pos.z + n * 2.0 * scale;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0 );\n}"
 
 /***/ }),
 
@@ -107454,6 +107464,10 @@ var _terrain3 = __webpack_require__("./sketch5/shaders/terrain.frag");
 
 var _terrain4 = _interopRequireDefault(_terrain3);
 
+var _caustics = __webpack_require__("./sketch5/assets/caustics.jpg");
+
+var _caustics2 = _interopRequireDefault(_caustics);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -107467,8 +107481,16 @@ function terrain() {
             color: { type: "c", value: new THREE.Color(0x254984) },
             fog: { type: "c", value: new THREE.Color(0x66c1ff) },
             scale: { type: "f", value: 200.0 },
-            time: { type: "f", value: 0.0 },
-            freq: { type: "f", value: 80.0 }
+            time1: { type: "f", value: 0.0 },
+            time2: { type: "f", value: 0.0 },
+            freq: { type: "f", value: 80.0 },
+            caustics: {
+                type: "t", value: new THREE.TextureLoader().load(_caustics2.default, function (texture) {
+                    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+                })
+            },
+            texture_repeat: { type: "f", value: 2.0 },
+            intensity: { type: "f", value: 0.5 }
         },
         vertexShader: _terrain2.default,
         fragmentShader: _terrain4.default
@@ -107478,9 +107500,7 @@ function terrain() {
     var terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
 
     terrainMesh.rotation.x = -Math.PI / 2;
-    // terrainMesh.rotation.z = Math.PI / 2;
     terrainMesh.position.y = -380;
-    // terrainMesh.position.x = -130;
 
     this.addTerrain = function (scene) {
         scene.add(terrainMesh);
@@ -107488,7 +107508,10 @@ function terrain() {
 
     this.update = function () {
         // let time = clock.getDelta();
-        // let time = Date.now() / 1000 % 120000;
+        var time = Date.now() / 1000 % 120000;
+        terrainMat.uniforms.time1.value = Math.cos(time) * 0.005;
+        terrainMat.uniforms.time2.value = Math.sin(time) * 0.002;
+        terrainMat.uniforms.intensity.value = Math.cos(time * 0.1) * 0.05;
         // console.log(terrainMat.uniforms.time.value);
         // terrainMesh.rotation.x -= 0.001;
     };
