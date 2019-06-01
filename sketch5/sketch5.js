@@ -107292,6 +107292,10 @@ function Scene(canvas) {
     var particleGenerator = new _particleGenerator2.default();
     var tick = 0;
     var rays = [];
+    rays.push(new _godRays2.default(100, 300, new THREE.Vector3(0, 100, -150), 0.35, 0.5));
+    rays.push(new _godRays2.default(120, 300, new THREE.Vector3(75, 100, 10), 0.4, 0.3));
+    rays.push(new _godRays2.default(70, 300, new THREE.Vector3(-50, 100, 30), 0.2, 0.75));
+    rays.push(new _godRays2.default(120, 700, new THREE.Vector3(400, 300, 400), 0.2, 0.45));
 
     function createScene() {
         var scene = new THREE.Scene();
@@ -107318,9 +107322,8 @@ function Scene(canvas) {
         var nearPlane = 1;
         var farPlane = 10000;
         var camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
-
-        camera.position.set(20, 50, 20);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
+        // camera.position.set(20, 50, 20);
+        // camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
     }
@@ -107337,10 +107340,9 @@ function Scene(canvas) {
 
     this.start = function () {
         // console.log("start");
-
+        cat.loadCat(scene);
         scene.add(skybox);
         scene.add(terrain.addTerrain());
-        cat.loadCat(scene);
         scene.add(particleGenerator.particleSystem);
         particleGenerator.particleSystem.position.set(0, -10, 0);
 
@@ -107348,21 +107350,12 @@ function Scene(canvas) {
             scene.add(path.debug());
         }
 
-        rays.push(new _godRays2.default(100, 300, new THREE.Vector3(0, 100, -150), 0.35, 0.5));
-        rays.push(new _godRays2.default(120, 300, new THREE.Vector3(75, 100, 10), 0.4, 0.3));
-        rays.push(new _godRays2.default(70, 300, new THREE.Vector3(-50, 100, 30), 0.2, 0.75));
-        rays.push(new _godRays2.default(120, 700, new THREE.Vector3(400, 300, 400), 0.2, 0.45));
-
         for (var i = 0; i < rays.length; i++) {
             scene.add(rays[i].getLight());
         }
-        renderer.autoClear = true;
     };
 
     this.update = function () {
-        terrain.update();
-        particleGenerator.update();
-
         cat.update(path.getSpline());
         var catPos = cat.getCatPos();
 
@@ -107375,7 +107368,8 @@ function Scene(canvas) {
                 tick += 0.001;
             }
         }
-
+        terrain.update();
+        particleGenerator.update();
         for (var i = 0; i < rays.length; i++) {
             rays[i].update(camera);
         }
