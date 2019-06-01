@@ -107265,6 +107265,10 @@ var _particleGenerator = __webpack_require__("./sketch5/particleGenerator.js");
 
 var _particleGenerator2 = _interopRequireDefault(_particleGenerator);
 
+var _godRays = __webpack_require__("./sketch5/godRays.js");
+
+var _godRays2 = _interopRequireDefault(_godRays);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -107280,14 +107284,14 @@ function Scene(canvas) {
     var renderer = createRenderer();
     var camera = createCamera();
     var controls = debug ? createControl() : null;
+    // const controls = createControl();
     var cat = new _cat2.default();
     var skybox = (0, _background2.default)();
     var terrain = new _terrain2.default();
     var path = new _path2.default();
-
-    var particleGenerator = null;
+    var particleGenerator = new _particleGenerator2.default();
     var tick = 0;
-    var timer = 3;
+    var rays = [];
 
     function createScene() {
         var scene = new THREE.Scene();
@@ -107332,19 +107336,33 @@ function Scene(canvas) {
     }
 
     this.start = function () {
-        console.log("start");
+        // console.log("start");
+
         scene.add(skybox);
         scene.add(terrain.addTerrain());
         cat.loadCat(scene);
+        scene.add(particleGenerator.particleSystem);
+        particleGenerator.particleSystem.position.set(0, -10, 0);
 
         if (debug) {
             scene.add(path.debug());
+        }
+
+        rays.push(new _godRays2.default(100, 300, new THREE.Vector3(0, 100, -150), 0.35, 0.5));
+        rays.push(new _godRays2.default(120, 300, new THREE.Vector3(75, 100, 10), 0.4, 0.3));
+        rays.push(new _godRays2.default(70, 300, new THREE.Vector3(-50, 100, 30), 0.2, 0.75));
+        rays.push(new _godRays2.default(120, 700, new THREE.Vector3(400, 300, 400), 0.2, 0.45));
+
+        for (var i = 0; i < rays.length; i++) {
+            scene.add(rays[i].getLight());
         }
         renderer.autoClear = true;
     };
 
     this.update = function () {
         terrain.update();
+        particleGenerator.update();
+
         cat.update(path.getSpline());
         var catPos = cat.getCatPos();
 
@@ -107354,24 +107372,12 @@ function Scene(canvas) {
                 camera.position.x = catPos.x + Math.sin(tick) * 50;
                 camera.position.y = catPos.y;
                 camera.position.z = catPos.z + Math.cos(tick) * 30;
-                // console.log(catPos);
-            }
-        }
-        tick += 0.001;
-        timer -= tick;
-
-        if (timer < 0) {
-            if (particleGenerator == null) {
-                particleGenerator = new _particleGenerator2.default();
-                scene.add(particleGenerator.particleSystem);
-                particleGenerator.particleSystem.position.set(0, -10, 0);
-                console.log("spawn particles", particleGenerator.particleSystem);
+                tick += 0.001;
             }
         }
 
-        if (particleGenerator) {
-            particleGenerator.update();
-            // console.log("hey?");
+        for (var i = 0; i < rays.length; i++) {
+            rays[i].update(camera);
         }
         renderer.render(scene, camera);
     };
@@ -107391,6 +107397,7 @@ function Scene(canvas) {
 
     this.onMouseClick = function () {
         // console.log("click");
+        // debug = !debug;
     };
 }
 
@@ -107664,51 +107671,53 @@ function Cat() {
         loader.load(_catEverything2.default, function (object) {
             loader.load(_catEverything2.default, function (object) {
                 loader.load(_catEverything2.default, function (object) {
-                    // apply shader material
-                    object.traverse(function (child) {
-                        // console.log(child.name);
-                        if (child.isMesh) {
-                            if (child.name == "BodyModel") {
-                                // child.material = catMat;
-                                child.geometry.clearGroups();
-                                child.geometry.addGroup(0, Infinity, 0);
-                                child.geometry.addGroup(0, Infinity, 1);
-                                child.material = [catMatDepth, catMat];
-                            } else if (child.name.includes("TailModel")) {
-                                child.material = catTailMat;
-                            } else {
-                                child.material = catLimbMat;
+                    loader.load(_catEverything2.default, function (object) {
+                        // apply shader material
+                        object.traverse(function (child) {
+                            // console.log(child.name);
+                            if (child.isMesh) {
+                                if (child.name == "BodyModel") {
+                                    // child.material = catMat;
+                                    child.geometry.clearGroups();
+                                    child.geometry.addGroup(0, Infinity, 0);
+                                    child.geometry.addGroup(0, Infinity, 1);
+                                    child.material = [catMatDepth, catMat];
+                                } else if (child.name.includes("TailModel")) {
+                                    child.material = catTailMat;
+                                } else {
+                                    child.material = catLimbMat;
+                                }
                             }
-                        }
-                        if (child.name.includes('Tail_CoreModel')) {
-                            var tempBone = child;
-                            // reposition the tail
-                            tempBone.position.z = 1;
-                            while (tempBone != null) {
-                                tailBones.push(tempBone);
-                                tempBone = tempBone.children[0];
+                            if (child.name.includes('Tail_CoreModel')) {
+                                var tempBone = child;
+                                // reposition the tail
+                                tempBone.position.z = 1;
+                                while (tempBone != null) {
+                                    tailBones.push(tempBone);
+                                    tempBone = tempBone.children[0];
+                                }
+                                // console.log(tailBones);
                             }
-                            // console.log(tailBones);
-                        }
-                        if (child.name.includes('L_FrontLeg_CoreModel') || child.name.includes('R_FrontLeg_CoreModel')) {
-                            frontLegBones.push(child);
-                            // console.log(frontLegBones);
-                        }
-                        if (child.name.includes('L_BackLeg_CoreModel') || child.name.includes('R_BackLeg_CoreModel')) {
-                            backLegBones.push(child);
-                            // console.log(backLegBones);
-                        }
-                        if (child.name.includes('L_Ear_CoreModel') || child.name.includes('R_Ear_CoreModel')) {
-                            earBones.push(child);
-                            // console.log(earBones);
-                        }
+                            if (child.name.includes('L_FrontLeg_CoreModel') || child.name.includes('R_FrontLeg_CoreModel')) {
+                                frontLegBones.push(child);
+                                // console.log(frontLegBones);
+                            }
+                            if (child.name.includes('L_BackLeg_CoreModel') || child.name.includes('R_BackLeg_CoreModel')) {
+                                backLegBones.push(child);
+                                // console.log(backLegBones);
+                            }
+                            if (child.name.includes('L_Ear_CoreModel') || child.name.includes('R_Ear_CoreModel')) {
+                                earBones.push(child);
+                                // console.log(earBones);
+                            }
+                        });
+                        object.add(facePlane);
+                        // assign object to global cat
+                        cat = object;
+                        // cat.matrixWorldNeedsUpdate = true;
+                        scene.add(cat);
+                        // console.log(cat);
                     });
-                    object.add(facePlane);
-                    // assign object to global cat
-                    cat = object;
-                    // cat.matrixWorldNeedsUpdate = true;
-                    scene.add(cat);
-                    // console.log(cat);
                 });
             });
         });
@@ -107782,6 +107791,68 @@ function Cat() {
         radians = Math.acos(front.dot(tangent));
         // set the quaternion
         cat.quaternion.setFromAxisAngle(axis, radians);
+    };
+}
+
+/***/ }),
+
+/***/ "./sketch5/godRays.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = godRays;
+
+var _three = __webpack_require__("./node_modules/three/build/three.module.js");
+
+var THREE = _interopRequireWildcard(_three);
+
+var _godray = __webpack_require__("./sketch5/shaders/godray.vert");
+
+var _godray2 = _interopRequireDefault(_godray);
+
+var _godray3 = __webpack_require__("./sketch5/shaders/godray.frag");
+
+var _godray4 = _interopRequireDefault(_godray3);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function godRays(width, height, position, intensity, freq) {
+    var lightMat = new THREE.ShaderMaterial({
+        uniforms: {
+            color: { type: "c", value: new THREE.Color(0xff8800) },
+            intensity: { type: "f", value: intensity }
+        },
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        transparent: true,
+        vertexShader: _godray2.default,
+        fragmentShader: _godray4.default,
+        depthWrite: false
+    });
+    var lightGeo = new THREE.PlaneGeometry(width, height);
+    var lightMesh = new THREE.Mesh(lightGeo, lightMat);
+    lightMesh.rotation.z = Math.PI / 8;
+    lightMesh.position.x = position.x;
+    lightMesh.position.y = position.y;
+    lightMesh.position.z = position.z;
+    var time = 0;
+
+    this.getLight = function () {
+        return lightMesh;
+    };
+
+    this.update = function (camera) {
+        time = Date.now() / 1000 % 120000;
+        lightMesh.rotation.y = Math.atan2(camera.position.x - lightMesh.position.x, camera.position.z - lightMesh.position.z);
+        lightMesh.rotation.z += Math.cos(time) * 0.0003;
+        lightMat.uniforms.intensity.value = intensity + Math.sin(time * freq) * 0.3;
     };
 }
 
@@ -107960,6 +108031,20 @@ module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nuniform vec3 rimColor;
 /***/ (function(module, exports) {
 
 module.exports = "#define GLSLIFY 1\nvarying vec3 viewPos;\nvarying vec3 viewNormal;\nvarying vec3 worldPos;\nvarying vec3 worldNormal;\n\nuniform float scale;\nuniform float freq;\nuniform float time;\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  { \n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g;\n  vec3 i1 = min( g.xyz, l.zxy );\n  vec3 i2 = max( g.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289(i); \n  vec4 p = permute( permute( permute( \n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) \n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), \n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\n#ifdef USE_SKINNING\n\tuniform mat4 bindMatrix;\n\tuniform mat4 bindMatrixInverse;\n\t#ifdef BONE_TEXTURE\n\t\tuniform sampler2D boneTexture;\n\t\tuniform int boneTextureSize;\n\t\tmat4 getBoneMatrix( const in float i ) {\n\t\t\tfloat j = i * 4.0;\n\t\t\tfloat x = mod( j, float( boneTextureSize ) );\n\t\t\tfloat y = floor( j / float( boneTextureSize ) );\n\t\t\tfloat dx = 1.0 / float( boneTextureSize );\n\t\t\tfloat dy = 1.0 / float( boneTextureSize );\n\t\t\ty = dy * ( y + 0.5 );\n\t\t\tvec4 v1 = texture2D( boneTexture, vec2( dx * ( x + 0.5 ), y ) );\n\t\t\tvec4 v2 = texture2D( boneTexture, vec2( dx * ( x + 1.5 ), y ) );\n\t\t\tvec4 v3 = texture2D( boneTexture, vec2( dx * ( x + 2.5 ), y ) );\n\t\t\tvec4 v4 = texture2D( boneTexture, vec2( dx * ( x + 3.5 ), y ) );\n\t\t\tmat4 bone = mat4( v1, v2, v3, v4 );\n\t\t\treturn bone;\n\t\t}\n\t#else\n\t\tuniform mat4 boneMatrices[ MAX_BONES ];\n\t\tmat4 getBoneMatrix( const in float i ) {\n\t\t\tmat4 bone = boneMatrices[ int(i) ];\n\t\t\treturn bone;\n\t\t}\n\t#endif\n#endif\n\nvoid main()\n{\n    vec3 transformed = position;\n    // skinning\n#ifdef USE_SKINNING\n\tmat4 boneMatX = getBoneMatrix( skinIndex.x );\n\tmat4 boneMatY = getBoneMatrix( skinIndex.y );\n\tmat4 boneMatZ = getBoneMatrix( skinIndex.z );\n\tmat4 boneMatW = getBoneMatrix( skinIndex.w );\n#endif\n\n#ifdef USE_SKINNING\n\tvec4 skinVertex = bindMatrix * vec4( transformed, 1.0 );\n\tvec4 skinned = vec4( 0.0 );\n\tskinned += boneMatX * skinVertex * skinWeight.x;\n\tskinned += boneMatY * skinVertex * skinWeight.y;\n\tskinned += boneMatZ * skinVertex * skinWeight.z;\n\tskinned += boneMatW * skinVertex * skinWeight.w;\n\ttransformed = ( bindMatrixInverse * skinned ).xyz;\n#endif\n\n    vec3 objectNormal = normal;\n\n#ifdef USE_SKINNING\n\tmat4 skinMatrix = mat4( 0.0 );\n\tskinMatrix += skinWeight.x * boneMatX;\n\tskinMatrix += skinWeight.y * boneMatY;\n\tskinMatrix += skinWeight.z * boneMatZ;\n\tskinMatrix += skinWeight.w * boneMatW;\n\tskinMatrix  = bindMatrixInverse * skinMatrix * bindMatrix;\n\tobjectNormal = vec4( skinMatrix * vec4( objectNormal, 0.0 ) ).xyz;\n\t#ifdef USE_TANGENT\n\t\tobjectTangent = vec4( skinMatrix * vec4( objectTangent, 0.0 ) ).xyz;\n\t#endif\n#endif\n\n    vec3 pos = transformed;\n    worldPos = (modelMatrix * vec4(position, 1.0)).xyz;\n    worldNormal = normalize(mat3(modelMatrix) * objectNormal);\n    \n    float moveSpeedX = time * 0.1;\n    float moveSpeedY = time * 0.3;\n    float moveSpeedZ = time * 0.3;\n\n    float xs = scale * snoise(vec3(worldNormal.xy * freq, moveSpeedX));\n    float ys = scale * snoise(vec3(worldNormal.yz * freq, moveSpeedY));\n    float zs = scale * snoise(vec3(worldNormal.xz * freq, moveSpeedZ));\n\n    pos.x = pos.x + xs;\n    pos.y = pos.y + ys;\n    pos.z = pos.z + zs;\n\n    vec4 viewPosition = modelViewMatrix * vec4( pos, 1.0 );\n    viewPos = viewPosition.xyz;\n    vec3 vNormal = normalize(normalMatrix * normal);\n    viewNormal = vNormal;\n    gl_Position = projectionMatrix * viewPosition;\n}"
+
+/***/ }),
+
+/***/ "./sketch5/shaders/godray.frag":
+/***/ (function(module, exports) {
+
+module.exports = "#define GLSLIFY 1\nuniform vec3 color;\nvarying vec2 vUv;\nuniform float intensity;\n\nvoid main() {\n    vec2 flipped = vec2(vUv.y, vUv.x);\n    gl_FragColor = vec4(color, flipped * intensity);\n}\n"
+
+/***/ }),
+
+/***/ "./sketch5/shaders/godray.vert":
+/***/ (function(module, exports) {
+
+module.exports = "#define GLSLIFY 1\nvarying vec2 vUv;\n\nvoid main() {\n    vec3 pos = position;\n    vUv = uv;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n}"
 
 /***/ }),
 
