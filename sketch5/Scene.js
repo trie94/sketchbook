@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BloomEffect, RenderPass, EffectPass, EffectComposer } from "postprocessing";
 const OrbitControls = require('three-orbit-controls')(THREE);
 import Skybox from './background';
 import Terrain from './terrain';
@@ -6,6 +7,7 @@ import Path from './path';
 import Cat from './cat';
 import ParticleGenerator from './particleGenerator';
 import GodRays from './godRays';
+import test from './assets/caustics.jpg';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
@@ -21,9 +23,17 @@ export default function Scene(canvas) {
 
     // scene subjects
     const scene = createScene();
-    const renderer = createRenderer();
+    const renderer = createRenderer();  
     const camera = createCamera();
     const controls = debug ? createControl() : null;
+    
+    // post processing
+    const composer = new EffectComposer(renderer);
+    const effectPass = new EffectPass(camera, new BloomEffect());
+    effectPass.renderToScreen = true;
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(effectPass);
+    const clock = new THREE.Clock();
 
     let tick = 0;
     let rays = [];
@@ -113,6 +123,7 @@ export default function Scene(canvas) {
             rays[i].update(camera);
         }
         renderer.render(scene, camera);
+        composer.render(clock.getDelta());
     }
 
     this.onWindowResize = function () {
