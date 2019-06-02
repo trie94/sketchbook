@@ -23,16 +23,21 @@ export default function Scene(canvas) {
 
     // scene subjects
     const scene = createScene();
-    const renderer = createRenderer();  
+    const renderer = createRenderer();
     const camera = createCamera();
     const controls = debug ? createControl() : null;
-    
+
     // post processing
     const composer = new EffectComposer(renderer);
-    const effectPass = new EffectPass(camera, new BloomEffect());
+    const renderPass = new RenderPass(scene, camera);
+    renderPass.clear = true;
+    const bloomEffect = new BloomEffect();
+    const effectPass = new EffectPass(camera, bloomEffect);
     effectPass.renderToScreen = true;
-    composer.addPass(new RenderPass(scene, camera));
+
+    composer.addPass(renderPass);
     composer.addPass(effectPass);
+
     const clock = new THREE.Clock();
 
     let tick = 0;
@@ -122,7 +127,7 @@ export default function Scene(canvas) {
         for (let i = 0; i < rays.length; i++) {
             rays[i].update(camera);
         }
-        renderer.render(scene, camera);
+        // renderer.render(scene, camera);
         composer.render(clock.getDelta());
     }
 
