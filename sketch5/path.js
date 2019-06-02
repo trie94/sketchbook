@@ -4,7 +4,7 @@ export default function Path() {
     let center = new THREE.Vector3(100, -30, 100);
     let randomPoints = [];
     let radius = 100;
-    let segmentCount = 30;
+    let segmentCount = 29;
 
     for (let i = 0; i <= segmentCount; i++) {
         let theta = (i / segmentCount) * Math.PI * 2;

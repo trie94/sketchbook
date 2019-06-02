@@ -12,17 +12,19 @@ export default function Scene(canvas) {
     let WIDTH = window.innerWidth;
 
     let debug = false;
-    // scene subjects
-    const scene = createScene();
-    const renderer = createRenderer();
-    const camera = createCamera();
-    const controls = debug ? createControl() : null;
-    // const controls = createControl();
+
     const cat = new Cat();
     const skybox = Skybox();
     const terrain = new Terrain();
     const path = new Path();
     const particleGenerator = new ParticleGenerator();
+
+    // scene subjects
+    const scene = createScene();
+    const renderer = createRenderer();
+    const camera = createCamera();
+    const controls = debug ? createControl() : null;
+
     let tick = 0;
     let rays = [];
     rays.push(new GodRays(100, 300, new THREE.Vector3(0, 100, -150), 0.35, 0.5));
@@ -34,6 +36,17 @@ export default function Scene(canvas) {
         const scene = new THREE.Scene();
         // scene.fog = new THREE.Fog(0xf7d9aa, 1, 100);
         return scene;
+    }
+
+    function createCamera() {
+        const aspectRatio = WIDTH / HEIGHT;
+        const fieldOfView = 60;
+        const nearPlane = 1;
+        const farPlane = 10000;
+        const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
+        camera.lookAt(path.getSpline());
+
+        return camera;
     }
 
     function createRenderer() {
@@ -49,18 +62,6 @@ export default function Scene(canvas) {
         return renderer;
     }
 
-    function createCamera() {
-        const aspectRatio = WIDTH / HEIGHT;
-        const fieldOfView = 60;
-        const nearPlane = 1;
-        const farPlane = 10000;
-        const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
-        // camera.position.set(20, 50, 20);
-        // camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-        return camera;
-    }
-
     function createControl() {
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.target = new THREE.Vector3(0, 0, 0);
@@ -69,6 +70,22 @@ export default function Scene(canvas) {
         controls.minDistance = 20;
 
         return controls;
+    }
+
+    function lookAtCat() {
+        if (cat != null) {
+            cat.update(path.getSpline());
+            let catPos = cat.getCatPos();
+            if (!debug) {
+                if (catPos != null) {
+                    camera.lookAt(catPos);
+                    camera.position.x = catPos.x + Math.sin(tick) * 50;
+                    camera.position.y = catPos.y;
+                    camera.position.z = catPos.z + Math.cos(tick) * 30;
+                    tick += 0.001;
+                }
+            }
+        }
     }
 
     this.start = function () {
@@ -89,18 +106,7 @@ export default function Scene(canvas) {
     }
 
     this.update = function () {
-        cat.update(path.getSpline());
-        let catPos = cat.getCatPos();
-
-        if (!debug) {
-            if (catPos != null) {
-                camera.lookAt(catPos);
-                camera.position.x = catPos.x + Math.sin(tick) * 50;
-                camera.position.y = catPos.y;
-                camera.position.z = catPos.z + Math.cos(tick) * 30;
-                tick += 0.001;
-            }
-        }
+        lookAtCat();
         terrain.update();
         particleGenerator.update();
         for (let i = 0; i < rays.length; i++) {
