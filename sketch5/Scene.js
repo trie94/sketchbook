@@ -7,7 +7,6 @@ import Path from './path';
 import Cat from './cat';
 import ParticleGenerator from './particleGenerator';
 import GodRays from './godRays';
-import test from './assets/caustics.jpg';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
