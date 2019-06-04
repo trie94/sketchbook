@@ -40,6 +40,13 @@ if (sketch) {
         result => result.default(),
         error => console.log(error)
     );
+} else {
+    // default sketch
+    sketchName = "sketch5";
+    sketches.sketch5().then(
+        result => result.default(),
+        error => console.log(error)
+    );
 }
 
 function init() {
@@ -53,11 +60,11 @@ function init() {
     sketchWrapper.appendChild(title);
 
     // sketch
-    addSketchElem(sketchWrapper, "sketch1", "Iceberg");
-    addSketchElem(sketchWrapper, "sketch2", "Shell");
-    addSketchElem(sketchWrapper, "sketch3", "Munyu");
-    addSketchElem(sketchWrapper, "sketch4", "Moolang");
     addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
+    addSketchElem(sketchWrapper, "sketch4", "Moolang");
+    addSketchElem(sketchWrapper, "sketch3", "Munyu");
+    addSketchElem(sketchWrapper, "sketch2", "Shell");
+    addSketchElem(sketchWrapper, "sketch1", "Iceberg");
 }
 
 function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
