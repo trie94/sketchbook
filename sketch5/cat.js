@@ -22,6 +22,7 @@ export default function Cat() {
     let front = new THREE.Vector3(0, 0, 1);
     let pt, radians, tangent;
     let faceIndex = 0;
+    const renderTexture = new THREE.WebGLRenderTarget(512, 512);
 
     const clock = new THREE.Clock();
     const textureLoader = new THREE.TextureLoader();
@@ -33,7 +34,7 @@ export default function Cat() {
         transparent: false,
         skinning: true
     });
-
+    // console.log(renderTexture.texture);
     // cat body
     const catMat = new THREE.ShaderMaterial({
         uniforms: {
@@ -42,7 +43,8 @@ export default function Cat() {
             rimPower: { type: "f", value: 2.5 },
             scale: { type: "f", value: 0.072 },
             time: { type: "f", value: 0.0 },
-            freq: { type: "f", value: 0.6 }
+            freq: { type: "f", value: 0.6 },
+            texture: { type: "t", value: renderTexture.texture }
         },
         vertexShader: catVert,
         fragmentShader: catFrag,
@@ -180,9 +182,9 @@ export default function Cat() {
                         object.add(facePlane);
                         // assign object to global cat
                         cat = object;
-                        // cat.matrixWorldNeedsUpdate = true;
+                        // for another pass
+                        // cat.layers.set(1);
                         scene.add(cat);
-                        // console.log(cat);
                     });
                 });
             });

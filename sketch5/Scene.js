@@ -13,7 +13,7 @@ export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
 
-    let debug = false;
+    let debug = true;
 
     const cat = new Cat();
     const skybox = Skybox();
@@ -30,10 +30,18 @@ export default function Scene(canvas) {
     // post processing
     const composer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
-    renderPass.clear = true;
-    const bloomEffect = new BloomEffect();
+    const bloomEffect = new BloomEffect({ strength: 0.5 });
     const effectPass = new EffectPass(camera, bloomEffect);
     effectPass.renderToScreen = true;
+
+    const renderTarget = new THREE.WebGLRenderTarget(WIDTH, HEIGHT);
+    const testGeometry = new THREE.BoxGeometry(100, 100, 100);
+    const testMaterial = new THREE.MeshPhongMaterial({
+        // map: renderTarget.texture,
+    });
+    const cube = new THREE.Mesh(testGeometry, testMaterial);
+    cube.position.y = 100;
+    scene.add(cube);
 
     composer.addPass(renderPass);
     composer.addPass(effectPass);
@@ -60,6 +68,8 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
         camera.lookAt(path.getSpline());
+        camera.layers.enable(1);
+        // camera.layers.set(0);
 
         return camera;
     }
@@ -70,9 +80,7 @@ export default function Scene(canvas) {
         renderer.setSize(WIDTH, HEIGHT);
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.BasicShadowMap;
-        renderer.sortObjects = false;
+        renderer.autoClear = false;
 
         return renderer;
     }
@@ -103,13 +111,32 @@ export default function Scene(canvas) {
         }
     }
 
+    function render() {
+        // renderer.autoClear = false;
+        // renderer.clear();
+
+        camera.layers.set(1);
+        renderer.render(scene, camera);
+        // composer.render();
+
+        // renderer.clearDepth();
+        // camera.layers.set(0);
+        renderer.render(scene, camera);
+    }
+
     this.start = function () {
         // console.log("start");
         cat.loadCat(scene);
         scene.add(skybox);
-        scene.add(terrain.addTerrain());
-        scene.add(particleGenerator.particleSystem);
-        particleGenerator.particleSystem.position.set(0, -10, 0);
+        skybox.layers.set(1);
+        let terrainObj = terrain.addTerrain();
+        terrainObj.layers.set(1);
+        scene.add(terrainObj);
+
+        let particles = particleGenerator.particleSystem;
+        particles.layers.set(1);
+        scene.add(particles);
+        particles.position.set(0, -10, 0);
 
         if (debug) {
             scene.add(path.debug());
@@ -127,8 +154,7 @@ export default function Scene(canvas) {
         for (let i = 0; i < rays.length; i++) {
             rays[i].update(camera);
         }
-        // renderer.render(scene, camera);
-        composer.render(clock.getDelta());
+        render();
     }
 
     this.onWindowResize = function () {

@@ -7,6 +7,8 @@ uniform float scale;
 uniform float freq;
 uniform float time;
 
+varying vec2 v_texcoord;
+
 vec3 mod289(vec3 x) {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
@@ -184,5 +186,8 @@ void main()
     viewPos = viewPosition.xyz;
     vec3 vNormal = normalize(normalMatrix * normal);
     viewNormal = vNormal;
+
+    v_texcoord = uv;
+
     gl_Position = projectionMatrix * viewPosition;
 }
