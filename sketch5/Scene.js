@@ -37,11 +37,14 @@ export default function Scene(canvas) {
     const renderTarget = new THREE.WebGLRenderTarget(WIDTH, HEIGHT);
     const testGeometry = new THREE.BoxGeometry(100, 100, 100);
     const testMaterial = new THREE.MeshPhongMaterial({
-        // map: renderTarget.texture,
+        map: renderTarget.texture,
+        // color: new THREE.Color(0xff89f9)
     });
     const cube = new THREE.Mesh(testGeometry, testMaterial);
     cube.position.y = 100;
+    cube.layers.set(1);
     scene.add(cube);
+    console.log(cube.map);
 
     composer.addPass(renderPass);
     composer.addPass(effectPass);
