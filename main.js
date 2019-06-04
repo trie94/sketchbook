@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "0cb82939da35210f072b";
+/******/ 	var hotCurrentHash = "2f40d1c314de96489cde";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -963,6 +963,14 @@ if (sketch) {
     }, function (error) {
         return console.log(error);
     });
+} else {
+    // default sketch
+    sketchName = "sketch5";
+    sketches.sketch5().then(function (result) {
+        return result.default();
+    }, function (error) {
+        return console.log(error);
+    });
 }
 
 function init() {
@@ -976,11 +984,11 @@ function init() {
     sketchWrapper.appendChild(title);
 
     // sketch
-    addSketchElem(sketchWrapper, "sketch1", "Iceberg");
-    addSketchElem(sketchWrapper, "sketch2", "Shell");
-    addSketchElem(sketchWrapper, "sketch3", "Munyu");
-    addSketchElem(sketchWrapper, "sketch4", "Moolang");
     addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
+    addSketchElem(sketchWrapper, "sketch4", "Moolang");
+    addSketchElem(sketchWrapper, "sketch3", "Munyu");
+    addSketchElem(sketchWrapper, "sketch2", "Shell");
+    addSketchElem(sketchWrapper, "sketch1", "Iceberg");
 }
 
 function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
