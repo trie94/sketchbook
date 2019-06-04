@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BloomEffect, RenderPass, EffectPass, EffectComposer } from "postprocessing";
+// import { BloomEffect, RenderPass, EffectPass, EffectComposer } from "postprocessing";
 const OrbitControls = require('three-orbit-controls')(THREE);
 import Skybox from './background';
 import Terrain from './terrain';
@@ -13,7 +13,7 @@ export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
 
-    let debug = true;
+    let debug = false;
 
     const cat = new Cat();
     const skybox = Skybox();
@@ -28,26 +28,27 @@ export default function Scene(canvas) {
     const controls = debug ? createControl() : null;
 
     // post processing
-    const composer = new EffectComposer(renderer);
-    const renderPass = new RenderPass(scene, camera);
-    const bloomEffect = new BloomEffect({ strength: 0.5 });
-    const effectPass = new EffectPass(camera, bloomEffect);
-    effectPass.renderToScreen = true;
+    // const composer = new EffectComposer(renderer);
+    // const renderPass = new RenderPass(scene, camera);
+    // const bloomEffect = new BloomEffect({ strength: 0.5 });
+    // const effectPass = new EffectPass(camera, bloomEffect);
+    // effectPass.renderToScreen = true;
 
-    const renderTarget = new THREE.WebGLRenderTarget(WIDTH, HEIGHT);
-    const testGeometry = new THREE.BoxGeometry(100, 100, 100);
-    const testMaterial = new THREE.MeshPhongMaterial({
-        map: renderTarget.texture,
-        // color: new THREE.Color(0xff89f9)
-    });
-    const cube = new THREE.Mesh(testGeometry, testMaterial);
-    cube.position.y = 100;
-    cube.layers.set(1);
-    scene.add(cube);
-    console.log(cube.map);
+    // const renderTarget = new THREE.WebGLRenderTarget(WIDTH, HEIGHT, {
+    //     depthBuffer: false,
+    //     stencilBuffer: false
+    // });
+    // const testGeometry = new THREE.BoxGeometry(100, 100, 100);
+    // const testMaterial = new THREE.MeshPhongMaterial({
+    //     map: renderTarget.texture,
+    //     // color: new THREE.Color(0xff89f9),
+    // });
+    // const cube = new THREE.Mesh(testGeometry, testMaterial);
+    // cube.position.y = 100;
+    // scene.add(cube);
 
-    composer.addPass(renderPass);
-    composer.addPass(effectPass);
+    // composer.addPass(renderPass);
+    // composer.addPass(effectPass);
 
     const clock = new THREE.Clock();
 
@@ -71,7 +72,7 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
         camera.lookAt(path.getSpline());
-        camera.layers.enable(1);
+        // camera.layers.enable(1);
         // camera.layers.set(0);
 
         return camera;
@@ -83,7 +84,7 @@ export default function Scene(canvas) {
         renderer.setSize(WIDTH, HEIGHT);
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
-        renderer.autoClear = false;
+        // renderer.autoClear = false;
 
         return renderer;
     }
@@ -117,11 +118,17 @@ export default function Scene(canvas) {
     function render() {
         // renderer.autoClear = false;
         // renderer.clear();
+        // camera.renderTarget = renderTarget;
+        // renderer.setRenderTarget(renderTarget);
+        // renderer.clear();
+        // renderer.render(scene, camera);
 
-        camera.layers.set(1);
-        renderer.render(scene, camera);
         // composer.render();
 
+        // renderer.setRenderTarget(null);
+        // renderer.clear();
+
+        // camera.layers.set(1);
         // renderer.clearDepth();
         // camera.layers.set(0);
         renderer.render(scene, camera);
@@ -131,13 +138,13 @@ export default function Scene(canvas) {
         // console.log("start");
         cat.loadCat(scene);
         scene.add(skybox);
-        skybox.layers.set(1);
+        // skybox.layers.set(1);
         let terrainObj = terrain.addTerrain();
-        terrainObj.layers.set(1);
+        // terrainObj.layers.set(1);
         scene.add(terrainObj);
 
         let particles = particleGenerator.particleSystem;
-        particles.layers.set(1);
+        // particles.layers.set(1);
         scene.add(particles);
         particles.position.set(0, -10, 0);
 
