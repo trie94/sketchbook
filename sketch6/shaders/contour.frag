@@ -2,8 +2,7 @@ varying vec2 vUv;
 uniform sampler2D tDiffuse;
 uniform vec2 iResolution;
 
-// #define Sensitivity (vec2(0.3, 1.5) * iResolution.y / 400.0)
-#define Sensitivity (iResolution.xy / 1.0)
+#define Sensitivity (vec2(0.3, 1.5) * iResolution.y / 400.0)
 
 float checkSame(vec4 center, vec4 samplef)
 {
@@ -11,9 +10,11 @@ float checkSame(vec4 center, vec4 samplef)
     float centerDepth = center.z;
     vec2 sampleNormal = samplef.xy;
     float sampleDepth = samplef.z;
-    vec2 diffNormal = abs(centerNormal - sampleNormal) * Sensitivity.x;
+    // vec2 diffNormal = abs(centerNormal - sampleNormal) * Sensitivity.x;
+    vec2 diffNormal = abs(centerNormal - sampleNormal);
     bool isSameNormal = (diffNormal.x + diffNormal.y) < 0.1;
-    float diffDepth = abs(centerDepth - sampleDepth) * Sensitivity.y;
+    // float diffDepth = abs(centerDepth - sampleDepth) * Sensitivity.y;
+    float diffDepth = abs(centerDepth - sampleDepth);
     bool isSameDepth = diffDepth < 0.1;
     return (isSameNormal && isSameDepth) ? 1.0 : 0.0;
 }

@@ -67,7 +67,8 @@ export default function Scene(canvas) {
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
         renderer.setPixelRatio((window.devicePixelRatio) ? window.devicePixelRatio : 1);
         renderer.setSize(WIDTH, HEIGHT);
-        // renderer.setClearColor(0x4f8391);
+        // renderer.shadowMap.enabled = true;
+        // renderer.setClearColor(0xffffff);
         // renderer.gammaInput = true;
         // renderer.gammaOutput = true;
 
@@ -99,16 +100,16 @@ export default function Scene(canvas) {
 
     this.start = function () {
         console.log("start");
-        // for (let i = 0; i < light.length; i++) {
-        //     scene.add(light[i]);
-        // }
+        for (let i = 0; i < light.length; i++) {
+            scene.add(light[i]);
+        }
         // scene.add(skybox);
         scene.add(objects.getSphere());
         scene.add(objects.getFloor());
     }
 
     this.update = function () {
-        // renderer.render(scene, camera);
+        renderer.render(scene, camera);
         // renderer.autoClear = true;
         composer.render();
     }
