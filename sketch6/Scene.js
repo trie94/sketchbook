@@ -22,6 +22,7 @@ export default function Scene(canvas) {
     const controls = createControl();
 
     const resolution = new THREE.Vector2(WIDTH, HEIGHT);
+
     // passes
     const composer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
