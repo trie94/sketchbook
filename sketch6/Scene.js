@@ -29,7 +29,7 @@ export default function Scene(canvas) {
     const contourShader = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { type: 't', value: null },
-            color: { type: 'c', value: new THREE.Color(0xf442eb) },
+            // color: { type: 'c', value: new THREE.Color(0xf4e841) },
             iResolution: { type: 'v2', value: resolution }
         },
         vertexShader: VERTEX,
@@ -37,6 +37,7 @@ export default function Scene(canvas) {
     });
 
     const shaderPass = new ShaderPass(contourShader, "tDiffuse");
+    // renderPass.renderToScreen = true;
     shaderPass.renderToScreen = true;
     composer.addPass(renderPass);
     composer.addPass(shaderPass);
@@ -66,8 +67,9 @@ export default function Scene(canvas) {
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
         renderer.setPixelRatio((window.devicePixelRatio) ? window.devicePixelRatio : 1);
         renderer.setSize(WIDTH, HEIGHT);
-        renderer.gammaInput = true;
-        renderer.gammaOutput = true;
+        // renderer.setClearColor(0x4f8391);
+        // renderer.gammaInput = true;
+        // renderer.gammaOutput = true;
 
         return renderer;
     }
@@ -90,23 +92,24 @@ export default function Scene(canvas) {
         controls.target = new THREE.Vector3(0, 0, 0);
         // controls.maxPolarAngle = Math.PI / 2;
         // controls.maxDistance = 70;
-        controls.minDistance = 100;
+        // controls.minDistance = 100;
 
         return controls;
     }
 
     this.start = function () {
         console.log("start");
-        for (let i = 0; i < light.length; i++) {
-            scene.add(light[i]);
-        }
-        scene.add(skybox);
+        // for (let i = 0; i < light.length; i++) {
+        //     scene.add(light[i]);
+        // }
+        // scene.add(skybox);
         scene.add(objects.getSphere());
         scene.add(objects.getFloor());
     }
 
     this.update = function () {
         // renderer.render(scene, camera);
+        // renderer.autoClear = true;
         composer.render();
     }
 
