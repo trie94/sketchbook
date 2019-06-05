@@ -3,12 +3,15 @@ import { RenderPass, ShaderPass, EffectComposer } from "postprocessing";
 const OrbitControls = require('three-orbit-controls')(THREE);
 import Skybox from './background';
 import Objects from './object';
-import VERTEX from './shaders/contour.vert';
-import FRAGMENT from './shaders/contour.frag';
+import contourVert from './shaders/contour.vert';
+import contourFrag from './shaders/contour.frag';
+import stylizeVert from './shaders/stylize.vert';
+import stylizeFrag from './shaders/stylize.frag';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
+    let SHADOW_MAP_SIZE = 1024;
 
     let debug = true;
     const skybox = Skybox();
@@ -21,6 +24,15 @@ export default function Scene(canvas) {
     const camera = createCamera();
     const controls = createControl();
 
+    // render texture
+    const depthBuffer = new THREE.WebGLRenderTarget(WIDTH, HEIGHT);
+    depthBuffer.texture.format = THREE.RGBFormat;
+    depthBuffer.texture.minFilter = THREE.LinearFilter;
+    depthBuffer.texture.magFilter = THREE.LinearFilter;
+    depthBuffer.texture.generateMipmaps = false;
+    depthBuffer.stencilBuffer = false;
+    depthBuffer.depthBuffer = true;
+
     const resolution = new THREE.Vector2(WIDTH, HEIGHT);
 
     // passes
@@ -30,18 +42,32 @@ export default function Scene(canvas) {
     const contourShader = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { type: 't', value: null },
-            // color: { type: 'c', value: new THREE.Color(0xf4e841) },
+            tDepth: { type: 't', value: null },
             iResolution: { type: 'v2', value: resolution }
         },
-        vertexShader: VERTEX,
-        fragmentShader: FRAGMENT,
+        vertexShader: contourVert,
+        fragmentShader: contourFrag,
     });
 
     const shaderPass = new ShaderPass(contourShader, "tDiffuse");
-    // renderPass.renderToScreen = true;
+
+    const finalShader = new THREE.ShaderMaterial({
+        uniforms: {
+            tDiffuse: { type: 't', value: null },
+            tDepth: { type: 't', value: null },
+            iResolution: { type: 'v2', value: resolution }
+        },
+        vertexShader: stylizeVert,
+        fragmentShader: stylizeFrag
+    });
+    const finalPass = new ShaderPass(finalShader, "tDiffuse");
+
+    renderPass.renderToScreen = false;
     shaderPass.renderToScreen = true;
+    finalPass.renderToScreen = false;
     composer.addPass(renderPass);
     composer.addPass(shaderPass);
+    composer.addPass(finalPass);
 
     const clock = new THREE.Clock();
     let tick = 0;
@@ -54,11 +80,11 @@ export default function Scene(canvas) {
 
     function createCamera() {
         const aspectRatio = WIDTH / HEIGHT;
-        const fieldOfView = 60;
+        const fieldOfView = 40;
         const nearPlane = 1;
-        const farPlane = 10000;
+        const farPlane = 1000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
-        camera.position.set(0, 100, 0);
+        camera.position.set(50, 40, 50);
         camera.lookAt(new THREE.Vector3());
 
         return camera;
@@ -68,8 +94,10 @@ export default function Scene(canvas) {
         const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
         renderer.setPixelRatio((window.devicePixelRatio) ? window.devicePixelRatio : 1);
         renderer.setSize(WIDTH, HEIGHT);
-        // renderer.shadowMap.enabled = true;
-        // renderer.setClearColor(0xffffff);
+        renderer.shadowMap.enabled = true;
+        renderer.renderReverseSided = false;
+        // renderer.renderSingleSided = false;
+        renderer.setClearColor(0x000000);
         // renderer.gammaInput = true;
         // renderer.gammaOutput = true;
 
@@ -79,12 +107,24 @@ export default function Scene(canvas) {
     function createLights() {
         let lights = [];
         // lights.push(new THREE.AmbientLight(0x999999, 0.5));
-        lights.push(new THREE.DirectionalLight(0xffffff, 1));
-        // lights.push(new THREE.DirectionalLight(0x46f5fd, 1));
-        // lights.push(new THREE.DirectionalLight(0x8200C9, 1));
-        // lights[1].position.set(10, 0, 0);
-        // lights[2].position.set(0.75, 1, 0.5);
-        // lights[3].position.set(-0.75, -1, 0.5);
+        let directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        directionalLight.position.set(50, 50, 0);
+
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = SHADOW_MAP_SIZE;
+        directionalLight.shadow.mapSize.height = SHADOW_MAP_SIZE;
+        directionalLight.shadow.camera.far = 100;
+
+        directionalLight.shadow.camera.top = 20;
+        directionalLight.shadow.camera.bottom = -20;
+        directionalLight.shadow.camera.left = -20;
+        directionalLight.shadow.camera.right = 20;
+        // directionalLight.shadow.bias = -0.0001;
+
+        // let helper = new THREE.CameraHelper(directionalLight.shadow.camera);
+        // scene.add(helper);
+
+        lights.push(directionalLight);
 
         return lights;
     }
@@ -110,8 +150,16 @@ export default function Scene(canvas) {
     }
 
     this.update = function () {
+        objects.assignPhongMat();
+        renderer.setRenderTarget(depthBuffer);
         renderer.render(scene, camera);
+        contourShader.uniforms.tDepth.value = depthBuffer.texture;
         // renderer.autoClear = true;
+
+        objects.assignNormalMat();
+        renderer.setRenderTarget(null);
+        renderer.render(scene, camera);
+        renderer.autoClear = true;
         composer.render();
     }
 
@@ -124,6 +172,9 @@ export default function Scene(canvas) {
 
         camera.aspect = WIDTH / HEIGHT;
         camera.updateProjectionMatrix();
+
+        depthBuffer.setSize(WIDTH, HEIGHT);
+
         contourShader.uniforms.iResolution.value.set(WIDTH, HEIGHT);
 
         composer.setSize(WIDTH, HEIGHT);
@@ -131,6 +182,6 @@ export default function Scene(canvas) {
     }
 
     this.onMouseClick = function () {
-        console.log("click");
+        // console.log("click");
     }
 }
