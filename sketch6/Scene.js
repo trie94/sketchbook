@@ -54,8 +54,9 @@ export default function Scene(canvas) {
     const finalShader = new THREE.ShaderMaterial({
         uniforms: {
             tDiffuse: { type: 't', value: null },
-            tDepth: { type: 't', value: null },
-            iResolution: { type: 'v2', value: resolution }
+            time: { type: 'f', value: 0.0 },
+            scale: { type: 'f', value: 0.01 },
+            freq: { type: 'f', value: 0.5 }
         },
         vertexShader: stylizeVert,
         fragmentShader: stylizeFrag
@@ -63,8 +64,8 @@ export default function Scene(canvas) {
     const finalPass = new ShaderPass(finalShader, "tDiffuse");
 
     renderPass.renderToScreen = false;
-    shaderPass.renderToScreen = true;
-    finalPass.renderToScreen = false;
+    shaderPass.renderToScreen = false;
+    finalPass.renderToScreen = true;
     composer.addPass(renderPass);
     composer.addPass(shaderPass);
     composer.addPass(finalPass);
