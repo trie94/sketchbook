@@ -3,6 +3,8 @@ uniform sampler2D tDiffuse;
 uniform float time;
 uniform float freq;
 uniform float scale;
+uniform vec3 edgeColor;
+uniform vec3 backgroundColor;
 
 vec3 mod289(vec3 x) {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -96,10 +98,8 @@ float snoise(vec3 v)
                                 dot(p2,x2), dot(p3,x3) ) );
   }
 
-#define EdgeColor vec4(0.2, 0.2, 0.15, 1.0)
-#define BackgroundColor vec4(1,0.95,0.85,1)
-#define ErrorRange 0.003
-#define ErrorPeriod 30.0
+#define Offset 0.003
+#define Period 30.0
 
 float triangle(float x)
 {
@@ -114,22 +114,17 @@ void main()
     float t = floor(time * 16.0) / 16.0;
 
     vec2 uv = vUv;
-    uv += vec2(triangle(uv.y * rand(t) * 1.0) * rand(t * 1.9) * 0.005,
-    triangle(uv.x * rand(t * 3.4) * 1.0) * rand(t * 2.1) * 0.005);
-
     float noise = scale * (snoise(vec3(uv.xy * 0.5, freq)) - 0.5);
 
+    // add more elem if lines needed
     vec2 uvs[3];
-    uvs[0] = uv + vec2(ErrorRange * sin(ErrorPeriod * uv.y + 0.0) + noise, ErrorRange * sin(ErrorPeriod * uv.x + 0.0) + noise);
-    uvs[1] = uv + vec2(ErrorRange * sin(ErrorPeriod * uv.y + 1.047) + noise, ErrorRange * sin(ErrorPeriod * uv.x + 3.142) + noise);
-    uvs[2] = uv + vec2(ErrorRange * sin(ErrorPeriod * uv.y + 2.094) + noise, ErrorRange * sin(ErrorPeriod * uv.x + 1.571) + noise);
-
-    float edge = texture2D(tDiffuse, uvs[0]).r * texture2D(tDiffuse, uvs[1]).r * texture2D(tDiffuse, uvs[2]).r;
+    uvs[0] = uv + vec2(sin(uv.y * Period) * Offset + noise, sin(uv.x * Period) * Offset + noise);
+    float edge = texture2D(tDiffuse, uvs[0]).r;
+    // float edge = texture2D(tDiffuse, uvs[0]).r * texture2D(tDiffuse, uvs[1]).r * texture2D(tDiffuse, uvs[2]).r;
 
     float diffuse = texture2D(tDiffuse, uv).g;
     // float w = fwidth(diffuse);
-    float w = -0.0001;
-    vec4 mCol = mix(BackgroundColor * 0.5, BackgroundColor, mix(0.0, 1.0, smoothstep(-w, w, diffuse - 0.3)));
-
-    gl_FragColor = mix(EdgeColor, mCol, edge);
+    float w = 0.00001;
+    vec4 color = mix(vec4(backgroundColor, 1.0) * 0.5, vec4(backgroundColor, 1.0), mix(0.0, 1.0, smoothstep(w, -w, diffuse - 0.5)));
+    gl_FragColor = mix(vec4(edgeColor, 1.0), color, edge);
 }

@@ -56,7 +56,9 @@ export default function Scene(canvas) {
             tDiffuse: { type: 't', value: null },
             time: { type: 'f', value: 0.0 },
             scale: { type: 'f', value: 0.01 },
-            freq: { type: 'f', value: 0.5 }
+            freq: { type: 'f', value: 0.5 },
+            edgeColor: { type: 'c', value: new THREE.Color(0x282723) },
+            backgroundColor: { type: 'c', value: new THREE.Color(0xe0ddd0) }
         },
         vertexShader: stylizeVert,
         fragmentShader: stylizeFrag
@@ -85,7 +87,7 @@ export default function Scene(canvas) {
         const nearPlane = 1;
         const farPlane = 1000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
-        camera.position.set(50, 40, 50);
+        camera.position.set(50, 30, 90);
         camera.lookAt(new THREE.Vector3());
 
         return camera;
