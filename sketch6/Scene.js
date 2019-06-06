@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { RenderPass, ShaderPass, EffectComposer } from "postprocessing";
 const OrbitControls = require('three-orbit-controls')(THREE);
-import Skybox from './background';
 import Objects from './object';
 import contourVert from './shaders/contour.vert';
 import contourFrag from './shaders/contour.frag';
@@ -13,8 +12,6 @@ export default function Scene(canvas) {
     let WIDTH = window.innerWidth;
     let SHADOW_MAP_SIZE = 1024;
 
-    let debug = true;
-    const skybox = Skybox();
     const objects = new Objects();
 
     // scene subjects
@@ -55,8 +52,7 @@ export default function Scene(canvas) {
         uniforms: {
             tDiffuse: { type: 't', value: null },
             time: { type: 'f', value: 0.0 },
-            scale: { type: 'f', value: 0.01 },
-            freq: { type: 'f', value: 0.5 },
+            scale: { type: 'f', value: 0.001 },
             edgeColor: { type: 'c', value: new THREE.Color(0x282723) },
             backgroundColor: { type: 'c', value: new THREE.Color(0xe0ddd0) }
         },
@@ -147,12 +143,14 @@ export default function Scene(canvas) {
         for (let i = 0; i < light.length; i++) {
             scene.add(light[i]);
         }
-        // scene.add(skybox);
         scene.add(objects.getSphere());
         scene.add(objects.getFloor());
     }
 
     this.update = function () {
+        // let time = Date.now()/10000;
+        // time = time - Math.floor(time);
+        // finalShader.uniforms.time.value = time;
         objects.assignPhongMat();
         renderer.setRenderTarget(depthBuffer);
         renderer.render(scene, camera);

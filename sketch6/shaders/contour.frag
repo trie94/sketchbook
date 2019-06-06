@@ -3,19 +3,16 @@ uniform sampler2D tDiffuse;
 uniform sampler2D tDepth;
 uniform vec2 iResolution;
 
-
-#define Sensitivity (vec2(0.3, 1.5) * iResolution.y / 400.0)
-
 float checkSame(vec4 center, vec4 samplef)
 {
     vec2 centerNormal = center.xy;
     float centerDepth = center.z;
     vec2 sampleNormal = samplef.xy;
     float sampleDepth = samplef.z;
-    // vec2 diffNormal = abs(centerNormal - sampleNormal) * Sensitivity.x;
+    
     vec2 diffNormal = abs(centerNormal - sampleNormal);
     bool isSameNormal = (diffNormal.x + diffNormal.y) < 0.1;
-    // float diffDepth = abs(centerDepth - sampleDepth) * Sensitivity.y;
+    
     float diffDepth = abs(centerDepth - sampleDepth);
     bool isSameDepth = diffDepth < 0.1;
     return (isSameNormal && isSameDepth) ? 1.0 : 0.0;
@@ -32,8 +29,3 @@ void main()
     float depth = texture2D(tDepth, vUv).x;
     gl_FragColor = vec4(edge, depth, 1.0, 1.0);
 }
-
-// void main() {
-//     vec4 previousPassColor = texture2D(tDiffuse, vUv);
-//     gl_FragColor = vec4(previousPassColor.rgb * color, previousPassColor.w);
-// }

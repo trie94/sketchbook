@@ -1,7 +1,6 @@
 varying vec2 vUv;
 uniform sampler2D tDiffuse;
 uniform float time;
-uniform float freq;
 uniform float scale;
 uniform vec3 edgeColor;
 uniform vec3 backgroundColor;
@@ -111,10 +110,10 @@ float rand(float x)
 }
 void main()
 {
-    float t = floor(time * 16.0) / 16.0;
+    float t = sin(time) * 100.0;
 
     vec2 uv = vUv;
-    float noise = scale * (snoise(vec3(uv.xy * 0.5, freq)) - 0.5);
+    float noise = scale * snoise(vec3(uv.xy, t));
 
     // add more elem if lines needed
     vec2 uvs[3];
@@ -123,7 +122,6 @@ void main()
     // float edge = texture2D(tDiffuse, uvs[0]).r * texture2D(tDiffuse, uvs[1]).r * texture2D(tDiffuse, uvs[2]).r;
 
     float diffuse = texture2D(tDiffuse, uv).g;
-    // float w = fwidth(diffuse);
     float w = 0.00001;
     vec4 color = mix(vec4(backgroundColor, 1.0) * 0.5, vec4(backgroundColor, 1.0), mix(0.0, 1.0, smoothstep(w, -w, diffuse - 0.5)));
     gl_FragColor = mix(vec4(edgeColor, 1.0), color, edge);
