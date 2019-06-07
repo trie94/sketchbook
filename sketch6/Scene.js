@@ -97,8 +97,8 @@ export default function Scene(canvas) {
         renderer.renderReverseSided = false;
         // renderer.renderSingleSided = false;
         renderer.setClearColor(0x000000);
-        // renderer.gammaInput = true;
-        // renderer.gammaOutput = true;
+        renderer.gammaInput = true;
+        renderer.gammaOutput = true;
 
         return renderer;
     }
@@ -107,18 +107,18 @@ export default function Scene(canvas) {
         let lights = [];
         // lights.push(new THREE.AmbientLight(0x999999, 0.5));
         let directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        directionalLight.position.set(50, 50, 0);
+        directionalLight.position.set(100, 100, 0);
 
         directionalLight.castShadow = true;
         directionalLight.shadow.mapSize.width = SHADOW_MAP_SIZE;
         directionalLight.shadow.mapSize.height = SHADOW_MAP_SIZE;
-        directionalLight.shadow.camera.far = 100;
+        directionalLight.shadow.camera.far = 500;
 
-        directionalLight.shadow.camera.top = 20;
-        directionalLight.shadow.camera.bottom = -20;
-        directionalLight.shadow.camera.left = -20;
-        directionalLight.shadow.camera.right = 20;
-        // directionalLight.shadow.bias = -0.0001;
+        directionalLight.shadow.camera.top = 50;
+        directionalLight.shadow.camera.bottom = -50;
+        directionalLight.shadow.camera.left = -50;
+        directionalLight.shadow.camera.right = 50;
+        directionalLight.shadow.bias = -0.0001;
 
         // let helper = new THREE.CameraHelper(directionalLight.shadow.camera);
         // scene.add(helper);
@@ -131,9 +131,9 @@ export default function Scene(canvas) {
     function createControl() {
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.target = new THREE.Vector3(0, 0, 0);
-        // controls.maxPolarAngle = Math.PI / 2;
-        // controls.maxDistance = 70;
-        // controls.minDistance = 100;
+        controls.maxPolarAngle = Math.PI / 2;
+        controls.minDistance = 40;
+        controls.maxDistance = 300;
 
         return controls;
     }
@@ -148,9 +148,6 @@ export default function Scene(canvas) {
     }
 
     this.update = function () {
-        // let time = Date.now()/10000;
-        // time = time - Math.floor(time);
-        // finalShader.uniforms.time.value = time;
         objects.assignPhongMat();
         renderer.setRenderTarget(depthBuffer);
         renderer.render(scene, camera);

@@ -6,8 +6,6 @@ export default function object() {
     const phongMat = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         shininess: 0.0,
-        // specular: 0.0,
-        // reflectivity: 0.0,
     });
     const sphereMesh = new THREE.Mesh(sphereGeo, normalMat);
     sphereMesh.castShadow = true;
@@ -21,7 +19,6 @@ export default function object() {
     floorMesh.receiveShadow = true;
 
     this.getSphere = function () {
-        console.log(sphereMesh);
         return sphereMesh;
     }
 
