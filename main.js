@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "2f40d1c314de96489cde";
+/******/ 	var hotCurrentHash = "f98f15fdfcf55243c43f";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -744,7 +744,7 @@
 /******/
 /******/ 	// script path function
 /******/ 	function jsonpScriptSrc(chunkId) {
-/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch1","2":"sketch2","3":"sketch3","4":"sketch4","5":"sketch5"}[chunkId]||chunkId) + "/" + ({"1":"sketch1","2":"sketch2","3":"sketch3","4":"sketch4","5":"sketch5"}[chunkId]||chunkId) + ".js"
+/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5"}[chunkId]||chunkId) + "/" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5"}[chunkId]||chunkId) + ".js"
 /******/ 	}
 /******/
 /******/ 	// The require function
@@ -935,20 +935,21 @@ init();
 
 // get sketch
 var sketches = {
-    sketch1: function sketch1() {
-        return __webpack_require__.e(/* import() | sketch1 */ 1).then(__webpack_require__.t.bind(null, "./sketch1/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
-    },
+    // sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketch1").then(document.getElementById(sketchName).style.color = "#81d9f9"),
     sketch2: function sketch2() {
-        return __webpack_require__.e(/* import() | sketch2 */ 2).then(__webpack_require__.t.bind(null, "./sketch2/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
+        return __webpack_require__.e(/* import() | sketch2 */ 1).then(__webpack_require__.t.bind(null, "./sketch2/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     },
     sketch3: function sketch3() {
-        return __webpack_require__.e(/* import() | sketch3 */ 3).then(__webpack_require__.t.bind(null, "./sketch3/index.js", 7)).then(document.getElementById(sketchName).style.color = "#635a40");
+        return __webpack_require__.e(/* import() | sketch3 */ 2).then(__webpack_require__.t.bind(null, "./sketch3/index.js", 7)).then(document.getElementById(sketchName).style.color = "#635a40");
     },
     sketch4: function sketch4() {
-        return __webpack_require__.e(/* import() | sketch4 */ 4).then(__webpack_require__.t.bind(null, "./sketch4/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
+        return __webpack_require__.e(/* import() | sketch4 */ 3).then(__webpack_require__.t.bind(null, "./sketch4/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
     },
     sketch5: function sketch5() {
-        return __webpack_require__.e(/* import() | sketch5 */ 5).then(__webpack_require__.t.bind(null, "./sketch5/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
+        return __webpack_require__.e(/* import() | sketch5 */ 4).then(__webpack_require__.t.bind(null, "./sketch5/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
+    },
+    sketch6: function sketch6() {
+        return __webpack_require__.e(/* import() | sketch5 */ 4).then(__webpack_require__.t.bind(null, "./sketch6/index.js", 7)).then(document.getElementById(sketchName).style.color = "black");
     }
 };
 
@@ -985,10 +986,11 @@ function init() {
 
     // sketch
     addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
+    addSketchElem(sketchWrapper, "sketch6", "Sketchy shader");
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");
     addSketchElem(sketchWrapper, "sketch2", "Shell");
-    addSketchElem(sketchWrapper, "sketch1", "Iceberg");
+    // addSketchElem(sketchWrapper, "sketch1", "Iceberg");
 }
 
 function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
