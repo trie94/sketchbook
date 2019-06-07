@@ -7,6 +7,10 @@ uniform float freq;
 uniform float time1;
 uniform float time2;
 
+varying vec2 vUv;
+varying vec2 v_texcoord;
+varying vec2 v_texcoord2;
+
 vec3 mod289(vec3 x) {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
@@ -19,13 +23,11 @@ vec4 permute(vec4 x) {
      return mod289(((x*34.0)+1.0)*x);
 }
 
-vec4 taylorInvSqrt(vec4 r)
-{
+vec4 taylorInvSqrt(vec4 r) {
   return 1.79284291400159 - 0.85373472095314 * r;
 }
 
-float snoise(vec3 v)
-  { 
+float snoise(vec3 v) { 
   const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
   const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
 
@@ -97,21 +99,17 @@ float snoise(vec3 v)
   m = m * m;
   return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
                                 dot(p2,x2), dot(p3,x3) ) );
-  }
+}
 
-  float surface3 (vec3 coord) {
-      float n = 0.0;
-      n += 1.0 * abs(snoise(coord));
-      n += 0.5 * abs(snoise(coord * 2.0));
-      n += 0.25 * abs(snoise(coord * 4.0));
-      n += 0.125 * abs(snoise(coord * 8.0));
+float surface3 (vec3 coord) {
+    float n = 0.0;
+    n += 1.0 * abs(snoise(coord));
+    n += 0.5 * abs(snoise(coord * 2.0));
+    n += 0.25 * abs(snoise(coord * 4.0));
+    n += 0.125 * abs(snoise(coord * 8.0));
 
-      return n;
-  }
-
-varying vec2 vUv;
-varying vec2 v_texcoord;
-varying vec2 v_texcoord2;
+    return n;
+}
 
 void main() {
     vec3 pos = position;

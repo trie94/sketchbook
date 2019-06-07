@@ -10,6 +10,5 @@ void main() {
     rim = 1.0 - rim;
     rim = pow(rim, rimPower);
     vec3 color = mix(color, rimColor, rim);
-    // vec4 render_texture = texture2D(texture, v_texcoord * 1.0);
     gl_FragColor = vec4(rimColor, rim);
 }

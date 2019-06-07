@@ -3,8 +3,6 @@ uniform sampler2D tDiffuse;
 uniform sampler2D tDepth;
 uniform vec2 iResolution;
 
-// #define Sensitivity (vec2(0.3, 1.5) * iResolution.y / 400.0)
-
 float checkSame(vec4 center, vec4 samplef)
 {
     vec2 centerNormal = center.xy;
