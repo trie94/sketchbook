@@ -2,6 +2,7 @@ import * as THREE from 'three';
 const OrbitControls = require('three-orbit-controls')(THREE);
 import Skybox from './background';
 import Fish from './Fish';
+import Pot from './Pot';
 
 export default function Scene(canvas) {
     const clock = new THREE.Clock();
@@ -12,9 +13,11 @@ export default function Scene(canvas) {
     const scene = createScene();
     const renderer = createRenderer();
     const camera = createCamera();
+    const light = createLights();
     const controls = createControl();
     const skybox = Skybox();
     const fish = new Fish();
+    const pot = new Pot();
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -46,6 +49,20 @@ export default function Scene(canvas) {
         return camera;
     }
 
+    function createLights() {
+        let lights = [];
+        // lights.push(new THREE.AmbientLight(0x999999, 0.5));
+        let directionalLight = new THREE.DirectionalLight();
+        directionalLight.position.set(30, 50, 0);
+        directionalLight.castShadow = true;
+        // let helper = new THREE.CameraHelper(directionalLight.shadow.camera);
+        // scene.add(helper);
+
+        lights.push(directionalLight);
+
+        return lights;
+    }
+
     function createControl() {
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.target = new THREE.Vector3(0, 0, 0);
@@ -56,8 +73,12 @@ export default function Scene(canvas) {
     }
 
     this.start = function () {
+        for (let i = 0; i < light.length; i++) {
+            scene.add(light[i]);
+        }
         scene.add(skybox);
         scene.add(fish);
+        scene.add(pot);
     }
 
     this.update = function () {
