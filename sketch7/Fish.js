@@ -16,7 +16,7 @@ export default function Fish() {
     });
 
     const limbMat = new THREE.MeshBasicMaterial({
-        color: 0xff6700
+        color: 0x8eb8e2
     });
 
     loader.load(

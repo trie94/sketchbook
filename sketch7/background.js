@@ -6,8 +6,8 @@ export default function skybox() {
     const gradgeo = new THREE.BoxGeometry(10000, 10000, 10000);
     const gradMat = new THREE.ShaderMaterial({
         uniforms: {
-            uColorA: { value: new THREE.Color(0xe7ddd1) },
-            uColorB: { value: new THREE.Color(0xcabcaa) }
+            uColorA: { value: new THREE.Color(0xdaebed) },
+            uColorB: { value: new THREE.Color(0xe9daed) }
         },
         vertexShader: vertShader,
         fragmentShader: fragShader,

@@ -3,6 +3,7 @@ const OrbitControls = require('three-orbit-controls')(THREE);
 import Skybox from './background';
 import Fish from './Fish';
 import Pot from './Pot';
+import Bean from './Bean';
 
 export default function Scene(canvas) {
     const clock = new THREE.Clock();
@@ -18,6 +19,7 @@ export default function Scene(canvas) {
     const skybox = Skybox();
     const fish = new Fish();
     const pot = new Pot();
+    const beans = [];
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -51,9 +53,9 @@ export default function Scene(canvas) {
 
     function createLights() {
         let lights = [];
-        // lights.push(new THREE.AmbientLight(0x999999, 0.5));
-        let directionalLight = new THREE.DirectionalLight();
-        directionalLight.position.set(30, 50, 0);
+        lights.push(new THREE.AmbientLight(0x999999, 0.5));
+        let directionalLight = new THREE.DirectionalLight(0xb2f9ff, 0.5);
+        directionalLight.position.set(60, 50, 0);
         directionalLight.castShadow = true;
         // let helper = new THREE.CameraHelper(directionalLight.shadow.camera);
         // scene.add(helper);
@@ -76,8 +78,15 @@ export default function Scene(canvas) {
         for (let i = 0; i < light.length; i++) {
             scene.add(light[i]);
         }
+        // for (let i=0; i<10; i++) {
+        //     let b = new Bean();
+        //     // beans.push(b);
+        //     scene.add(b);
+        //     b.position.set(getRandom(-5, 5), -3.3, getRandom(-5, 5));
+        // }
+
         scene.add(skybox);
-        scene.add(fish);
+        // scene.add(fish);
         scene.add(pot);
     }
 
@@ -99,5 +108,9 @@ export default function Scene(canvas) {
     }
 
     this.onMouseClick = function () {
+    }
+
+    function getRandom(min, max) {
+        return Math.random() * (max - min) + min;
     }
 }

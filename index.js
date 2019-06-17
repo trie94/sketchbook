@@ -67,7 +67,7 @@ function init() {
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");
     addSketchElem(sketchWrapper, "sketch2", "Shell");
-    addSketchElem(sketchWrapper, "sketch7", "Coffee fish");
+    addSketchElem(sketchWrapper, "sketch7", "Liquid");
     // addSketchElem(sketchWrapper, "sketch1", "Iceberg");
 }
 

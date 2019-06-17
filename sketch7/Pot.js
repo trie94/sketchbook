@@ -10,21 +10,23 @@ export default function Pot() {
     const sphere = new THREE.SphereGeometry(5, 20, 20);
     const tempMat = new THREE.MeshNormalMaterial();
 
-    const glassMat = new THREE.MeshBasicMaterial({
+    const glassMat = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         transparent: true,
         opacity: 0.2,
         depthWrite: false,
-        // shininess: 500
+        shininess: 1000
     });
 
     const lidMat = new THREE.MeshBasicMaterial({
-        color: 0x8e7d73
+        color: 0x454b51
     });
 
     const liquidMat = new THREE.ShaderMaterial({
         uniforms: {
-            color: { type: 'c', value: new THREE.Color(0x501e00) },
+            color: { type: 'c', value: new THREE.Color(0xbe82ff) },
+            rimColor: { type: 'c', value: new THREE.Color(0x89f5ff) },
+            foamColor: { type: 'c', value: new THREE.Color(0xcee1ff) },
             fillHeight: { type: 'f', value: -0.2 }
         },
         vertexShader: liquidVert,
