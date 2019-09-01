@@ -13,7 +13,6 @@ export default function Scene(canvas) {
     const gameLink = "https://drive.google.com/drive/u/0/folders/1mRQQlGuRYYVI8jx6ppnvOFs_dKKrJbVJ";
 
     this.start = function () {
-        console.log("start");
         const root = document.getElementById('root');
 
         // video
