@@ -19,12 +19,15 @@ export default function Scene(canvas) {
         // video
         iframe.width = WIDTH;
         iframe.height = HEIGHT;
-        iframe.setAttribute("src", "https://www.youtube.com/embed/zq8yO3mudMk"
+        iframe.setAttribute("src", "https://www.youtube-nocookie.com/embed/zq8yO3mudMk"
         +"?rel=0&modestbranding=1&autohide=1&showinfo=0&controls=0&autoplay=1&loop=1&playlist=zq8yO3mudMk");
         iframe.allowFullscreen = false;
         iframe.allow = "autoplay";
         iframe.frameBorder = 0;
 
+        // hide stupid youtube buttons
+        // console.log(iframe.getElementsByClassName('ytp-share-panel'));
+        console.log(document.body.childNodes);
         // button with a link
         gameHref.href = gameLink;
         gameHref.target = "_blank";
@@ -38,7 +41,6 @@ export default function Scene(canvas) {
         gameIcon.setAttribute("width", "100px");
         gameHref.onmouseover = function() {
             gameIcon.style.opacity = 0.5;
-            console.log("wtf");
         }
         gameHref.onmouseout = function() {
             gameIcon.style.opacity = 1;            
