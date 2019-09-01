@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "f98f15fdfcf55243c43f";
+/******/ 	var hotCurrentHash = "45dd0834428116ed8bf7";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -744,7 +744,7 @@
 /******/
 /******/ 	// script path function
 /******/ 	function jsonpScriptSrc(chunkId) {
-/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5"}[chunkId]||chunkId) + "/" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5"}[chunkId]||chunkId) + ".js"
+/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7"}[chunkId]||chunkId) + "/" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7"}[chunkId]||chunkId) + ".js"
 /******/ 	}
 /******/
 /******/ 	// The require function
@@ -949,7 +949,13 @@ var sketches = {
         return __webpack_require__.e(/* import() | sketch5 */ 4).then(__webpack_require__.t.bind(null, "./sketch5/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     },
     sketch6: function sketch6() {
-        return __webpack_require__.e(/* import() | sketch5 */ 4).then(__webpack_require__.t.bind(null, "./sketch6/index.js", 7)).then(document.getElementById(sketchName).style.color = "black");
+        return __webpack_require__.e(/* import() | sketch6 */ 5).then(__webpack_require__.t.bind(null, "./sketch6/index.js", 7)).then(document.getElementById(sketchName).style.color = "black");
+    },
+    sketch7: function sketch7() {
+        return __webpack_require__.e(/* import() | sketch7 */ 6).then(__webpack_require__.t.bind(null, "./sketch7/index.js", 7)).then(document.getElementById(sketchName).style.color = "black");
+    },
+    sketch8: function sketch8() {
+        return __webpack_require__.e(/* import() | sketch7 */ 6).then(__webpack_require__.t.bind(null, "./sketch8/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     }
 };
 
@@ -986,10 +992,12 @@ function init() {
 
     // sketch
     addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
+    addSketchElem(sketchWrapper, "sketch8", "Ice cat");
     addSketchElem(sketchWrapper, "sketch6", "Sketchy shader");
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");
     addSketchElem(sketchWrapper, "sketch2", "Shell");
+    // addSketchElem(sketchWrapper, "sketch7", "Liquid");
     // addSketchElem(sketchWrapper, "sketch1", "Iceberg");
 }
 
