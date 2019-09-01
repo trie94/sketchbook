@@ -64,7 +64,7 @@ function init() {
 
     // sketch
     addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
-    addSketchElem(sketchWrapper, "sketch8", "Ice cat");
+    // addSketchElem(sketchWrapper, "sketch8", "Ice cat");
     addSketchElem(sketchWrapper, "sketch6", "Sketchy shader");
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");

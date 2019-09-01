@@ -25,8 +25,6 @@ export default function Scene(canvas) {
         iframe.allow = "autoplay";
         iframe.frameBorder = 0;
 
-        // hide stupid youtube buttons
-        // console.log(iframe.getElementsByClassName('ytp-share-panel'));
         // button with a link
         gameHref.href = gameLink;
         gameHref.target = "_blank";
