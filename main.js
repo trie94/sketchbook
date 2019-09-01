@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "31bc06b7d8b367b029fa";
+/******/ 	var hotCurrentHash = "5efa5047a0bb9375fea7";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -992,7 +992,7 @@ function init() {
 
     // sketch
     addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
-    addSketchElem(sketchWrapper, "sketch8", "Ice cat");
+    // addSketchElem(sketchWrapper, "sketch8", "Ice cat");
     addSketchElem(sketchWrapper, "sketch6", "Sketchy shader");
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");
