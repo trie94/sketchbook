@@ -1,11 +1,13 @@
 import icon from './icecaticon216.png';
+import localVideo from './ice-cat.mp4';
 
 export default function Scene(canvas) {
-    let HEIGHT = window.innerHeight * 0.9;
-    let WIDTH = window.innerWidth * 0.9;
+    let HEIGHT = window.innerHeight;
+    let WIDTH = window.innerWidth;
 
     const videoWrapper = document.createElement("div");
-    const iframe = document.createElement("iframe");
+    // const iframe = document.createElement("iframe");
+    const video = document.createElement("video");
     const gameHref = document.createElement("a");
     const gameIcon = document.createElement("img");
     const text = document.createElement("p");
@@ -16,17 +18,18 @@ export default function Scene(canvas) {
         const root = document.getElementById('root');
 
         // video
-        iframe.width = WIDTH;
-        iframe.height = HEIGHT;
-        iframe.setAttribute("src", "https://www.youtube-nocookie.com/embed/zq8yO3mudMk"
-        +"?rel=0&modestbranding=1&autohide=1&showinfo=0&controls=0&autoplay=1&loop=1&playlist=zq8yO3mudMk");
-        iframe.allowFullscreen = false;
-        iframe.allow = "autoplay";
-        iframe.frameBorder = 0;
+        video.width = WIDTH;
+        video.height = HEIGHT;
+        // iframe.setAttribute("src", "https://www.youtube-nocookie.com/embed/zq8yO3mudMk"
+        // +"?rel=0&modestbranding=1&autohide=1&showinfo=0&controls=0&autoplay=1&loop=1&playlist=zq8yO3mudMk");
+        video.setAttribute("src", localVideo);
+        video.style.margin = 0;
+        // iframe.allowFullscreen = false;
+        // iframe.allow = "autoplay";
+        video.frameBorder = 0;
 
         // hide stupid youtube buttons
         // console.log(iframe.getElementsByClassName('ytp-share-panel'));
-        console.log(document.body.childNodes);
         // button with a link
         gameHref.href = gameLink;
         gameHref.target = "_blank";
@@ -64,7 +67,8 @@ export default function Scene(canvas) {
 
         // layout
         root.insertBefore(videoWrapper, canvas);
-        videoWrapper.appendChild(iframe);
+        // videoWrapper.appendChild(iframe);
+        videoWrapper.appendChild(video);
         root.insertBefore(iconWrapper, videoWrapper);
         iconWrapper.appendChild(gameHref);
 
@@ -76,10 +80,10 @@ export default function Scene(canvas) {
     }
 
     this.onWindowResize = function () {
-        HEIGHT = window.innerHeight * 0.9;
-        WIDTH = window.innerWidth * 0.9;
-        iframe.width = WIDTH;
-        iframe.height = HEIGHT;
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        video.width = WIDTH;
+        video.height = HEIGHT;
     }
 
     this.onMouseClick = function () {
