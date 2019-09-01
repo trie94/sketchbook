@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "9da0212ec6decd034d43";
+/******/ 	var hotCurrentHash = "d8ee46355f5d3544a022";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -744,7 +744,7 @@
 /******/
 /******/ 	// script path function
 /******/ 	function jsonpScriptSrc(chunkId) {
-/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7"}[chunkId]||chunkId) + "/" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7"}[chunkId]||chunkId) + ".js"
+/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7","7":"sketch8"}[chunkId]||chunkId) + "/" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7","7":"sketch8"}[chunkId]||chunkId) + ".js"
 /******/ 	}
 /******/
 /******/ 	// The require function
@@ -940,7 +940,7 @@ var sketches = {
         return __webpack_require__.e(/* import() | sketch2 */ 1).then(__webpack_require__.t.bind(null, "./sketch2/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     },
     sketch3: function sketch3() {
-        return __webpack_require__.e(/* import() | sketch3 */ 2).then(__webpack_require__.t.bind(null, "./sketch3/index.js", 7)).then(document.getElementById(sketchName).style.color = "#635a40");
+        return __webpack_require__.e(/* import() | sketch3 */ 2).then(__webpack_require__.t.bind(null, "./sketch3/index.js", 7)).then(document.getElementById(sketchName).style.color = "#ffd459");
     },
     sketch4: function sketch4() {
         return __webpack_require__.e(/* import() | sketch4 */ 3).then(__webpack_require__.t.bind(null, "./sketch4/index.js", 7)).then(document.getElementById(sketchName).style.color = "#81d9f9");
@@ -949,13 +949,13 @@ var sketches = {
         return __webpack_require__.e(/* import() | sketch5 */ 4).then(__webpack_require__.t.bind(null, "./sketch5/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     },
     sketch6: function sketch6() {
-        return __webpack_require__.e(/* import() | sketch6 */ 5).then(__webpack_require__.t.bind(null, "./sketch6/index.js", 7)).then(document.getElementById(sketchName).style.color = "black");
+        return __webpack_require__.e(/* import() | sketch6 */ 5).then(__webpack_require__.t.bind(null, "./sketch6/index.js", 7)).then(document.getElementById(sketchName).style.color = "ffedb8");
     },
     sketch7: function sketch7() {
         return __webpack_require__.e(/* import() | sketch7 */ 6).then(__webpack_require__.t.bind(null, "./sketch7/index.js", 7)).then(document.getElementById(sketchName).style.color = "black");
     },
     sketch8: function sketch8() {
-        return __webpack_require__.e(/* import() | sketch7 */ 6).then(__webpack_require__.t.bind(null, "./sketch8/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
+        return __webpack_require__.e(/* import() | sketch8 */ 7).then(__webpack_require__.t.bind(null, "./sketch8/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     }
 };
 
@@ -987,12 +987,12 @@ function init() {
 
     var sketchWrapper = document.getElementsByClassName('sketch-wrapper')[0];
     var sketchList = document.getElementsByClassName('sketch-list')[0];
-    sketchWrapper.insertBefore(title, sketchList);
+    // sketchWrapper.insertBefore(title, sketchList);
 
     // sketch
-    addSketchElem(sketchList, "sketch5", "Jelly cat");
-    // addSketchElem(sketchList, "sketch8", "Ice cat");
-    addSketchElem(sketchList, "sketch6", "Sketchy shader");
+    addSketchElem(sketchList, "sketch5", "Jelly Cat");
+    addSketchElem(sketchList, "sketch8", "Ice Cat");
+    addSketchElem(sketchList, "sketch6", "Sketchy Shader");
     addSketchElem(sketchList, "sketch4", "Moolang");
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
@@ -1019,7 +1019,7 @@ exports = module.exports = __webpack_require__("./node_modules/css-loader/lib/cs
 
 
 // module
-exports.push([module.i, "html {\n  font-family: 'Source Sans Pro', sans-serif; }\n\nbody {\n  margin: 0; }\n\n#root {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  overflow: hidden; }\n\np {\n  margin: 1.2em; }\n\nh4 {\n  display: block;\n  padding: 4px 0 4px 32px;\n  color: #cecece;\n  background-color: rgba(220, 220, 220, 0.3); }\n\n.instruction {\n  position: absolute;\n  z-index: 1;\n  top: 5%;\n  left: 45%;\n  color: #818181; }\n\n.sketch-wrapper {\n  width: 180px;\n  height: 100%;\n  position: fixed;\n  z-index: 1;\n  top: 0;\n  left: 0;\n  overflow: hidden; }\n\n.sketch-item {\n  padding: 8px 0 4px 32px;\n  text-decoration: none;\n  color: #818181;\n  display: block;\n  letter-spacing: 0;\n  margin-top: 0;\n  opacity: 1; }\n\na:link {\n  color: gray;\n  text-decoration: none; }\n\na:visited {\n  color: gray; }\n\na:hover {\n  color: #000; }\n\na:active {\n  color: #000; }\n", ""]);
+exports.push([module.i, "html {\n  font-family: 'Source Sans Pro', sans-serif; }\n\nbody {\n  margin: 0; }\n\n#root {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  overflow: hidden; }\n\np {\n  margin: 1.2em; }\n\nh4 {\n  display: block;\n  padding: 4px 0 4px 32px;\n  color: #cecece;\n  background-color: rgba(220, 220, 220, 0.3); }\n\n.instruction {\n  position: absolute;\n  z-index: 1;\n  top: 5%;\n  left: 45%;\n  color: #818181; }\n\n#toggle {\n  display: block;\n  position: relative;\n  height: 100%;\n  z-index: 1;\n  -webkit-user-select: none;\n  user-select: none; }\n  #toggle input {\n    display: block;\n    width: 50px;\n    height: 32px;\n    position: absolute;\n    cursor: pointer;\n    opacity: 0;\n    /* hide this */\n    z-index: 2;\n    /* and place it over the hamburger */\n    -webkit-touch-callout: none; }\n  #toggle span {\n    display: block;\n    position: relative;\n    width: 30px;\n    height: 3px;\n    margin: 5px 0 5px 20px;\n    border-radius: 3px;\n    z-index: 1;\n    background: #232323;\n    transform-origin: 4px 0px;\n    transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1), opacity 0.55s ease; }\n  #toggle span:nth-last-child(2) {\n    transform-origin: 0% 100%; }\n  #toggle input:checked ~ span {\n    opacity: 1;\n    transform: rotate(45deg) translate(-2px, -1px);\n    background: #cdcdcd; }\n  #toggle input:checked ~ span:nth-last-child(3) {\n    opacity: 0;\n    transform: rotate(0deg) scale(0.2, 0.2); }\n  #toggle input:checked ~ span:nth-last-child(2) {\n    transform: rotate(-45deg) translate(0, -1px); }\n  #toggle input:checked ~ nav {\n    transform: none; }\n\n.first-child {\n  margin-top: 20px !important;\n  transform-origin: 0% 0%; }\n\n.sketch-wrapper {\n  width: 180px;\n  height: 100%;\n  position: absolute;\n  z-index: 1;\n  top: 0;\n  left: 0;\n  overflow: hidden; }\n\n.sketch-list {\n  position: relative;\n  margin: -50px 0 0 -50px;\n  padding: 35px;\n  padding-top: 65px;\n  height: 100%;\n  background: black;\n  opacity: 0.8;\n  -webkit-font-smoothing: antialiased;\n  transform-origin: 0% 0%;\n  transform: translate(-100%, 0);\n  transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1); }\n\n.sketch-item {\n  padding: 8px 0 4px 40px;\n  text-decoration: none;\n  color: #818181;\n  display: block;\n  letter-spacing: 0;\n  margin-top: 0;\n  opacity: 1; }\n\na:link {\n  color: gray;\n  text-decoration: none; }\n\na:visited {\n  color: gray; }\n\na:hover {\n  color: #fff; }\n\na:active {\n  color: #fff; }\n", ""]);
 
 // exports
 
