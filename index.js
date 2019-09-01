@@ -30,7 +30,7 @@ const sketches = {
     sketch5: () => import(/* webpackChunkName: "sketch5" */ "./sketch5").then(document.getElementById(sketchName).style.color = "white"),
     sketch6: () => import(/* webpackChunkName: "sketch6" */ "./sketch6").then(document.getElementById(sketchName).style.color = "black"),
     sketch7: () => import(/* webpackChunkName: "sketch7" */ "./sketch7").then(document.getElementById(sketchName).style.color = "black"),
-    sketch8: () => import(/* webpackChunkName: "sketch7" */ "./sketch8").then(document.getElementById(sketchName).style.color = "black"),
+    sketch8: () => import(/* webpackChunkName: "sketch7" */ "./sketch8").then(document.getElementById(sketchName).style.color = "white"),
 };
 
 let sketchName = window.location.pathname;
