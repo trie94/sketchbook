@@ -60032,7 +60032,7 @@ function Scene(canvas) {
     var SHADOW_MAP_SIZE = 1024;
 
     var objects = new _object2.default();
-    var sketchbookman = new man();
+    // const sketchbookman = new man();
 
     // scene subjects
     var scene = createScene();

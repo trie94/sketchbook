@@ -93,7 +93,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "5efa5047a0bb9375fea7";
+/******/ 	var hotCurrentHash = "9da0212ec6decd034d43";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -985,26 +985,25 @@ function init() {
     var title = document.createElement('h4');
     title.innerHTML = "Sketch List";
 
-    var sketchWrapper = document.createElement('div');
-    sketchWrapper.classList = "sketch-wrapper";
-    root.appendChild(sketchWrapper);
-    sketchWrapper.appendChild(title);
+    var sketchWrapper = document.getElementsByClassName('sketch-wrapper')[0];
+    var sketchList = document.getElementsByClassName('sketch-list')[0];
+    sketchWrapper.insertBefore(title, sketchList);
 
     // sketch
-    addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
-    // addSketchElem(sketchWrapper, "sketch8", "Ice cat");
-    addSketchElem(sketchWrapper, "sketch6", "Sketchy shader");
-    addSketchElem(sketchWrapper, "sketch4", "Moolang");
-    addSketchElem(sketchWrapper, "sketch3", "Munyu");
-    addSketchElem(sketchWrapper, "sketch2", "Shell");
-    // addSketchElem(sketchWrapper, "sketch7", "Liquid");
-    // addSketchElem(sketchWrapper, "sketch1", "Iceberg");
+    addSketchElem(sketchList, "sketch5", "Jelly cat");
+    // addSketchElem(sketchList, "sketch8", "Ice cat");
+    addSketchElem(sketchList, "sketch6", "Sketchy shader");
+    addSketchElem(sketchList, "sketch4", "Moolang");
+    addSketchElem(sketchList, "sketch3", "Munyu");
+    addSketchElem(sketchList, "sketch2", "Shell");
+    // addSketchElem(sketchList, "sketch7", "Liquid");
+    // addSketchElem(sketchList, "sketch1", "Iceberg");
 }
 
-function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
+function addSketchElem(sketchList, sketchFileName, sketchName) {
     var sketch = document.createElement('a');
-    sketch.className = "sketch-list";
-    sketchWrapper.appendChild(sketch);
+    sketch.className = "sketch-item";
+    sketchList.appendChild(sketch);
     sketch.setAttribute('href', basename + sketchFileName);
     sketch.id = sketchFileName;
     sketch.innerHTML = sketchName;
@@ -1020,7 +1019,7 @@ exports = module.exports = __webpack_require__("./node_modules/css-loader/lib/cs
 
 
 // module
-exports.push([module.i, "html {\n  font-family: 'Source Sans Pro', sans-serif; }\n\nbody {\n  margin: 0; }\n\n#root {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  overflow: hidden; }\n\np {\n  margin: 1.2em; }\n\nh4 {\n  display: block;\n  padding: 4px 0 4px 32px;\n  color: #cecece;\n  background-color: rgba(220, 220, 220, 0.3); }\n\n.instruction {\n  position: absolute;\n  z-index: 1;\n  top: 5%;\n  left: 45%;\n  color: #818181; }\n\n.sketch-wrapper {\n  height: 100%;\n  width: 180px;\n  position: fixed;\n  z-index: 1;\n  top: 0;\n  left: 0;\n  overflow-x: hidden; }\n\n.sketch-list {\n  padding: 8px 0 4px 32px;\n  text-decoration: none;\n  color: #818181;\n  display: block; }\n\na:link {\n  color: gray;\n  text-decoration: none; }\n\na:visited {\n  color: gray; }\n\na:hover {\n  color: #000; }\n\na:active {\n  color: #000; }\n", ""]);
+exports.push([module.i, "html {\n  font-family: 'Source Sans Pro', sans-serif; }\n\nbody {\n  margin: 0; }\n\n#root {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  overflow: hidden; }\n\np {\n  margin: 1.2em; }\n\nh4 {\n  display: block;\n  padding: 4px 0 4px 32px;\n  color: #cecece;\n  background-color: rgba(220, 220, 220, 0.3); }\n\n.instruction {\n  position: absolute;\n  z-index: 1;\n  top: 5%;\n  left: 45%;\n  color: #818181; }\n\n.sketch-wrapper {\n  width: 180px;\n  height: 100%;\n  position: fixed;\n  z-index: 1;\n  top: 0;\n  left: 0;\n  overflow: hidden; }\n\n.sketch-item {\n  padding: 8px 0 4px 32px;\n  text-decoration: none;\n  color: #818181;\n  display: block;\n  letter-spacing: 0;\n  margin-top: 0;\n  opacity: 1; }\n\na:link {\n  color: gray;\n  text-decoration: none; }\n\na:visited {\n  color: gray; }\n\na:hover {\n  color: #000; }\n\na:active {\n  color: #000; }\n", ""]);
 
 // exports
 

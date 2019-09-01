@@ -53843,10 +53843,6 @@ var _icecaticon = __webpack_require__("./sketch8/icecaticon216.png");
 
 var _icecaticon2 = _interopRequireDefault(_icecaticon);
 
-var _iceCat = __webpack_require__("./sketch8/ice-cat.mp4");
-
-var _iceCat2 = _interopRequireDefault(_iceCat);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function Scene(canvas) {
@@ -53854,8 +53850,7 @@ function Scene(canvas) {
     var WIDTH = window.innerWidth;
 
     var videoWrapper = document.createElement("div");
-    // const iframe = document.createElement("iframe");
-    var video = document.createElement("video");
+    var iframe = document.createElement("iframe");
     var gameHref = document.createElement("a");
     var gameIcon = document.createElement("img");
     var text = document.createElement("p");
@@ -53866,18 +53861,14 @@ function Scene(canvas) {
         var root = document.getElementById('root');
 
         // video
-        video.width = WIDTH;
-        video.height = HEIGHT;
-        // iframe.setAttribute("src", "https://www.youtube-nocookie.com/embed/zq8yO3mudMk"
-        // +"?rel=0&modestbranding=1&autohide=1&showinfo=0&controls=0&autoplay=1&loop=1&playlist=zq8yO3mudMk");
-        video.setAttribute("src", _iceCat2.default);
-        video.style.margin = 0;
-        // iframe.allowFullscreen = false;
-        // iframe.allow = "autoplay";
-        video.frameBorder = 0;
+        iframe.width = WIDTH;
+        iframe.height = HEIGHT;
+        iframe.setAttribute("src", "https://www.youtube-nocookie.com/embed/zq8yO3mudMk" + "?rel=0&modestbranding=1&autohide=1&showinfo=0&controls=0&autoplay=1&loop=1&playlist=zq8yO3mudMk");
+        iframe.style.margin = 0;
+        iframe.allowFullscreen = false;
+        iframe.allow = "autoplay";
+        iframe.frameBorder = 0;
 
-        // hide stupid youtube buttons
-        // console.log(iframe.getElementsByClassName('ytp-share-panel'));
         // button with a link
         gameHref.href = gameLink;
         gameHref.target = "_blank";
@@ -53915,8 +53906,8 @@ function Scene(canvas) {
 
         // layout
         root.insertBefore(videoWrapper, canvas);
-        // videoWrapper.appendChild(iframe);
-        videoWrapper.appendChild(video);
+        videoWrapper.appendChild(iframe);
+        // videoWrapper.appendChild(video);
         root.insertBefore(iconWrapper, videoWrapper);
         iconWrapper.appendChild(gameHref);
 
@@ -53929,19 +53920,12 @@ function Scene(canvas) {
     this.onWindowResize = function () {
         HEIGHT = window.innerHeight;
         WIDTH = window.innerWidth;
-        video.width = WIDTH;
-        video.height = HEIGHT;
+        iframe.width = WIDTH;
+        iframe.height = HEIGHT;
     };
 
     this.onMouseClick = function () {};
 }
-
-/***/ }),
-
-/***/ "./sketch8/ice-cat.mp4":
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__.p + "sketch8/ice-cat.mp4";
 
 /***/ }),
 
