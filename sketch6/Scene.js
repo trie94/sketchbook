@@ -14,7 +14,7 @@ export default function Scene(canvas) {
     let SHADOW_MAP_SIZE = 1024;
 
     const objects = new Objects();
-    const sketchbookman = new man();
+    // const sketchbookman = new man();
 
     // scene subjects
     const scene = createScene();

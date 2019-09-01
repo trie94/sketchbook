@@ -34,19 +34,32 @@ h4 {
 
 .sketch {
     &-wrapper{
-        height: 100%;
+        // position: relative;
         width: 180px;
+        height: 100%;
         position: fixed;
         z-index: 1;
         top: 0;
         left: 0;
-        overflow-x: hidden;
+        overflow: hidden;
+        // margin: 35px auto 0;
     }
     &-list{
+
+    }
+    &-item {
         padding: 8px 0 4px 32px;
         text-decoration: none;
         color: #818181;
         display: block;
+
+        letter-spacing: 0;
+        // height: 40px;
+        // line-height: 40px;
+        margin-top: 0;
+        opacity: 1;
+        // transform: scaleY(1);
+        // transition: $transition-duration, opacity 0.1s;
     }
 }
 

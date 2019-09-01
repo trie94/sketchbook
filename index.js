@@ -57,26 +57,25 @@ function init() {
     const title = document.createElement('h4');
     title.innerHTML = "Sketch List";
 
-    let sketchWrapper = document.createElement('div');
-    sketchWrapper.classList = "sketch-wrapper";
-    root.appendChild(sketchWrapper);
-    sketchWrapper.appendChild(title);
+    let sketchWrapper = document.getElementsByClassName('sketch-wrapper')[0];
+    let sketchList = document.getElementsByClassName('sketch-list')[0];
+    sketchWrapper.insertBefore(title, sketchList);
 
     // sketch
-    addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
-    // addSketchElem(sketchWrapper, "sketch8", "Ice cat");
-    addSketchElem(sketchWrapper, "sketch6", "Sketchy shader");
-    addSketchElem(sketchWrapper, "sketch4", "Moolang");
-    addSketchElem(sketchWrapper, "sketch3", "Munyu");
-    addSketchElem(sketchWrapper, "sketch2", "Shell");
-    // addSketchElem(sketchWrapper, "sketch7", "Liquid");
-    // addSketchElem(sketchWrapper, "sketch1", "Iceberg");
+    addSketchElem(sketchList, "sketch5", "Jelly cat");
+    // addSketchElem(sketchList, "sketch8", "Ice cat");
+    addSketchElem(sketchList, "sketch6", "Sketchy shader");
+    addSketchElem(sketchList, "sketch4", "Moolang");
+    addSketchElem(sketchList, "sketch3", "Munyu");
+    addSketchElem(sketchList, "sketch2", "Shell");
+    // addSketchElem(sketchList, "sketch7", "Liquid");
+    // addSketchElem(sketchList, "sketch1", "Iceberg");
 }
 
-function addSketchElem(sketchWrapper, sketchFileName, sketchName) {
+function addSketchElem(sketchList, sketchFileName, sketchName) {
     let sketch = document.createElement('a');
-    sketch.className = "sketch-list";
-    sketchWrapper.appendChild(sketch);
+    sketch.className = "sketch-item";
+    sketchList.appendChild(sketch);
     sketch.setAttribute('href', basename + sketchFileName);
     sketch.id = sketchFileName;
     sketch.innerHTML = sketchName;
