@@ -53858,7 +53858,6 @@ function Scene(canvas) {
     var gameLink = "https://drive.google.com/drive/u/0/folders/1mRQQlGuRYYVI8jx6ppnvOFs_dKKrJbVJ";
 
     this.start = function () {
-        console.log("start");
         var root = document.getElementById('root');
 
         // video
