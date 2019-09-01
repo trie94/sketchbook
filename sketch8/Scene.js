@@ -66,7 +66,6 @@ export default function Scene(canvas) {
         // videoWrapper.appendChild(video);
         root.insertBefore(iconWrapper, videoWrapper);
         iconWrapper.appendChild(gameHref);
-
         // make background black
         root.style.background = "black";
     }

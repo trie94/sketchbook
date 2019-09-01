@@ -25,12 +25,12 @@ init();
 const sketches = {
     // sketch1: () => import(/* webpackChunkName: "sketch1" */ "./sketch1").then(document.getElementById(sketchName).style.color = "#81d9f9"),
     sketch2: () => import(/* webpackChunkName: "sketch2" */ "./sketch2").then(document.getElementById(sketchName).style.color = "white"),
-    sketch3: () => import(/* webpackChunkName: "sketch3" */ "./sketch3").then(document.getElementById(sketchName).style.color = "#635a40"),
+    sketch3: () => import(/* webpackChunkName: "sketch3" */ "./sketch3").then(document.getElementById(sketchName).style.color = "#ffd459"),
     sketch4: () => import(/* webpackChunkName: "sketch4" */ "./sketch4").then(document.getElementById(sketchName).style.color = "#81d9f9"),
     sketch5: () => import(/* webpackChunkName: "sketch5" */ "./sketch5").then(document.getElementById(sketchName).style.color = "white"),
-    sketch6: () => import(/* webpackChunkName: "sketch6" */ "./sketch6").then(document.getElementById(sketchName).style.color = "black"),
+    sketch6: () => import(/* webpackChunkName: "sketch6" */ "./sketch6").then(document.getElementById(sketchName).style.color = "ffedb8"),
     sketch7: () => import(/* webpackChunkName: "sketch7" */ "./sketch7").then(document.getElementById(sketchName).style.color = "black"),
-    sketch8: () => import(/* webpackChunkName: "sketch7" */ "./sketch8").then(document.getElementById(sketchName).style.color = "white"),
+    sketch8: () => import(/* webpackChunkName: "sketch8" */ "./sketch8").then(document.getElementById(sketchName).style.color = "white"),
 };
 
 let sketchName = window.location.pathname;
@@ -59,12 +59,12 @@ function init() {
 
     let sketchWrapper = document.getElementsByClassName('sketch-wrapper')[0];
     let sketchList = document.getElementsByClassName('sketch-list')[0];
-    sketchWrapper.insertBefore(title, sketchList);
+    // sketchWrapper.insertBefore(title, sketchList);
 
     // sketch
-    addSketchElem(sketchList, "sketch5", "Jelly cat");
-    // addSketchElem(sketchList, "sketch8", "Ice cat");
-    addSketchElem(sketchList, "sketch6", "Sketchy shader");
+    addSketchElem(sketchList, "sketch5", "Jelly Cat");
+    addSketchElem(sketchList, "sketch8", "Ice Cat");
+    addSketchElem(sketchList, "sketch6", "Sketchy Shader");
     addSketchElem(sketchList, "sketch4", "Moolang");
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
