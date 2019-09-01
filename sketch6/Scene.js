@@ -6,6 +6,7 @@ import contourVert from './shaders/contour.vert';
 import contourFrag from './shaders/contour.frag';
 import stylizeVert from './shaders/stylize.vert';
 import stylizeFrag from './shaders/stylize.frag';
+// import man from './sketchbookman';
 
 export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
@@ -13,6 +14,7 @@ export default function Scene(canvas) {
     let SHADOW_MAP_SIZE = 1024;
 
     const objects = new Objects();
+    const sketchbookman = new man();
 
     // scene subjects
     const scene = createScene();
@@ -143,6 +145,7 @@ export default function Scene(canvas) {
         for (let i = 0; i < light.length; i++) {
             scene.add(light[i]);
         }
+        // scene.add(sketchbookman.getMan());
         scene.add(objects.getSphere());
         scene.add(objects.getFloor());
     }

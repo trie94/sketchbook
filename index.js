@@ -30,6 +30,7 @@ const sketches = {
     sketch5: () => import(/* webpackChunkName: "sketch5" */ "./sketch5").then(document.getElementById(sketchName).style.color = "white"),
     sketch6: () => import(/* webpackChunkName: "sketch6" */ "./sketch6").then(document.getElementById(sketchName).style.color = "black"),
     sketch7: () => import(/* webpackChunkName: "sketch7" */ "./sketch7").then(document.getElementById(sketchName).style.color = "black"),
+    sketch8: () => import(/* webpackChunkName: "sketch7" */ "./sketch8").then(document.getElementById(sketchName).style.color = "black"),
 };
 
 let sketchName = window.location.pathname;
@@ -63,11 +64,12 @@ function init() {
 
     // sketch
     addSketchElem(sketchWrapper, "sketch5", "Jelly cat");
+    addSketchElem(sketchWrapper, "sketch8", "Ice cat");
     addSketchElem(sketchWrapper, "sketch6", "Sketchy shader");
     addSketchElem(sketchWrapper, "sketch4", "Moolang");
     addSketchElem(sketchWrapper, "sketch3", "Munyu");
     addSketchElem(sketchWrapper, "sketch2", "Shell");
-    addSketchElem(sketchWrapper, "sketch7", "Liquid");
+    // addSketchElem(sketchWrapper, "sketch7", "Liquid");
     // addSketchElem(sketchWrapper, "sketch1", "Iceberg");
 }
 
