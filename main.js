@@ -92,7 +92,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "8373151934d4ea36fc8c";
+/******/ 	var hotCurrentHash = "4681ace483b3ee9b3e2b";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -809,7 +809,7 @@
 /******/
 /******/ 	// script path function
 /******/ 	function jsonpScriptSrc(chunkId) {
-/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7","7":"sketch8"}[chunkId]||chunkId) + "/" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7","7":"sketch8"}[chunkId]||chunkId) + ".js"
+/******/ 		return __webpack_require__.p + "./" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7","7":"sketch8","8":"sketch9"}[chunkId]||chunkId) + "/" + ({"1":"sketch2","2":"sketch3","3":"sketch4","4":"sketch5","5":"sketch6","6":"sketch7","7":"sketch8","8":"sketch9"}[chunkId]||chunkId) + ".js"
 /******/ 	}
 /******/
 /******/ 	// The require function
@@ -1023,6 +1023,10 @@ var sketches = {
     },
     sketch8: function sketch8() {
         return __webpack_require__.e(/* import() | sketch8 */ 7).then(__webpack_require__.t.bind(null, "./sketch8/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
+    },
+    // sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9").then(document.getElementById(sketchName).style.color = "white"),
+    sketch9: function sketch9() {
+        return __webpack_require__.e(/* import() | sketch9 */ 8).then(__webpack_require__.t.bind(null, "./sketch9/index.js", 7));
     }
 };
 
@@ -1063,6 +1067,7 @@ function init() {
     addSketchElem(sketchList, "sketch4", "Moolang");
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
+    // addSketchElem(sketchList, "sketch9", "Project E");
     // addSketchElem(sketchList, "sketch7", "Liquid");
     // addSketchElem(sketchList, "sketch1", "Iceberg");
 }
