@@ -10,7 +10,7 @@
 /******/ 		var moduleId, chunkId, i = 0, resolves = [];
 /******/ 		for(;i < chunkIds.length; i++) {
 /******/ 			chunkId = chunkIds[i];
-/******/ 			if(installedChunks[chunkId]) {
+/******/ 			if(Object.prototype.hasOwnProperty.call(installedChunks, chunkId) && installedChunks[chunkId]) {
 /******/ 				resolves.push(installedChunks[chunkId][0]);
 /******/ 			}
 /******/ 			installedChunks[chunkId] = 0;
@@ -40,12 +40,11 @@
 /******/
 /******/ 	// eslint-disable-next-line no-unused-vars
 /******/ 	function hotDownloadUpdateChunk(chunkId) {
-/******/ 		var head = document.getElementsByTagName("head")[0];
 /******/ 		var script = document.createElement("script");
 /******/ 		script.charset = "utf-8";
 /******/ 		script.src = __webpack_require__.p + "" + chunkId + "." + hotCurrentHash + ".hot-update.js";
 /******/ 		if (null) script.crossOrigin = null;
-/******/ 		head.appendChild(script);
+/******/ 		document.head.appendChild(script);
 /******/ 	}
 /******/
 /******/ 	// eslint-disable-next-line no-unused-vars
@@ -93,7 +92,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "d8ee46355f5d3544a022";
+/******/ 	var hotCurrentHash = "8373151934d4ea36fc8c";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -186,6 +185,7 @@
 /******/ 			_declinedDependencies: {},
 /******/ 			_selfAccepted: false,
 /******/ 			_selfDeclined: false,
+/******/ 			_selfInvalidated: false,
 /******/ 			_disposeHandlers: [],
 /******/ 			_main: hotCurrentChildModule !== moduleId,
 /******/
@@ -215,6 +215,29 @@
 /******/ 			removeDisposeHandler: function(callback) {
 /******/ 				var idx = hot._disposeHandlers.indexOf(callback);
 /******/ 				if (idx >= 0) hot._disposeHandlers.splice(idx, 1);
+/******/ 			},
+/******/ 			invalidate: function() {
+/******/ 				this._selfInvalidated = true;
+/******/ 				switch (hotStatus) {
+/******/ 					case "idle":
+/******/ 						hotUpdate = {};
+/******/ 						hotUpdate[moduleId] = modules[moduleId];
+/******/ 						hotSetStatus("ready");
+/******/ 						break;
+/******/ 					case "ready":
+/******/ 						hotApplyInvalidatedModule(moduleId);
+/******/ 						break;
+/******/ 					case "prepare":
+/******/ 					case "check":
+/******/ 					case "dispose":
+/******/ 					case "apply":
+/******/ 						(hotQueuedInvalidatedModules =
+/******/ 							hotQueuedInvalidatedModules || []).push(moduleId);
+/******/ 						break;
+/******/ 					default:
+/******/ 						// ignore requests in error states
+/******/ 						break;
+/******/ 				}
 /******/ 			},
 /******/
 /******/ 			// Management API
@@ -257,7 +280,7 @@
 /******/ 	var hotDeferred;
 /******/
 /******/ 	// The update info
-/******/ 	var hotUpdate, hotUpdateNewHash;
+/******/ 	var hotUpdate, hotUpdateNewHash, hotQueuedInvalidatedModules;
 /******/
 /******/ 	function toModuleId(id) {
 /******/ 		var isNumber = +id + "" === id;
@@ -272,7 +295,7 @@
 /******/ 		hotSetStatus("check");
 /******/ 		return hotDownloadManifest(hotRequestTimeout).then(function(update) {
 /******/ 			if (!update) {
-/******/ 				hotSetStatus("idle");
+/******/ 				hotSetStatus(hotApplyInvalidatedModules() ? "ready" : "idle");
 /******/ 				return null;
 /******/ 			}
 /******/ 			hotRequestedFilesMap = {};
@@ -291,7 +314,6 @@
 /******/ 			for(var chunkId in installedChunks)
 /******/ 			// eslint-disable-next-line no-lone-blocks
 /******/ 			{
-/******/ 				/*globals chunkId */
 /******/ 				hotEnsureUpdateChunk(chunkId);
 /******/ 			}
 /******/ 			if (
@@ -366,6 +388,11 @@
 /******/ 		if (hotStatus !== "ready")
 /******/ 			throw new Error("apply() is only allowed in ready status");
 /******/ 		options = options || {};
+/******/ 		return hotApplyInternal(options);
+/******/ 	}
+/******/
+/******/ 	function hotApplyInternal(options) {
+/******/ 		hotApplyInvalidatedModules();
 /******/
 /******/ 		var cb;
 /******/ 		var i;
@@ -377,7 +404,7 @@
 /******/ 			var outdatedModules = [updateModuleId];
 /******/ 			var outdatedDependencies = {};
 /******/
-/******/ 			var queue = outdatedModules.slice().map(function(id) {
+/******/ 			var queue = outdatedModules.map(function(id) {
 /******/ 				return {
 /******/ 					chain: [id],
 /******/ 					id: id
@@ -388,7 +415,11 @@
 /******/ 				var moduleId = queueItem.id;
 /******/ 				var chain = queueItem.chain;
 /******/ 				module = installedModules[moduleId];
-/******/ 				if (!module || module.hot._selfAccepted) continue;
+/******/ 				if (
+/******/ 					!module ||
+/******/ 					(module.hot._selfAccepted && !module.hot._selfInvalidated)
+/******/ 				)
+/******/ 					continue;
 /******/ 				if (module.hot._selfDeclined) {
 /******/ 					return {
 /******/ 						type: "self-declined",
@@ -554,12 +585,18 @@
 /******/ 			moduleId = outdatedModules[i];
 /******/ 			if (
 /******/ 				installedModules[moduleId] &&
-/******/ 				installedModules[moduleId].hot._selfAccepted
-/******/ 			)
+/******/ 				installedModules[moduleId].hot._selfAccepted &&
+/******/ 				// removed self-accepted modules should not be required
+/******/ 				appliedUpdate[moduleId] !== warnUnexpectedRequire &&
+/******/ 				// when called invalidate self-accepting is not possible
+/******/ 				!installedModules[moduleId].hot._selfInvalidated
+/******/ 			) {
 /******/ 				outdatedSelfAcceptedModules.push({
 /******/ 					module: moduleId,
+/******/ 					parents: installedModules[moduleId].parents.slice(),
 /******/ 					errorHandler: installedModules[moduleId].hot._selfAccepted
 /******/ 				});
+/******/ 			}
 /******/ 		}
 /******/
 /******/ 		// Now in "dispose" phase
@@ -626,10 +663,14 @@
 /******/ 			}
 /******/ 		}
 /******/
-/******/ 		// Not in "apply" phase
+/******/ 		// Now in "apply" phase
 /******/ 		hotSetStatus("apply");
 /******/
-/******/ 		hotCurrentHash = hotUpdateNewHash;
+/******/ 		if (hotUpdateNewHash !== undefined) {
+/******/ 			hotCurrentHash = hotUpdateNewHash;
+/******/ 			hotUpdateNewHash = undefined;
+/******/ 		}
+/******/ 		hotUpdate = undefined;
 /******/
 /******/ 		// insert new code
 /******/ 		for (moduleId in appliedUpdate) {
@@ -682,7 +723,8 @@
 /******/ 		for (i = 0; i < outdatedSelfAcceptedModules.length; i++) {
 /******/ 			var item = outdatedSelfAcceptedModules[i];
 /******/ 			moduleId = item.module;
-/******/ 			hotCurrentParents = [moduleId];
+/******/ 			hotCurrentParents = item.parents;
+/******/ 			hotCurrentChildModule = moduleId;
 /******/ 			try {
 /******/ 				__webpack_require__(moduleId);
 /******/ 			} catch (err) {
@@ -724,10 +766,33 @@
 /******/ 			return Promise.reject(error);
 /******/ 		}
 /******/
+/******/ 		if (hotQueuedInvalidatedModules) {
+/******/ 			return hotApplyInternal(options).then(function(list) {
+/******/ 				outdatedModules.forEach(function(moduleId) {
+/******/ 					if (list.indexOf(moduleId) < 0) list.push(moduleId);
+/******/ 				});
+/******/ 				return list;
+/******/ 			});
+/******/ 		}
+/******/
 /******/ 		hotSetStatus("idle");
 /******/ 		return new Promise(function(resolve) {
 /******/ 			resolve(outdatedModules);
 /******/ 		});
+/******/ 	}
+/******/
+/******/ 	function hotApplyInvalidatedModules() {
+/******/ 		if (hotQueuedInvalidatedModules) {
+/******/ 			if (!hotUpdate) hotUpdate = {};
+/******/ 			hotQueuedInvalidatedModules.forEach(hotApplyInvalidatedModule);
+/******/ 			hotQueuedInvalidatedModules = undefined;
+/******/ 			return true;
+/******/ 		}
+/******/ 	}
+/******/
+/******/ 	function hotApplyInvalidatedModule(moduleId) {
+/******/ 		if (!Object.prototype.hasOwnProperty.call(hotUpdate, moduleId))
+/******/ 			hotUpdate[moduleId] = modules[moduleId];
 /******/ 	}
 /******/
 /******/ 	// The module cache
@@ -796,7 +861,6 @@
 /******/ 				promises.push(installedChunkData[2] = promise);
 /******/
 /******/ 				// start chunk loading
-/******/ 				var head = document.getElementsByTagName('head')[0];
 /******/ 				var script = document.createElement('script');
 /******/ 				var onScriptComplete;
 /******/
@@ -807,6 +871,8 @@
 /******/ 				}
 /******/ 				script.src = jsonpScriptSrc(chunkId);
 /******/
+/******/ 				// create error before stack unwound to get useful stacktrace later
+/******/ 				var error = new Error();
 /******/ 				onScriptComplete = function (event) {
 /******/ 					// avoid mem leaks in IE.
 /******/ 					script.onerror = script.onload = null;
@@ -816,7 +882,8 @@
 /******/ 						if(chunk) {
 /******/ 							var errorType = event && (event.type === 'load' ? 'missing' : event.type);
 /******/ 							var realSrc = event && event.target && event.target.src;
-/******/ 							var error = new Error('Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')');
+/******/ 							error.message = 'Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')';
+/******/ 							error.name = 'ChunkLoadError';
 /******/ 							error.type = errorType;
 /******/ 							error.request = realSrc;
 /******/ 							chunk[1](error);
@@ -828,7 +895,7 @@
 /******/ 					onScriptComplete({ type: 'timeout', target: script });
 /******/ 				}, 120000);
 /******/ 				script.onerror = script.onload = onScriptComplete;
-/******/ 				head.appendChild(script);
+/******/ 				document.head.appendChild(script);
 /******/ 			}
 /******/ 		}
 /******/ 		return Promise.all(promises);
@@ -1011,7 +1078,7 @@ function addSketchElem(sketchList, sketchFileName, sketchName) {
 
 /***/ }),
 
-/***/ "./node_modules/css-loader/index.js!./node_modules/sass-loader/lib/loader.js!./style.scss":
+/***/ "./node_modules/css-loader/index.js!./node_modules/sass-loader/dist/cjs.js!./style.scss":
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__("./node_modules/css-loader/lib/css-base.js")(false);
@@ -1019,7 +1086,7 @@ exports = module.exports = __webpack_require__("./node_modules/css-loader/lib/cs
 
 
 // module
-exports.push([module.i, "html {\n  font-family: 'Source Sans Pro', sans-serif; }\n\nbody {\n  margin: 0; }\n\n#root {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  overflow: hidden; }\n\np {\n  margin: 1.2em; }\n\nh4 {\n  display: block;\n  padding: 4px 0 4px 32px;\n  color: #cecece;\n  background-color: rgba(220, 220, 220, 0.3); }\n\n.instruction {\n  position: absolute;\n  z-index: 1;\n  top: 5%;\n  left: 45%;\n  color: #818181; }\n\n#toggle {\n  display: block;\n  position: relative;\n  height: 100%;\n  z-index: 1;\n  -webkit-user-select: none;\n  user-select: none; }\n  #toggle input {\n    display: block;\n    width: 50px;\n    height: 32px;\n    position: absolute;\n    cursor: pointer;\n    opacity: 0;\n    /* hide this */\n    z-index: 2;\n    /* and place it over the hamburger */\n    -webkit-touch-callout: none; }\n  #toggle span {\n    display: block;\n    position: relative;\n    width: 30px;\n    height: 3px;\n    margin: 5px 0 5px 20px;\n    border-radius: 3px;\n    z-index: 1;\n    background: #232323;\n    transform-origin: 4px 0px;\n    transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1), opacity 0.55s ease; }\n  #toggle span:nth-last-child(2) {\n    transform-origin: 0% 100%; }\n  #toggle input:checked ~ span {\n    opacity: 1;\n    transform: rotate(45deg) translate(-2px, -1px);\n    background: #cdcdcd; }\n  #toggle input:checked ~ span:nth-last-child(3) {\n    opacity: 0;\n    transform: rotate(0deg) scale(0.2, 0.2); }\n  #toggle input:checked ~ span:nth-last-child(2) {\n    transform: rotate(-45deg) translate(0, -1px); }\n  #toggle input:checked ~ nav {\n    transform: none; }\n\n.first-child {\n  margin-top: 20px !important;\n  transform-origin: 0% 0%; }\n\n.sketch-wrapper {\n  width: 180px;\n  height: 100%;\n  position: absolute;\n  z-index: 1;\n  top: 0;\n  left: 0;\n  overflow: hidden; }\n\n.sketch-list {\n  position: relative;\n  margin: -50px 0 0 -50px;\n  padding: 35px;\n  padding-top: 65px;\n  height: 100%;\n  background: black;\n  opacity: 0.8;\n  -webkit-font-smoothing: antialiased;\n  transform-origin: 0% 0%;\n  transform: translate(-100%, 0);\n  transition: transform 0.5s cubic-bezier(0.77, 0.2, 0.05, 1); }\n\n.sketch-item {\n  padding: 8px 0 4px 40px;\n  text-decoration: none;\n  color: #818181;\n  display: block;\n  letter-spacing: 0;\n  margin-top: 0;\n  opacity: 1; }\n\na:link {\n  color: gray;\n  text-decoration: none; }\n\na:visited {\n  color: gray; }\n\na:hover {\n  color: #fff; }\n\na:active {\n  color: #fff; }\n", ""]);
+exports.push([module.i, "html{font-family:\"Source Sans Pro\",sans-serif}body{margin:0}#root{position:absolute;width:100%;height:100%;overflow:hidden}p{margin:1.2em}h4{display:block;padding:4px 0 4px 32px;color:#cecece;background-color:rgba(220,220,220,.3)}.instruction{position:absolute;z-index:1;top:5%;left:45%;color:#818181}#toggle{display:block;position:relative;height:100%;z-index:1;-webkit-user-select:none;user-select:none}#toggle input{display:block;width:50px;height:32px;position:absolute;cursor:pointer;opacity:0;z-index:2;-webkit-touch-callout:none}#toggle span{display:block;position:relative;width:30px;height:3px;margin:5px 0 5px 20px;border-radius:3px;z-index:1;background:#232323;transform-origin:4px 0px;transition:transform .5s cubic-bezier(0.77, 0.2, 0.05, 1),opacity .55s ease}#toggle span:nth-last-child(2){transform-origin:0% 100%}#toggle input:checked~span{opacity:1;transform:rotate(45deg) translate(-2px, -1px);background:#cdcdcd}#toggle input:checked~span:nth-last-child(3){opacity:0;transform:rotate(0deg) scale(0.2, 0.2)}#toggle input:checked~span:nth-last-child(2){transform:rotate(-45deg) translate(0, -1px)}#toggle input:checked~nav{transform:none}.first-child{margin-top:20px !important;transform-origin:0% 0%}.sketch-wrapper{width:180px;height:100%;position:absolute;z-index:1;top:0;left:0;overflow:hidden}.sketch-list{position:relative;margin:-50px 0 0 -50px;padding:35px;padding-top:65px;height:100%;background:#000;opacity:.8;-webkit-font-smoothing:antialiased;transform-origin:0% 0%;transform:translate(-100%, 0);transition:transform .5s cubic-bezier(0.77, 0.2, 0.05, 1)}.sketch-item{padding:8px 0 4px 40px;text-decoration:none;color:#818181;display:block;letter-spacing:0;margin-top:0;opacity:1}a:link{color:gray;text-decoration:none}a:visited{color:gray}a:hover{color:#fff}a:active{color:#fff}", ""]);
 
 // exports
 
@@ -1612,7 +1679,7 @@ module.exports = function (css) {
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__("./node_modules/css-loader/index.js!./node_modules/sass-loader/lib/loader.js!./style.scss");
+var content = __webpack_require__("./node_modules/css-loader/index.js!./node_modules/sass-loader/dist/cjs.js!./style.scss");
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -1631,8 +1698,8 @@ var update = __webpack_require__("./node_modules/style-loader/lib/addStyles.js")
 if(content.locals) module.exports = content.locals;
 
 if(true) {
-	module.hot.accept("./node_modules/css-loader/index.js!./node_modules/sass-loader/lib/loader.js!./style.scss", function() {
-		var newContent = __webpack_require__("./node_modules/css-loader/index.js!./node_modules/sass-loader/lib/loader.js!./style.scss");
+	module.hot.accept("./node_modules/css-loader/index.js!./node_modules/sass-loader/dist/cjs.js!./style.scss", function() {
+		var newContent = __webpack_require__("./node_modules/css-loader/index.js!./node_modules/sass-loader/dist/cjs.js!./style.scss");
 
 		if(typeof newContent === 'string') newContent = [[module.i, newContent, '']];
 
