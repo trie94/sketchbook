@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/trie94/sketchbook#readme",
   "devDependencies": {
+    "ammo.js": "github:kripken/ammo.js",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-loader": "^7.1.5",
@@ -47,7 +48,6 @@
     "three-fbx-loader": "^1.0.3",
     "three-gltf-loader": "^1.105.0",
     "three-orbit-controls": "^82.1.0",
-    "troika-three-text": "^0.42.0",
     "two.js": "^0.7.0-beta.3",
     "webpack": "^4.16.2",
     "webpack-cli": "^3.1.0",

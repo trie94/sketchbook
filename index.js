@@ -70,7 +70,7 @@ function init() {
     addSketchElem(sketchList, "sketch4", "Moolang");
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
-    // addSketchElem(sketchList, "sketch9", "Project E");
+    // addSketchElem(sketchList, "sketch9", "Factoree");
     // addSketchElem(sketchList, "sketch7", "Liquid");
     // addSketchElem(sketchList, "sketch1", "Iceberg");
 }

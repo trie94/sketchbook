@@ -30,7 +30,9 @@ module.exports = {
         path: path.resolve(__dirname, './dist'),
         chunkFilename: './[name]/[name].js'
     },
-
+    node: {
+        fs: 'empty'
+    },
     module: {
         rules: [{
             test: /\.js$/,
