@@ -53964,26 +53964,12 @@ var _ammo = __webpack_require__("./node_modules/ammo.js/builds/ammo.js");
 
 var _ammo2 = _interopRequireDefault(_ammo);
 
-var _mikadoMedium = __webpack_require__("./sketch9/assets/mikado-medium.png");
-
-var _mikadoMedium2 = _interopRequireDefault(_mikadoMedium);
-
-var _text = __webpack_require__("./sketch9/shaders/text.vert");
-
-var _text2 = _interopRequireDefault(_text);
-
-var _text3 = __webpack_require__("./sketch9/shaders/text.frag");
-
-var _text4 = _interopRequireDefault(_text3);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-// import * as ammo from 'ammo.js';
-// import { Ammo } from './ammo';
-
 var OrbitControls = __webpack_require__("./node_modules/three-orbit-controls/index.js")(THREE);
+
 function Scene(canvas) {
     var clock = new THREE.Clock();
     var HEIGHT = window.innerHeight;
@@ -53995,12 +53981,17 @@ function Scene(canvas) {
     var renderer = createRenderer();
     var camera = createCamera();
     var controls = createControl();
+    var rayCaster = new THREE.Raycaster();
 
     var textureLoader = new THREE.TextureLoader();
     // const sdfTexture = textureLoader.load(fontSdf);
-    var rigidBodies = [],
-        tmpTrans = void 0;
+    var rigidBodies = [];
+    // Physics world is in a world of its own on a different realm from your game.
+    // it's just there to model the physical objects of your scene and their possible interaction using its own objects.
+    // it's your duty to update the transform of the objects, especially in the main render loop.
     var physicsWorld = void 0;
+    var tmpTrans = void 0;
+    var AMMO = null;
 
     function addLights() {
         var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
@@ -54010,10 +54001,11 @@ function Scene(canvas) {
         scene.add(hemiLight);
 
         //Add directional light
-        var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        var dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
         dirLight.color.setHSL(0.1, 1, 0.95);
-        dirLight.position.set(-1, 1.75, 1);
+        dirLight.position.set(0, 3, 10);
         dirLight.position.multiplyScalar(100);
+        dirLight.lookAt(0, 0, 0);
         scene.add(dirLight);
 
         dirLight.castShadow = true;
@@ -54072,15 +54064,12 @@ function Scene(canvas) {
         return controls;
     }
 
-    function createPlatform(Ammo, physicsWorld) {
-        // render
-        var pos = new THREE.Vector3(0, -10, 0);
-        var scale = new THREE.Vector3(30, 1, 30);
-        var quat = new THREE.Quaternion(0, 0, 0, 1);
-        // static body
+    function createPlatform(pos, scale, quat) {
+        // zero mass means the body has infinite mass, hence it's static.
         var mass = 0;
 
-        var box = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial({
+        // render
+        var box = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({
             color: 0xadaaa5
             // side: THREE.DoubleSide,
         }));
@@ -54092,25 +54081,44 @@ function Scene(canvas) {
         scene.add(box);
 
         // physics
-        var transform = new Ammo.btTransform();
+        var transform = new AMMO.btTransform();
         transform.setIdentity();
-        transform.setOrigin(new Ammo.btVector3(pos.x, pos.y, pos.z));
-        transform.setRotation(new Ammo.btQuaternion(quat.x, quat.y, quat.z, quat.w));
-        var motionState = new Ammo.btDefaultMotionState(transform);
+        transform.setOrigin(new AMMO.btVector3(pos.x, pos.y, pos.z));
+        transform.setRotation(new AMMO.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+        var motionState = new AMMO.btDefaultMotionState(transform);
 
-        var colShape = new Ammo.btBoxShape(new Ammo.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
+        // each rigidbody needs to reference a collision shape.
+        // the collision shape is for collision s only, thus has no concept of mass, inertia, restitution, etc.
+        var colShape = new AMMO.btBoxShape(new AMMO.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
         colShape.setMargin(0.05);
 
-        var localInertia = new Ammo.btVector3(0, 0, 0);
+        var localInertia = new AMMO.btVector3(0, 0, 0);
         colShape.calculateLocalInertia(mass, localInertia);
 
-        var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
-        var body = new Ammo.btRigidBody(rbInfo);
+        var rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
+        var body = new AMMO.btRigidBody(rbInfo);
 
         physicsWorld.addRigidBody(body);
     }
 
-    function createBall(Ammo, physicsWorld, pos, radius, mass) {
+    function createContainer() {
+        var length = 30;
+        var halfLength = length * 0.5;
+        var thickness = 1;
+        var quat = new THREE.Quaternion(0, 0, 0, 1);
+        // bottom
+        createPlatform(new THREE.Vector3(0, -halfLength, 0), new THREE.Vector3(length + thickness, thickness, length), quat);
+        // left
+        createPlatform(new THREE.Vector3(-halfLength, 0, 0), new THREE.Vector3(thickness, length, length), quat);
+        // right
+        createPlatform(new THREE.Vector3(halfLength, 0, 0), new THREE.Vector3(thickness, length, length), quat);
+        // top
+        createPlatform(new THREE.Vector3(0, halfLength, 0), new THREE.Vector3(length + thickness, thickness, length), quat);
+        // back
+        createPlatform(new THREE.Vector3(0, 0, -halfLength), new THREE.Vector3(length + thickness, length + thickness, thickness), quat);
+    }
+
+    function createBall(pos, radius, mass) {
         var ball = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 20), new THREE.MeshStandardMaterial({
             color: 0x7bacbd
         }));
@@ -54120,37 +54128,38 @@ function Scene(canvas) {
 
         scene.add(ball);
 
-        var btSphere = new Ammo.btSphereShape(radius);
+        var btSphere = new AMMO.btSphereShape(radius);
         btSphere.setMargin(0.05);
 
-        var transform = new Ammo.btTransform();
+        var transform = new AMMO.btTransform();
         transform.setIdentity();
-        transform.setOrigin(new Ammo.btVector3(0, 3, 0));
+        transform.setOrigin(new AMMO.btVector3(pos.x, pos.y, pos.z));
 
-        var motionState = new Ammo.btDefaultMotionState(transform);
-        var localInertia = new Ammo.btVector3(0, 0, 0);
+        var motionState = new AMMO.btDefaultMotionState(transform);
+        var localInertia = new AMMO.btVector3(0, 0, 0);
         btSphere.calculateLocalInertia(mass, localInertia);
-        var rbInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
-        var body = new Ammo.btRigidBody(rbInfo);
+        var rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
+        var body = new AMMO.btRigidBody(rbInfo);
 
         physicsWorld.addRigidBody(body);
-        // Maybe make a struct instead...
         ball.userData.physicsBody = body;
 
         rigidBodies.push(ball);
     }
 
     function updatePhysics(deltaTime) {
-        // Step world
+        // step world
         physicsWorld.stepSimulation(deltaTime, 10);
 
-        // Update rigid bodies
+        // update rigid bodies
         for (var i = 0; i < rigidBodies.length; i++) {
             var objThree = rigidBodies[i];
             var objAmmo = objThree.userData.physicsBody;
-            var ms = objAmmo.getMotionState();
-            if (ms) {
-                ms.getWorldTransform(tmpTrans);
+            // motion state holds the current transform
+            var motionState = objAmmo.getMotionState();
+            if (motionState) {
+                // this copies this rigidbody's transform data to tmpTrans.
+                motionState.getWorldTransform(tmpTrans);
                 var p = tmpTrans.getOrigin();
                 var q = tmpTrans.getRotation();
                 objThree.position.set(p.x(), p.y(), p.z());
@@ -54159,37 +54168,36 @@ function Scene(canvas) {
         }
     }
 
-    function getRandomNumber(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+    function setupPhysicsWorld() {
+        // allows me to fine-tune the algorithms used for the full collision detection
+        var collisionConfiguration = new AMMO.btDefaultCollisionConfiguration();
+        // use this to register a callback that filters overlapping broadphase proxies
+        // so that the collisions are not processed by the rest of the system.
+        var dispatcher = new AMMO.btCollisionDispatcher(collisionConfiguration);
+        // uses bounding box to quickly compute collision
+        var overlappingPairCache = new AMMO.btDbvtBroadphase();
+        // causes the objects to interact properly taking into account gravity,
+        // game logic supplied forces, collisions, and hinge constraints.
+        var solver = new AMMO.btSequentialImpulseConstraintSolver();
+
+        physicsWorld = new AMMO.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+        physicsWorld.setGravity(new AMMO.btVector3(0, -10, 0));
+        // TODO: share the collision shape among other rigidbodies if they are the same.
+        tmpTrans = new AMMO.btTransform();
     }
 
     this.start = function () {
         addLights();
-        renderer.render(scene, camera);
-
         // initialize Ammo
         (0, _ammo2.default)().then(function (Ammo) {
-            var collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-            var dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
-            var overlappingPairCache = new Ammo.btDbvtBroadphase();
-            var solver = new Ammo.btSequentialImpulseConstraintSolver();
-
-            physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-            physicsWorld.setGravity(new Ammo.btVector3(0, -10, 0));
-            initPhysics = true;
-
-            tmpTrans = new Ammo.btTransform();
-
-            createPlatform(Ammo, physicsWorld);
-
-            for (var i = 0; i < numBalls; i++) {
-                createBall(Ammo, physicsWorld, new THREE.Vector3(0, 10, 0), i + 1, i + 1);
-            }
+            AMMO = Ammo;
+            setupPhysicsWorld();
+            createContainer();
         });
     };
 
     this.update = function () {
-        if (!initPhysics) return;
+        if (AMMO == null) return;
         renderer.render(scene, camera);
         updatePhysics(clock.getDelta());
     };
@@ -54207,15 +54215,22 @@ function Scene(canvas) {
         renderer.setSize(WIDTH, HEIGHT);
     };
 
-    this.onMouseClick = function () {};
+    this.onMouseClick = function (e) {
+        var pointer = new THREE.Vector2();
+        pointer.x = e.clientX / WIDTH * 2 - 1;
+        pointer.y = -(e.clientY / HEIGHT) * 2 + 1;
+
+        rayCaster.setFromCamera(pointer, camera);
+
+        var intersects = rayCaster.intersectObjects(scene.children);
+        if (intersects.length > 0) {
+            console.log("spawn at" + intersects[0].point);
+            createBall(intersects[0].point, 1, 1);
+        } else {
+            console.log("no hit");
+        }
+    };
 }
-
-/***/ }),
-
-/***/ "./sketch9/assets/mikado-medium.png":
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__.p + "sketch9/assets/mikado-medium.png";
 
 /***/ }),
 
@@ -54245,20 +54260,6 @@ function Sketch9() {
     var scene = new _Scene2.default(canvas);
     Sketch9.prototype = new _BaseSketch2.default(scene);
 }
-
-/***/ }),
-
-/***/ "./sketch9/shaders/text.frag":
-/***/ (function(module, exports) {
-
-module.exports = "#define GLSLIFY 1\nuniform vec2 u_resolution;\n\nfloat sdBox(vec3 p, vec3 b) {\n  vec3 q = abs(p) - b;\n  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);\n}\n\nvoid main() {\n    // gl fragcoord is a relative window coordinate (0, 0) - (window_width, window_height)\n    // z: depth, w: related to perspective division and is often used for perspective correct interpolation.\n    vec2 uv = gl_FragCoord.xy / u_resolution;\n    gl_FragColor = vec4(uv, 0., 1.);\n}"
-
-/***/ }),
-
-/***/ "./sketch9/shaders/text.vert":
-/***/ (function(module, exports) {
-
-module.exports = "#define GLSLIFY 1\nvarying vec2 v_uv;\n\nvoid main() {\n    // vec4 localPos = vec4(position, 1.0);\n    // vec4 worldPos = modelMatrix * localPos;\n    // vec4 viewPos = modelViewMatrix * worldPos;\n    // vec4 projPos = projectionMatrix * viewPos;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n}"
 
 /***/ })
 
