@@ -18,6 +18,7 @@ function BaseSketch(scene) {
     function bindEventListeners() {
         window.onresize = resizeCanvas;
         window.addEventListener("click", mouseClick);
+        window.addEventListener("keyup", keyUp);
         resizeCanvas();
     }
 
@@ -29,6 +30,10 @@ function BaseSketch(scene) {
 
     function mouseClick(e) {
         scene.onMouseClick(e);
+    }
+
+    function keyUp(e) {
+        scene.onKeyUp(e);
     }
 
     function start() {
@@ -53974,16 +53979,24 @@ function Scene(canvas) {
     var clock = new THREE.Clock();
     var HEIGHT = window.innerHeight;
     var WIDTH = window.innerWidth;
-    var initPhysics = false;
-    var numBalls = 3;
 
     var scene = createScene();
     var renderer = createRenderer();
     var camera = createCamera();
-    var controls = createControl();
-    var rayCaster = new THREE.Raycaster();
 
-    var textureLoader = new THREE.TextureLoader();
+    // const controls = createControl();
+
+    var rayCaster = new THREE.Raycaster();
+    // mouse pointer position
+    var pointer = new THREE.Vector2();
+    var mousePos = new THREE.Vector3();
+    var mousePosIndicator = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+    var indicatorTimeout = void 0;
+
+    var forceMultiplier = 400;
+    var decayRate = 10;
+
+    // const textureLoader = new THREE.TextureLoader();
     // const sdfTexture = textureLoader.load(fontSdf);
     var rigidBodies = [];
     // Physics world is in a world of its own on a different realm from your game.
@@ -53992,6 +54005,27 @@ function Scene(canvas) {
     var physicsWorld = void 0;
     var tmpTrans = void 0;
     var AMMO = null;
+
+    var Mode = { SPAWN: "SPAWN", ATTRACT: "ATTRACT", REPEL: "REPEL" };
+    var mode = Mode.SPAWN;
+    var modeText = createModeText();
+
+    // mode text
+    function createModeText() {
+        var root = document.getElementById("root");
+        var modeText = document.createElement("div");
+        modeText.id = "mode-text";
+        modeText.style.position = "absolute";
+        modeText.style.top = "10%";
+        modeText.style.left = "50%";
+        modeText.style.transform = "translate(-10%, -50%)";
+        modeText.style.color = "black";
+        modeText.textContent = mode;
+
+        root.appendChild(modeText);
+
+        return modeText;
+    }
 
     function addLights() {
         var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
@@ -54053,6 +54087,10 @@ function Scene(canvas) {
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
+    }
+
+    function updateModeText() {
+        modeText.textContent = mode;
     }
 
     function createControl() {
@@ -54147,7 +54185,38 @@ function Scene(canvas) {
         rigidBodies.push(ball);
     }
 
+    function applyForceToBalls() {
+        if (mode == Mode.SPAWN) return;
+
+        for (var i = 0; i < rigidBodies.length; i++) {
+            var objThree = rigidBodies[i];
+            var objAmmo = objThree.userData.physicsBody;
+
+            // direction from a ball to mouse pointer
+            var direction = new THREE.Vector3().subVectors(mousePos, objThree.position);
+            // let distSq = direction.lengthSq(); // maybe use this instead
+            var dist = direction.length();
+            direction.normalize();
+            // console.log("dir: " + direction.x + ", " + direction.y + ", " + direction.z);
+
+            var forceDir = mode == Mode.ATTRACT ? 1 : -1;
+            var forceMagnitude = forceDir * forceMultiplier / Math.max(dist, 0.001); // avoid dividing by 0
+            var force = direction.multiplyScalar(forceMagnitude);
+            // console.log("force: " + force.x + ", " + force.y + ", " + force.z);
+
+            // apply the force to the object
+            objAmmo.applyForce(new AMMO.btVector3(force.x, force.y, force.z), new AMMO.btVector3(0, 0, 0));
+        }
+    }
+
     function updatePhysics(deltaTime) {
+        if (mode == Mode.ATTRACT || mode == Mode.REPEL) {
+            forceMultiplier -= decayRate * deltaTime;
+            // make sure we don't go negative..
+            forceMultiplier = Math.max(forceMultiplier, 0);
+        }
+        applyForceToBalls();
+
         // step world
         physicsWorld.stepSimulation(deltaTime, 10);
 
@@ -54187,7 +54256,11 @@ function Scene(canvas) {
     }
 
     this.start = function () {
+        scene.add(mousePosIndicator);
+        mousePosIndicator.visible = false;
+
         addLights();
+
         // initialize Ammo
         (0, _ammo2.default)().then(function (Ammo) {
             AMMO = Ammo;
@@ -54216,19 +54289,50 @@ function Scene(canvas) {
     };
 
     this.onMouseClick = function (e) {
-        var pointer = new THREE.Vector2();
         pointer.x = e.clientX / WIDTH * 2 - 1;
         pointer.y = -(e.clientY / HEIGHT) * 2 + 1;
 
         rayCaster.setFromCamera(pointer, camera);
-
         var intersects = rayCaster.intersectObjects(scene.children);
+
         if (intersects.length > 0) {
-            console.log("spawn at" + intersects[0].point);
-            createBall(intersects[0].point, 1, 1);
+            mousePos.copy(intersects[0].point);
+            if (mode == Mode.SPAWN) {
+                // console.log("spawn at: " + mousePos.x + ", " + mousePos.y + ", " + mousePos.z);
+                createBall(intersects[0].point, 1, 1);
+            } else {
+                // we only need the indicator for the other modes.
+                mousePosIndicator.position.copy(mousePos);
+                mousePosIndicator.visible = true;
+
+                clearTimeout(indicatorTimeout);
+                indicatorTimeout = setTimeout(function () {
+                    mousePosIndicator.visible = false;
+                }, 1000);
+            }
         } else {
             console.log("no hit");
         }
+    };
+
+    this.onKeyUp = function (e) {
+        // console.log("key:" + e.key + ", code: " + e.code);
+
+        if (e.key == "s") {
+            // reset
+            mode = Mode.SPAWN;
+        }
+        if (e.key == "a") {
+            // attract
+            mode = Mode.ATTRACT;
+        }
+        if (e.key == "r") {
+            // repel
+            mode = Mode.REPEL;
+        }
+
+        updateModeText();
+        console.log("mode: " + mode);
     };
 }
 
