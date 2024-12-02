@@ -6,6 +6,7 @@ export default function BaseSketch(scene) {
     function bindEventListeners() {
         window.onresize = resizeCanvas;
         window.addEventListener("click", mouseClick);
+        window.addEventListener("keyup", keyUp);
         resizeCanvas();
     }
 
@@ -17,6 +18,10 @@ export default function BaseSketch(scene) {
 
     function mouseClick(e) {
         scene.onMouseClick(e);
+    }
+
+    function keyUp(e) {
+        scene.onKeyUp(e);
     }
 
     function start() {
