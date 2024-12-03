@@ -53993,7 +53993,8 @@ function Scene(canvas) {
     var mousePosIndicator = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
     var indicatorTimeout = void 0;
 
-    var forceMultiplier = 400;
+    var maxForceMultiplier = 400;
+    var forceMultiplier = maxForceMultiplier;
     var decayRate = 10;
 
     // const textureLoader = new THREE.TextureLoader();
@@ -54008,6 +54009,7 @@ function Scene(canvas) {
 
     var Mode = { SPAWN: "SPAWN", ATTRACT: "ATTRACT", REPEL: "REPEL" };
     var mode = Mode.SPAWN;
+    var prevMode = mode;
     var modeText = createModeText();
 
     // mode text
@@ -54021,6 +54023,32 @@ function Scene(canvas) {
         modeText.style.transform = "translate(-10%, -50%)";
         modeText.style.color = "black";
         modeText.textContent = mode;
+
+        modeText.addEventListener("pointerup", function () {
+            prevMode = mode;
+            if (mode == Mode.SPAWN) {
+                mode = Mode.ATTRACT;
+            } else if (mode == Mode.ATTRACT) {
+                mode = Mode.REPEL;
+            } else if (mode == Mode.REPEL) {
+                mode = Mode.SPAWN;
+            }
+
+            updateModeText();
+            console.log("mode: " + mode);
+
+            if (mode != prevMode) {
+                // reset the multiplier
+                forceMultiplier = maxForceMultiplier;
+                // when the balls get settled, they get deactivated until there's something that
+                // wakes them up (e.g., collision), so force them to wake up
+                for (var i = 0; i < rigidBodies.length; i++) {
+                    var objThree = rigidBodies[i];
+                    var objAmmo = objThree.userData.physicsBody;
+                    objAmmo.activate();
+                }
+            }
+        });
 
         root.appendChild(modeText);
 
@@ -54199,14 +54227,26 @@ function Scene(canvas) {
             direction.normalize();
             // console.log("dir: " + direction.x + ", " + direction.y + ", " + direction.z);
 
-            var forceDir = mode == Mode.ATTRACT ? 1 : -1;
-            var forceMagnitude = forceDir * forceMultiplier / Math.max(dist, 0.001); // avoid dividing by 0
+            var sign = mode == Mode.ATTRACT ? 1 : -1;
+            var forceMagnitude = sign * forceMultiplier / Math.max(dist, 0.001); // avoid dividing by 0
             var force = direction.multiplyScalar(forceMagnitude);
-            // console.log("force: " + force.x + ", " + force.y + ", " + force.z);
 
-            // apply the force to the object
+            // apply the force to the center of the object
             objAmmo.applyForce(new AMMO.btVector3(force.x, force.y, force.z), new AMMO.btVector3(0, 0, 0));
+            // drawDebugForce(objThree, force, forceMagnitude);
         }
+    }
+
+    function drawDebugForce(objThree, force, forceMagnitude) {
+        var points = [];
+        points.push(objThree.position);
+        points.push(objThree.position.clone().add(force.clone().multiplyScalar(0.1)));
+        var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0xff0000, opacity: forceMagnitude / maxForceMultiplier }));
+
+        scene.add(line);
+        setTimeout(function () {
+            scene.remove(line);
+        }, 100);
     }
 
     function updatePhysics(deltaTime) {
@@ -54214,8 +54254,8 @@ function Scene(canvas) {
             forceMultiplier -= decayRate * deltaTime;
             // make sure we don't go negative..
             forceMultiplier = Math.max(forceMultiplier, 0);
+            applyForceToBalls();
         }
-        applyForceToBalls();
 
         // step world
         physicsWorld.stepSimulation(deltaTime, 10);
@@ -54317,6 +54357,7 @@ function Scene(canvas) {
 
     this.onKeyUp = function (e) {
         // console.log("key:" + e.key + ", code: " + e.code);
+        prevMode = mode;
 
         if (e.key == "s") {
             // reset
@@ -54333,6 +54374,18 @@ function Scene(canvas) {
 
         updateModeText();
         console.log("mode: " + mode);
+
+        if (mode != prevMode) {
+            // reset the multiplier
+            forceMultiplier = maxForceMultiplier;
+            // when the balls get settled, they get deactivated until there's something that
+            // wakes them up (e.g., collision), so force them to wake up
+            for (var i = 0; i < rigidBodies.length; i++) {
+                var objThree = rigidBodies[i];
+                var objAmmo = objThree.userData.physicsBody;
+                objAmmo.activate();
+            }
+        }
     };
 }
 
