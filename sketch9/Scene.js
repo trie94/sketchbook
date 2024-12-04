@@ -17,7 +17,8 @@ export default function Scene(canvas) {
     const rayCaster = new THREE.Raycaster();
     // mouse pointer position
     const pointer = new THREE.Vector2();
-    const mousePos = new THREE.Vector3();
+    // let mousePos = new THREE.Vector3();
+    let mousePos = null;
     let mousePosIndicator = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 32, 32),
         new THREE.MeshBasicMaterial({ color: 0xff0000 })
@@ -40,7 +41,24 @@ export default function Scene(canvas) {
 
     const Mode = { SPAWN: "SPAWN", ATTRACT: "ATTRACT", REPEL: "REPEL" };
     let mode = Mode.SPAWN;
-    let prevMode = mode;
+    function setMode(newMode) {
+        if (mode != newMode) {
+            // reset the multiplier
+            forceMultiplier = maxForceMultiplier;
+            // when the balls get settled, they get deactivated until there's something that
+            // wakes them up (e.g., collision), so force them to wake up
+            for (let i=0; i<rigidBodies.length; i++) {
+                let objThree = rigidBodies[i];
+                let objAmmo = objThree.userData.physicsBody;
+                objAmmo.activate();
+            }
+
+            mode = newMode;
+            // reset the mouse pos so that the balls get reset when the mode changes.
+            mousePos = null;
+            updateModeText();
+        }
+    }
     const modeText = createModeText();
 
     // mode text
@@ -56,29 +74,14 @@ export default function Scene(canvas) {
         modeText.textContent = mode;
 
         modeText.addEventListener("pointerup", function() {
-            prevMode = mode;
             if (mode == Mode.SPAWN) {
-                mode = Mode.ATTRACT;
+                setMode(Mode.ATTRACT);
             } else if (mode == Mode.ATTRACT) {
-                mode = Mode.REPEL;
+                setMode(Mode.REPEL);
             } else if (mode == Mode.REPEL) {
-                mode = Mode.SPAWN;
+                setMode(Mode.SPAWN);
             }
-
-            updateModeText();
             console.log("mode: " + mode);
-    
-            if (mode != prevMode) {
-                // reset the multiplier
-                forceMultiplier = maxForceMultiplier;
-                // when the balls get settled, they get deactivated until there's something that
-                // wakes them up (e.g., collision), so force them to wake up
-                for (let i=0; i<rigidBodies.length; i++) {
-                    let objThree = rigidBodies[i];
-                    let objAmmo = objThree.userData.physicsBody;
-                    objAmmo.activate();
-                }
-            }
         });
 
         root.appendChild(modeText);
@@ -271,7 +274,10 @@ export default function Scene(canvas) {
     }
 
     function applyForceToBalls() {
+        // no extra force needed for the spawn mode.
         if (mode == Mode.SPAWN) return;
+        // we don't have a point to apply force, return.
+        if (mousePos == null) return;
 
         for (let i=0; i<rigidBodies.length; i++) {
             let objThree = rigidBodies[i];
@@ -402,19 +408,24 @@ export default function Scene(canvas) {
         const intersects = rayCaster.intersectObjects(scene.children);
 
         if (intersects.length > 0) {
+            if (mousePos == null) {
+                mousePos = new THREE.Vector3();
+            }
             mousePos.copy(intersects[0].point);
             if (mode == Mode.SPAWN) {
                 // console.log("spawn at: " + mousePos.x + ", " + mousePos.y + ", " + mousePos.z);
                 createBall(intersects[0].point, 1, 1);
             } else {
                 // we only need the indicator for the other modes.
-                mousePosIndicator.position.copy(mousePos);
-                mousePosIndicator.visible = true;
-    
-                clearTimeout(indicatorTimeout);
-                indicatorTimeout = setTimeout(() => {
-                    mousePosIndicator.visible = false;
-                }, 1000);
+                if (mousePos != null) {
+                    mousePosIndicator.position.copy(mousePos);
+                    mousePosIndicator.visible = true;
+        
+                    clearTimeout(indicatorTimeout);
+                    indicatorTimeout = setTimeout(() => {
+                        mousePosIndicator.visible = false;
+                    }, 1000);
+                }
             }
         } else {
             console.log("no hit");
@@ -422,32 +433,16 @@ export default function Scene(canvas) {
     }
 
     this.onKeyUp = function (e) {
-        // console.log("key:" + e.key + ", code: " + e.code);
-        prevMode = mode;
-
         if (e.key == "s") { // reset
-            mode = Mode.SPAWN;
+            setMode(Mode.SPAWN);
         }
         if (e.key == "a") { // attract
-            mode = Mode.ATTRACT;
+            setMode(Mode.ATTRACT);
         }
         if (e.key == "r") { // repel
-            mode = Mode.REPEL;
+            setMode(Mode.REPEL);
         }
 
-        updateModeText();
         console.log("mode: " + mode);
-
-        if (mode != prevMode) {
-            // reset the multiplier
-            forceMultiplier = maxForceMultiplier;
-            // when the balls get settled, they get deactivated until there's something that
-            // wakes them up (e.g., collision), so force them to wake up
-            for (let i=0; i<rigidBodies.length; i++) {
-                let objThree = rigidBodies[i];
-                let objAmmo = objThree.userData.physicsBody;
-                objAmmo.activate();
-            }
-        }
     }
 }
