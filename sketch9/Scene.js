@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import Ammo from 'ammo.js';
+import Ball from './Ball.js';
 
 const OrbitControls = require('three-orbit-controls')(THREE);
 
@@ -48,9 +49,7 @@ export default function Scene(canvas) {
             // when the balls get settled, they get deactivated until there's something that
             // wakes them up (e.g., collision), so force them to wake up
             for (let i=0; i<rigidBodies.length; i++) {
-                let objThree = rigidBodies[i];
-                let objAmmo = objThree.userData.physicsBody;
-                objAmmo.activate();
+                rigidBodies[i].activate();
             }
 
             mode = newMode;
@@ -242,75 +241,10 @@ export default function Scene(canvas) {
     }
 
     function createBall(pos, radius, mass) {
-        const ball = new THREE.Mesh(
-            new THREE.SphereGeometry(radius, 20, 20),
-            new THREE.MeshStandardMaterial({
-                color: 0x7bacbd
-            })
-        );
-        ball.position.set(pos.x, pos.y, pos.z);
-        ball.castShadow = true;
-        ball.receiveShadow = true;
-
-        scene.add(ball);
-
-        const btSphere = new AMMO.btSphereShape(radius);
-        btSphere.setMargin(0.05);
-    
-        const transform = new AMMO.btTransform();
-        transform.setIdentity();
-        transform.setOrigin(new AMMO.btVector3(pos.x, pos.y, pos.z));
-
-        const motionState = new AMMO.btDefaultMotionState(transform);
-        const localInertia = new AMMO.btVector3(0, 0, 0);
-        btSphere.calculateLocalInertia(mass, localInertia);
-        const rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
-        const body = new AMMO.btRigidBody(rbInfo);
-
-        physicsWorld.addRigidBody(body);
-        ball.userData.physicsBody = body;
-
+        const ball = new Ball(pos, radius, mass, AMMO);
+        scene.add(ball.getBall());
         rigidBodies.push(ball);
-    }
-
-    function applyForceToBalls() {
-        // no extra force needed for the spawn mode.
-        if (mode == Mode.SPAWN) return;
-        // we don't have a point to apply force, return.
-        if (mousePos == null) return;
-
-        for (let i=0; i<rigidBodies.length; i++) {
-            let objThree = rigidBodies[i];
-            let objAmmo = objThree.userData.physicsBody;
-
-            // direction from a ball to mouse pointer
-            let direction = new THREE.Vector3().subVectors(mousePos, objThree.position);
-            // let distSq = direction.lengthSq(); // maybe use this instead
-            let dist = direction.length();
-            direction.normalize();
-            // console.log("dir: " + direction.x + ", " + direction.y + ", " + direction.z);
-
-            let sign = mode == Mode.ATTRACT ? 1 : -1;
-            let forceMagnitude = sign * forceMultiplier / Math.max(dist, 0.001); // avoid dividing by 0
-            let force = direction.multiplyScalar(forceMagnitude);
-
-            // apply the force to the center of the object
-            objAmmo.applyForce(new AMMO.btVector3(force.x, force.y, force.z), new AMMO.btVector3(0, 0, 0));
-            // drawDebugForce(objThree, force, forceMagnitude);
-        }
-    }
-
-    function drawDebugForce(objThree, force, forceMagnitude) {
-        const points = [];
-        points.push(objThree.position);
-        points.push(objThree.position.clone().add(force.clone().multiplyScalar(0.1)));
-        const line = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints(points),
-            new THREE.LineBasicMaterial( { color: 0xff0000, opacity: forceMagnitude / maxForceMultiplier } )
-        );
-        
-        scene.add(line);
-        setTimeout(() => { scene.remove(line); }, 100);
+        physicsWorld.addRigidBody(ball.getBall().userData.physicsBody);
     }
 
     function updatePhysics(deltaTime) {
@@ -318,7 +252,13 @@ export default function Scene(canvas) {
             forceMultiplier -= decayRate * deltaTime;
             // make sure we don't go negative..
             forceMultiplier = Math.max(forceMultiplier, 0);
-            applyForceToBalls();
+            // applyForceToBalls();
+            if (mousePos != null) {
+                for (let i=0; i<rigidBodies.length; i++) {
+                    rigidBodies[i].applyForce(
+                        AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
+                }
+            }
         }
 
         // step world
@@ -326,18 +266,7 @@ export default function Scene(canvas) {
 
         // update rigid bodies
         for (let i = 0; i < rigidBodies.length; i++) {
-            let objThree = rigidBodies[i];
-            let objAmmo = objThree.userData.physicsBody;
-            // motion state holds the current transform
-            let motionState = objAmmo.getMotionState();
-            if (motionState) {
-                // this copies this rigidbody's transform data to tmpTrans.
-                motionState.getWorldTransform(tmpTrans);
-                let p = tmpTrans.getOrigin();
-                let q = tmpTrans.getRotation();
-                objThree.position.set(p.x(), p.y(), p.z());
-                objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
-            }
+            rigidBodies[i].updatePhysics(tmpTrans);
         }
     }
 
@@ -416,7 +345,7 @@ export default function Scene(canvas) {
                 // console.log("spawn at: " + mousePos.x + ", " + mousePos.y + ", " + mousePos.z);
                 createBall(intersects[0].point, 1, 1);
             } else {
-                // we only need the indicator for the other modes.
+                // we only need the indicator for non spawn modes.
                 if (mousePos != null) {
                     mousePosIndicator.position.copy(mousePos);
                     mousePosIndicator.visible = true;
