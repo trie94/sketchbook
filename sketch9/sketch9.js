@@ -53950,6 +53950,107 @@ module.exports = g;
 
 /***/ }),
 
+/***/ "./sketch9/Ball.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = Ball;
+
+var _three = __webpack_require__("./node_modules/three/build/three.module.js");
+
+var THREE = _interopRequireWildcard(_three);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function Ball(pos, radius, mass, AMMO) {
+    // three js
+    var ball = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 20), new THREE.MeshStandardMaterial({
+        color: 0x7bacbd
+    }));
+    ball.position.set(pos.x, pos.y, pos.z);
+    ball.castShadow = true;
+    ball.receiveShadow = true;
+
+    // Ammo
+    var btSphere = new AMMO.btSphereShape(radius);
+    btSphere.setMargin(0.05);
+
+    var transform = new AMMO.btTransform();
+    transform.setIdentity();
+    transform.setOrigin(new AMMO.btVector3(pos.x, pos.y, pos.z));
+
+    var motionState = new AMMO.btDefaultMotionState(transform);
+    var localInertia = new AMMO.btVector3(0, 0, 0);
+    btSphere.calculateLocalInertia(mass, localInertia);
+    var rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
+    var body = new AMMO.btRigidBody(rbInfo);
+
+    // attach ammo data to the three js object
+    ball.userData.physicsBody = body;
+
+    // returns three js ball object
+    this.getBall = function () {
+        return ball;
+    };
+
+    this.applyForce = function (AMMO, forceMultiplier, mousePos, sign) {
+        var objThree = ball;
+        var objAmmo = objThree.userData.physicsBody;
+
+        // direction from a ball to mouse pointer
+        var direction = new THREE.Vector3().subVectors(mousePos, objThree.position);
+        // let distSq = direction.lengthSq(); // maybe use this instead
+        var dist = direction.length();
+        direction.normalize();
+        // console.log("dir: " + direction.x + ", " + direction.y + ", " + direction.z);
+
+        var forceMagnitude = sign * forceMultiplier / Math.max(dist, 0.001); // avoid dividing by 0
+        var force = direction.multiplyScalar(forceMagnitude);
+
+        // apply the force to the center of the object
+        objAmmo.applyForce(new AMMO.btVector3(force.x, force.y, force.z), new AMMO.btVector3(0, 0, 0));
+        // drawDebugForce(objThree, force, forceMagnitude);
+    };
+
+    this.updatePhysics = function (tmpTrans) {
+        var objThree = ball;
+        var objAmmo = objThree.userData.physicsBody;
+        // motion state holds the current transform
+        var motionState = objAmmo.getMotionState();
+        if (motionState) {
+            // this copies this rigidbody's transform data to tmpTrans.
+            motionState.getWorldTransform(tmpTrans);
+            var p = tmpTrans.getOrigin();
+            var q = tmpTrans.getRotation();
+            objThree.position.set(p.x(), p.y(), p.z());
+            objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+        }
+    };
+
+    this.activate = function () {
+        ball.userData.physicsBody.activate();
+    };
+
+    function drawDebugForce(objThree, force, forceMagnitude) {
+        var points = [];
+        points.push(objThree.position);
+        points.push(objThree.position.clone().add(force.clone().multiplyScalar(0.1)));
+        var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0xff0000, opacity: forceMagnitude / maxForceMultiplier }));
+
+        scene.add(line);
+        setTimeout(function () {
+            scene.remove(line);
+        }, 100);
+    }
+}
+
+/***/ }),
+
 /***/ "./sketch9/Scene.js":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -53968,6 +54069,10 @@ var THREE = _interopRequireWildcard(_three);
 var _ammo = __webpack_require__("./node_modules/ammo.js/builds/ammo.js");
 
 var _ammo2 = _interopRequireDefault(_ammo);
+
+var _Ball = __webpack_require__("./sketch9/Ball.js");
+
+var _Ball2 = _interopRequireDefault(_Ball);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -54017,9 +54122,7 @@ function Scene(canvas) {
             // when the balls get settled, they get deactivated until there's something that
             // wakes them up (e.g., collision), so force them to wake up
             for (var i = 0; i < rigidBodies.length; i++) {
-                var objThree = rigidBodies[i];
-                var objAmmo = objThree.userData.physicsBody;
-                objAmmo.activate();
+                rigidBodies[i].activate();
             }
 
             mode = newMode;
@@ -54188,71 +54291,10 @@ function Scene(canvas) {
     }
 
     function createBall(pos, radius, mass) {
-        var ball = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 20), new THREE.MeshStandardMaterial({
-            color: 0x7bacbd
-        }));
-        ball.position.set(pos.x, pos.y, pos.z);
-        ball.castShadow = true;
-        ball.receiveShadow = true;
-
-        scene.add(ball);
-
-        var btSphere = new AMMO.btSphereShape(radius);
-        btSphere.setMargin(0.05);
-
-        var transform = new AMMO.btTransform();
-        transform.setIdentity();
-        transform.setOrigin(new AMMO.btVector3(pos.x, pos.y, pos.z));
-
-        var motionState = new AMMO.btDefaultMotionState(transform);
-        var localInertia = new AMMO.btVector3(0, 0, 0);
-        btSphere.calculateLocalInertia(mass, localInertia);
-        var rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
-        var body = new AMMO.btRigidBody(rbInfo);
-
-        physicsWorld.addRigidBody(body);
-        ball.userData.physicsBody = body;
-
+        var ball = new _Ball2.default(pos, radius, mass, AMMO);
+        scene.add(ball.getBall());
         rigidBodies.push(ball);
-    }
-
-    function applyForceToBalls() {
-        // no extra force needed for the spawn mode.
-        if (mode == Mode.SPAWN) return;
-        // we don't have a point to apply force, return.
-        if (mousePos == null) return;
-
-        for (var i = 0; i < rigidBodies.length; i++) {
-            var objThree = rigidBodies[i];
-            var objAmmo = objThree.userData.physicsBody;
-
-            // direction from a ball to mouse pointer
-            var direction = new THREE.Vector3().subVectors(mousePos, objThree.position);
-            // let distSq = direction.lengthSq(); // maybe use this instead
-            var dist = direction.length();
-            direction.normalize();
-            // console.log("dir: " + direction.x + ", " + direction.y + ", " + direction.z);
-
-            var sign = mode == Mode.ATTRACT ? 1 : -1;
-            var forceMagnitude = sign * forceMultiplier / Math.max(dist, 0.001); // avoid dividing by 0
-            var force = direction.multiplyScalar(forceMagnitude);
-
-            // apply the force to the center of the object
-            objAmmo.applyForce(new AMMO.btVector3(force.x, force.y, force.z), new AMMO.btVector3(0, 0, 0));
-            // drawDebugForce(objThree, force, forceMagnitude);
-        }
-    }
-
-    function drawDebugForce(objThree, force, forceMagnitude) {
-        var points = [];
-        points.push(objThree.position);
-        points.push(objThree.position.clone().add(force.clone().multiplyScalar(0.1)));
-        var line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0xff0000, opacity: forceMagnitude / maxForceMultiplier }));
-
-        scene.add(line);
-        setTimeout(function () {
-            scene.remove(line);
-        }, 100);
+        physicsWorld.addRigidBody(ball.getBall().userData.physicsBody);
     }
 
     function updatePhysics(deltaTime) {
@@ -54260,26 +54302,20 @@ function Scene(canvas) {
             forceMultiplier -= decayRate * deltaTime;
             // make sure we don't go negative..
             forceMultiplier = Math.max(forceMultiplier, 0);
-            applyForceToBalls();
+            // applyForceToBalls();
+            if (mousePos != null) {
+                for (var i = 0; i < rigidBodies.length; i++) {
+                    rigidBodies[i].applyForce(AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
+                }
+            }
         }
 
         // step world
         physicsWorld.stepSimulation(deltaTime, 10);
 
         // update rigid bodies
-        for (var i = 0; i < rigidBodies.length; i++) {
-            var objThree = rigidBodies[i];
-            var objAmmo = objThree.userData.physicsBody;
-            // motion state holds the current transform
-            var motionState = objAmmo.getMotionState();
-            if (motionState) {
-                // this copies this rigidbody's transform data to tmpTrans.
-                motionState.getWorldTransform(tmpTrans);
-                var p = tmpTrans.getOrigin();
-                var q = tmpTrans.getRotation();
-                objThree.position.set(p.x(), p.y(), p.z());
-                objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
-            }
+        for (var _i = 0; _i < rigidBodies.length; _i++) {
+            rigidBodies[_i].updatePhysics(tmpTrans);
         }
     }
 
@@ -54350,7 +54386,7 @@ function Scene(canvas) {
                 // console.log("spawn at: " + mousePos.x + ", " + mousePos.y + ", " + mousePos.z);
                 createBall(intersects[0].point, 1, 1);
             } else {
-                // we only need the indicator for the other modes.
+                // we only need the indicator for non spawn modes.
                 if (mousePos != null) {
                     mousePosIndicator.position.copy(mousePos);
                     mousePosIndicator.visible = true;
