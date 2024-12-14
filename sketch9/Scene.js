@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import Ammo from 'ammo.js';
 import Ball from './Ball.js';
+import Slide from './Slide.js';
 
 const OrbitControls = require('three-orbit-controls')(THREE);
 
@@ -13,7 +14,7 @@ export default function Scene(canvas) {
     const renderer = createRenderer();
     const camera = createCamera();
 
-    // const controls = createControl();
+    const controls = createControl();
 
     const rayCaster = new THREE.Raycaster();
     // mouse pointer position
@@ -103,7 +104,7 @@ export default function Scene(canvas) {
         dirLight.lookAt(0, 0, 0);
         scene.add(dirLight);
     
-        dirLight.castShadow = true;
+        // dirLight.castShadow = true;
     
         dirLight.shadow.mapSize.width = 2048;
         dirLight.shadow.mapSize.height = 2048;
@@ -192,7 +193,7 @@ export default function Scene(canvas) {
         // each rigidbody needs to reference a collision shape.
         // the collision shape is for collision s only, thus has no concept of mass, inertia, restitution, etc.
         const colShape = new AMMO.btBoxShape(new AMMO.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
-        colShape.setMargin( 0.05 );
+        colShape.setMargin(0.05);
     
         const localInertia = new AMMO.btVector3(0, 0, 0);
         colShape.calculateLocalInertia(mass, localInertia);
@@ -242,21 +243,22 @@ export default function Scene(canvas) {
 
     function createBall(pos, radius, mass) {
         const ball = new Ball(pos, radius, mass, AMMO);
-        scene.add(ball.getBall());
+        ball.addToScene(scene, physicsWorld);
         rigidBodies.push(ball);
-        physicsWorld.addRigidBody(ball.getBall().userData.physicsBody);
     }
 
     function updatePhysics(deltaTime) {
         if (mode == Mode.ATTRACT || mode == Mode.REPEL) {
-            forceMultiplier -= decayRate * deltaTime;
+            // forceMultiplier -= decayRate * deltaTime;
             // make sure we don't go negative..
-            forceMultiplier = Math.max(forceMultiplier, 0);
-            // applyForceToBalls();
+            // forceMultiplier = Math.max(forceMultiplier, 0);
             if (mousePos != null) {
                 for (let i=0; i<rigidBodies.length; i++) {
-                    rigidBodies[i].applyForce(
-                        AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
+                    let body = rigidBodies[i];
+                    if (body instanceof Ball) {
+                        rigidBodies[i].applyForce(
+                            AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
+                    }
                 }
             }
         }
@@ -266,7 +268,7 @@ export default function Scene(canvas) {
 
         // update rigid bodies
         for (let i = 0; i < rigidBodies.length; i++) {
-            rigidBodies[i].updatePhysics(tmpTrans);
+            rigidBodies[i].updatePhysics(tmpTrans, deltaTime);
         }
     }
 
@@ -284,6 +286,7 @@ export default function Scene(canvas) {
         // causes the objects to interact properly taking into account gravity,
         // game logic supplied forces, collisions, and hinge constraints.
         const solver = new AMMO.btSequentialImpulseConstraintSolver();
+        // const solver = new AMMO.btMLCPSolver();
 
         physicsWorld = new AMMO.btDiscreteDynamicsWorld(
             dispatcher,
@@ -307,6 +310,14 @@ export default function Scene(canvas) {
             AMMO = Ammo;
             setupPhysicsWorld();
             createContainer();
+            const slide = new Slide(
+                new THREE.Vector3(0, 0, -13),
+                new THREE.Vector3(20, 2, 5),
+                new THREE.Quaternion(0, 0, 0, 1),
+                AMMO
+            )
+            slide.addToScene(scene, physicsWorld);
+            rigidBodies.push(slide);
         });
     };
 

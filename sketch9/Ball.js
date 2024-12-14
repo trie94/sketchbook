@@ -26,20 +26,19 @@ export default function Ball(pos, radius, mass, AMMO) {
     const rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
     const body = new AMMO.btRigidBody(rbInfo);
 
-    // attach ammo data to the three js object
-    ball.userData.physicsBody = body;
+    // used for applying force
+    let direction = new THREE.Vector3();
+    let forceVector = new AMMO.btVector3();
+    const relativePos = new AMMO.btVector3(0, 0, 0);
 
-    // returns three js ball object
-    this.getBall = function() {
-        return ball;
+    this.addToScene = function(scene, physicsWorld) {
+        scene.add(ball);
+        physicsWorld.addRigidBody(body);
     }
 
     this.applyForce = function(AMMO, forceMultiplier, mousePos, sign) {
-        let objThree = ball;
-        let objAmmo = objThree.userData.physicsBody;
-
         // direction from a ball to mouse pointer
-        let direction = new THREE.Vector3().subVectors(mousePos, objThree.position);
+        direction.subVectors(mousePos, ball.position);
         // let distSq = direction.lengthSq(); // maybe use this instead
         let dist = direction.length();
         direction.normalize();
@@ -49,27 +48,26 @@ export default function Ball(pos, radius, mass, AMMO) {
         let force = direction.multiplyScalar(forceMagnitude);
 
         // apply the force to the center of the object
-        objAmmo.applyForce(new AMMO.btVector3(force.x, force.y, force.z), new AMMO.btVector3(0, 0, 0));
+        forceVector.setValue(force.x, force.y, force.z);
+        body.applyForce(forceVector, relativePos);
         // drawDebugForce(objThree, force, forceMagnitude);
     }
 
-    this.updatePhysics = function(tmpTrans) {
-        let objThree = ball;
-        let objAmmo = objThree.userData.physicsBody;
+    this.updatePhysics = function(tmpTrans, deltaTime) {
         // motion state holds the current transform
-        let motionState = objAmmo.getMotionState();
+        let motionState = body.getMotionState();
         if (motionState) {
             // this copies this rigidbody's transform data to tmpTrans.
             motionState.getWorldTransform(tmpTrans);
             let p = tmpTrans.getOrigin();
             let q = tmpTrans.getRotation();
-            objThree.position.set(p.x(), p.y(), p.z());
-            objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+            ball.position.set(p.x(), p.y(), p.z());
+            ball.quaternion.set(q.x(), q.y(), q.z(), q.w());
         }
     }
 
     this.activate = function() {
-        ball.userData.physicsBody.activate();
+        body.activate();
     }
 
     function drawDebugForce(objThree, force, forceMagnitude) {
