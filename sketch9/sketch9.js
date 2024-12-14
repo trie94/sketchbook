@@ -53990,20 +53990,19 @@ function Ball(pos, radius, mass, AMMO) {
     var rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
     var body = new AMMO.btRigidBody(rbInfo);
 
-    // attach ammo data to the three js object
-    ball.userData.physicsBody = body;
+    // used for applying force
+    var direction = new THREE.Vector3();
+    var forceVector = new AMMO.btVector3();
+    var relativePos = new AMMO.btVector3(0, 0, 0);
 
-    // returns three js ball object
-    this.getBall = function () {
-        return ball;
+    this.addToScene = function (scene, physicsWorld) {
+        scene.add(ball);
+        physicsWorld.addRigidBody(body);
     };
 
     this.applyForce = function (AMMO, forceMultiplier, mousePos, sign) {
-        var objThree = ball;
-        var objAmmo = objThree.userData.physicsBody;
-
         // direction from a ball to mouse pointer
-        var direction = new THREE.Vector3().subVectors(mousePos, objThree.position);
+        direction.subVectors(mousePos, ball.position);
         // let distSq = direction.lengthSq(); // maybe use this instead
         var dist = direction.length();
         direction.normalize();
@@ -54013,27 +54012,26 @@ function Ball(pos, radius, mass, AMMO) {
         var force = direction.multiplyScalar(forceMagnitude);
 
         // apply the force to the center of the object
-        objAmmo.applyForce(new AMMO.btVector3(force.x, force.y, force.z), new AMMO.btVector3(0, 0, 0));
+        forceVector.setValue(force.x, force.y, force.z);
+        body.applyForce(forceVector, relativePos);
         // drawDebugForce(objThree, force, forceMagnitude);
     };
 
-    this.updatePhysics = function (tmpTrans) {
-        var objThree = ball;
-        var objAmmo = objThree.userData.physicsBody;
+    this.updatePhysics = function (tmpTrans, deltaTime) {
         // motion state holds the current transform
-        var motionState = objAmmo.getMotionState();
+        var motionState = body.getMotionState();
         if (motionState) {
             // this copies this rigidbody's transform data to tmpTrans.
             motionState.getWorldTransform(tmpTrans);
             var p = tmpTrans.getOrigin();
             var q = tmpTrans.getRotation();
-            objThree.position.set(p.x(), p.y(), p.z());
-            objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
+            ball.position.set(p.x(), p.y(), p.z());
+            ball.quaternion.set(q.x(), q.y(), q.z(), q.w());
         }
     };
 
     this.activate = function () {
-        ball.userData.physicsBody.activate();
+        body.activate();
     };
 
     function drawDebugForce(objThree, force, forceMagnitude) {
@@ -54074,6 +54072,10 @@ var _Ball = __webpack_require__("./sketch9/Ball.js");
 
 var _Ball2 = _interopRequireDefault(_Ball);
 
+var _Slide = __webpack_require__("./sketch9/Slide.js");
+
+var _Slide2 = _interopRequireDefault(_Slide);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -54089,7 +54091,7 @@ function Scene(canvas) {
     var renderer = createRenderer();
     var camera = createCamera();
 
-    // const controls = createControl();
+    var controls = createControl();
 
     var rayCaster = new THREE.Raycaster();
     // mouse pointer position
@@ -54176,7 +54178,7 @@ function Scene(canvas) {
         dirLight.lookAt(0, 0, 0);
         scene.add(dirLight);
 
-        dirLight.castShadow = true;
+        // dirLight.castShadow = true;
 
         dirLight.shadow.mapSize.width = 2048;
         dirLight.shadow.mapSize.height = 2048;
@@ -54292,20 +54294,21 @@ function Scene(canvas) {
 
     function createBall(pos, radius, mass) {
         var ball = new _Ball2.default(pos, radius, mass, AMMO);
-        scene.add(ball.getBall());
+        ball.addToScene(scene, physicsWorld);
         rigidBodies.push(ball);
-        physicsWorld.addRigidBody(ball.getBall().userData.physicsBody);
     }
 
     function updatePhysics(deltaTime) {
         if (mode == Mode.ATTRACT || mode == Mode.REPEL) {
-            forceMultiplier -= decayRate * deltaTime;
+            // forceMultiplier -= decayRate * deltaTime;
             // make sure we don't go negative..
-            forceMultiplier = Math.max(forceMultiplier, 0);
-            // applyForceToBalls();
+            // forceMultiplier = Math.max(forceMultiplier, 0);
             if (mousePos != null) {
                 for (var i = 0; i < rigidBodies.length; i++) {
-                    rigidBodies[i].applyForce(AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
+                    var body = rigidBodies[i];
+                    if (body instanceof _Ball2.default) {
+                        rigidBodies[i].applyForce(AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
+                    }
                 }
             }
         }
@@ -54315,7 +54318,7 @@ function Scene(canvas) {
 
         // update rigid bodies
         for (var _i = 0; _i < rigidBodies.length; _i++) {
-            rigidBodies[_i].updatePhysics(tmpTrans);
+            rigidBodies[_i].updatePhysics(tmpTrans, deltaTime);
         }
     }
 
@@ -54330,6 +54333,7 @@ function Scene(canvas) {
         // causes the objects to interact properly taking into account gravity,
         // game logic supplied forces, collisions, and hinge constraints.
         var solver = new AMMO.btSequentialImpulseConstraintSolver();
+        // const solver = new AMMO.btMLCPSolver();
 
         physicsWorld = new AMMO.btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
         physicsWorld.setGravity(new AMMO.btVector3(0, -10, 0));
@@ -54348,6 +54352,9 @@ function Scene(canvas) {
             AMMO = Ammo;
             setupPhysicsWorld();
             createContainer();
+            var slide = new _Slide2.default(new THREE.Vector3(0, 0, -13), new THREE.Vector3(20, 2, 5), new THREE.Quaternion(0, 0, 0, 1), AMMO);
+            slide.addToScene(scene, physicsWorld);
+            rigidBodies.push(slide);
         });
     };
 
@@ -54417,6 +54424,90 @@ function Scene(canvas) {
         }
 
         console.log("mode: " + mode);
+    };
+}
+
+/***/ }),
+
+/***/ "./sketch9/Slide.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = Slide;
+
+var _three = __webpack_require__("./node_modules/three/build/three.module.js");
+
+var THREE = _interopRequireWildcard(_three);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function Slide(pos, scale, quat, AMMO) {
+    // change this if we want static
+    var mass = 0;
+    var axis = new THREE.Vector3(0, 0, 1);
+
+    var slide = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({
+        color: 0x536075
+    }));
+    slide.position.set(pos.x, pos.y, pos.z);
+    slide.scale.set(scale.x, scale.y, scale.z);
+    slide.castShadow = true;
+    slide.receiveShadow = true;
+
+    // physics
+    var transform = new AMMO.btTransform();
+    transform.setIdentity();
+    transform.setOrigin(new AMMO.btVector3(pos.x, pos.y, pos.z));
+    transform.setRotation(new AMMO.btQuaternion(quat.x, quat.y, quat.z, quat.w));
+    var motionState = new AMMO.btDefaultMotionState(transform);
+
+    var colShape = new AMMO.btBoxShape(new AMMO.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
+    colShape.setMargin(0.05);
+
+    var localInertia = new AMMO.btVector3(0, 0, 0);
+    colShape.calculateLocalInertia(mass, localInertia);
+
+    var rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
+    var body = new AMMO.btRigidBody(rbInfo);
+
+    var tmpQuat = new THREE.Quaternion();
+    var tmpQuat2 = new THREE.Quaternion();
+
+    this.addToScene = function (scene, physicsWorld) {
+        scene.add(slide);
+        physicsWorld.addRigidBody(body);
+    };
+
+    this.activate = function () {
+        body.activate();
+    };
+
+    this.updatePhysics = function (tmpTrans, deltaTime) {
+        var motionState = body.getMotionState();
+        if (motionState) {
+            motionState.getWorldTransform(tmpTrans);
+            var p = tmpTrans.getOrigin();
+            var q = tmpTrans.getRotation();
+            // no need to set since it's not moving its position, but..why not.
+            slide.position.set(p.x(), p.y(), p.z());
+
+            // compute new rotation
+            tmpQuat.set(q.x(), q.y(), q.z(), q.w());
+            tmpQuat.multiply(tmpQuat2.setFromAxisAngle(axis, 3 * deltaTime));
+
+            tmpTrans.setRotation(new AMMO.btQuaternion(tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w));
+            motionState.setWorldTransform(tmpTrans);
+            // rigid body should update the transform
+            body.setMotionState(motionState);
+
+            slide.quaternion.set(tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w);
+            // slide.rotation.z += deltaTime;
+        }
     };
 }
 
