@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import ping from './assets/single_ping.wav';
 
 export default function Ball(pos, radius, mass, AMMO) {
     // three js
@@ -25,15 +26,52 @@ export default function Ball(pos, radius, mass, AMMO) {
     btSphere.calculateLocalInertia(mass, localInertia);
     const rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
     const body = new AMMO.btRigidBody(rbInfo);
+    body.tag = "ball";
+    let prevIsColliding = false;
+    let isColliding = false;
+
+    // for audio
+    let audioBuffer;
+    const listener = new THREE.AudioListener();
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load(ping, function(buffer) {
+        audioBuffer = buffer;
+    });
+    const audioContext = listener.context;
+    let source = null;
+    let isPlaying = false;
+
+    body.onCollision = function(pitch) {
+        isColliding = true;
+        if (prevIsColliding) return;
+
+        if (source == null) {
+            source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+        }
+        if (!isPlaying) {
+            // console.log("pitch: " + pitch);
+            source.detune.value = pitch;
+            source.start();
+            isPlaying = true;
+
+            source.onended = () => {
+                isPlaying = false;
+                source = null;
+            }
+        }
+    }
 
     // used for applying force
     let direction = new THREE.Vector3();
     let forceVector = new AMMO.btVector3();
     const relativePos = new AMMO.btVector3(0, 0, 0);
 
-    this.addToScene = function(scene, physicsWorld) {
+    this.addToScene = function(scene, physicsWorld, camera) {
         scene.add(ball);
         physicsWorld.addRigidBody(body);
+        camera.add(listener);
     }
 
     this.applyForce = function(AMMO, forceMultiplier, mousePos, sign) {
@@ -54,6 +92,8 @@ export default function Ball(pos, radius, mass, AMMO) {
     }
 
     this.updatePhysics = function(tmpTrans, deltaTime) {
+        prevIsColliding = isColliding;
+        isColliding = false;
         // motion state holds the current transform
         let motionState = body.getMotionState();
         if (motionState) {

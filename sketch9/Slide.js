@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 
 export default function Slide(pos, scale, quat, AMMO) {
-    // change this if we want static
     const mass = 0;
     const axis = new THREE.Vector3(0, 0, 1);
 
@@ -31,13 +30,77 @@ export default function Slide(pos, scale, quat, AMMO) {
 
     const rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
     const body = new AMMO.btRigidBody(rbInfo);
+    body.tag = "slide";
 
+    // for rotation
     let tmpQuat = new THREE.Quaternion();
     let tmpQuat2 = new THREE.Quaternion();
+
+    // for collision check.. should i move this to Ball as well..
+    let contactResultCallback = new AMMO.ConcreteContactResultCallback();
+    contactResultCallback.addSingleResult =
+    function(cp, colObj0Wrap, partId0, index0, colObj1Wrap, partId1, index1){
+        let contactPoint = AMMO.wrapPointer( cp, AMMO.btManifoldPoint );
+
+        const distance = contactPoint.getDistance();
+
+        if( distance > 0 ) return;
+
+        let colWrapper0 = AMMO.wrapPointer( colObj0Wrap, AMMO.btCollisionObjectWrapper );
+        let rb0 = AMMO.castObject( colWrapper0.getCollisionObject(), AMMO.btRigidBody );
+        
+        let colWrapper1 = AMMO.wrapPointer( colObj1Wrap, AMMO.btCollisionObjectWrapper );
+        let rb1 = AMMO.castObject( colWrapper1.getCollisionObject(), AMMO.btRigidBody );
+
+        // if (rb0.tag == "ball") {
+        //     rb0.onCollision();
+        //     console.log("rb1: " + JSON.stringify(contactPoint, null, 4))
+        // }
+        let localPos, worldPos;
+
+        if (rb1.tag == "ball") {
+            // rb0 is the bar.
+            localPos = contactPoint.get_m_localPointA();
+            worldPos = contactPoint.get_m_positionWorldOnA();
+
+            // let localPosDisplay = {x: localPos.x(), y: localPos.y(), z: localPos.z()};
+            // let worldPosDisplay = {x: worldPos.x(), y: worldPos.y(), z: worldPos.z()};
+
+            // major scale
+            const scaleValues = [0, 2, 4, 5, 7, 9, 11, 12];
+            // minor scale
+            // const scaleValues = [0, 2, 3, 5, 7, 9, 11, 12];
+            // pentatonic
+            // const scaleValues = [0, 2, 4, 7, 9, 12];
+            let lowEnd = -scale.x * 0.5;
+            let highEnd = scale.x * 0.5;
+            let pitch = remap(localPos.x(), lowEnd, highEnd, 0, 12);
+
+            let nearestPitch = -1;
+            let nearestDistance = Infinity;
+            for (let i = 0; i < scaleValues.length; i++) {
+                let distance = Math.abs(pitch - scaleValues[i]);
+                if (distance < nearestDistance) {
+                    nearestPitch = scaleValues[i];
+                    nearestDistance = distance;
+                }
+            }
+
+            const pitchOffset = -600;
+            nearestPitch *= 100;
+            nearestPitch += pitchOffset;
+
+            rb1.onCollision(nearestPitch);
+            // console.log("pitch: " + pitch);
+            // console.log( { localPosDisplay, worldPosDisplay } );
+        }
+    }
 
     this.addToScene = function(scene, physicsWorld) {
         scene.add(slide);
         physicsWorld.addRigidBody(body);
+
+        this.physicsWorld = physicsWorld;
     }
 
     this.activate = function() {
@@ -45,6 +108,8 @@ export default function Slide(pos, scale, quat, AMMO) {
     }
 
     this.updatePhysics = function(tmpTrans, deltaTime) {
+        this.physicsWorld.contactTest(body, contactResultCallback);
+
         let motionState = body.getMotionState();
         if (motionState) {
             motionState.getWorldTransform(tmpTrans);
@@ -68,7 +133,10 @@ export default function Slide(pos, scale, quat, AMMO) {
             body.setMotionState(motionState);
 
             slide.quaternion.set(tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w);
-            // slide.rotation.z += deltaTime;
         }
+    }
+
+    function remap(value, inMin, inMax, outMin , outMax) {
+        return outMin + (outMax - outMin) * ((value - inMin) / (inMax - inMin));
     }
 }

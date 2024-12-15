@@ -33,13 +33,15 @@ export default function Scene(canvas) {
 
     // const textureLoader = new THREE.TextureLoader();
     // const sdfTexture = textureLoader.load(fontSdf);
-    let rigidBodies = [];
+    let balls = [];
     // Physics world is in a world of its own on a different realm from your game.
     // it's just there to model the physical objects of your scene and their possible interaction using its own objects.
     // it's your duty to update the transform of the objects, especially in the main render loop.
     let physicsWorld;
     let tmpTrans;
     let AMMO = null;
+
+    let slide;
 
     const Mode = { SPAWN: "SPAWN", ATTRACT: "ATTRACT", REPEL: "REPEL" };
     let mode = Mode.SPAWN;
@@ -49,9 +51,10 @@ export default function Scene(canvas) {
             forceMultiplier = maxForceMultiplier;
             // when the balls get settled, they get deactivated until there's something that
             // wakes them up (e.g., collision), so force them to wake up
-            for (let i=0; i<rigidBodies.length; i++) {
-                rigidBodies[i].activate();
+            for (let i=0; i<balls.length; i++) {
+                balls[i].activate();
             }
+            slide.activate();
 
             mode = newMode;
             // reset the mouse pos so that the balls get reset when the mode changes.
@@ -243,8 +246,8 @@ export default function Scene(canvas) {
 
     function createBall(pos, radius, mass) {
         const ball = new Ball(pos, radius, mass, AMMO);
-        ball.addToScene(scene, physicsWorld);
-        rigidBodies.push(ball);
+        ball.addToScene(scene, physicsWorld, camera);
+        balls.push(ball);
     }
 
     function updatePhysics(deltaTime) {
@@ -253,10 +256,10 @@ export default function Scene(canvas) {
             // make sure we don't go negative..
             // forceMultiplier = Math.max(forceMultiplier, 0);
             if (mousePos != null) {
-                for (let i=0; i<rigidBodies.length; i++) {
-                    let body = rigidBodies[i];
+                for (let i=0; i<balls.length; i++) {
+                    let body = balls[i];
                     if (body instanceof Ball) {
-                        rigidBodies[i].applyForce(
+                        balls[i].applyForce(
                             AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
                     }
                 }
@@ -265,10 +268,12 @@ export default function Scene(canvas) {
 
         // step world
         physicsWorld.stepSimulation(deltaTime, 10);
-
+        if (slide != null) {
+            slide.updatePhysics(tmpTrans, deltaTime);
+        }
         // update rigid bodies
-        for (let i = 0; i < rigidBodies.length; i++) {
-            rigidBodies[i].updatePhysics(tmpTrans, deltaTime);
+        for (let i = 0; i < balls.length; i++) {
+            balls[i].updatePhysics(tmpTrans, deltaTime);
         }
     }
 
@@ -310,14 +315,14 @@ export default function Scene(canvas) {
             AMMO = Ammo;
             setupPhysicsWorld();
             createContainer();
-            const slide = new Slide(
+            slide = new Slide(
                 new THREE.Vector3(0, 0, -13),
                 new THREE.Vector3(20, 2, 5),
                 new THREE.Quaternion(0, 0, 0, 1),
                 AMMO
             )
             slide.addToScene(scene, physicsWorld);
-            rigidBodies.push(slide);
+            // rigidBodies.push(slide);
         });
     };
 
