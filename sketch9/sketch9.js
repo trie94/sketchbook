@@ -53965,6 +53965,12 @@ var _three = __webpack_require__("./node_modules/three/build/three.module.js");
 
 var THREE = _interopRequireWildcard(_three);
 
+var _single_ping = __webpack_require__("./sketch9/assets/single_ping.wav");
+
+var _single_ping2 = _interopRequireDefault(_single_ping);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function Ball(pos, radius, mass, AMMO) {
@@ -53989,15 +53995,52 @@ function Ball(pos, radius, mass, AMMO) {
     btSphere.calculateLocalInertia(mass, localInertia);
     var rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, btSphere, localInertia);
     var body = new AMMO.btRigidBody(rbInfo);
+    body.tag = "ball";
+    var prevIsColliding = false;
+    var isColliding = false;
+
+    // for audio
+    var audioBuffer = void 0;
+    var listener = new THREE.AudioListener();
+    var audioLoader = new THREE.AudioLoader();
+    audioLoader.load(_single_ping2.default, function (buffer) {
+        audioBuffer = buffer;
+    });
+    var audioContext = listener.context;
+    var source = null;
+    var isPlaying = false;
+
+    body.onCollision = function (pitch) {
+        isColliding = true;
+        if (prevIsColliding) return;
+
+        if (source == null) {
+            source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+        }
+        if (!isPlaying) {
+            // console.log("pitch: " + pitch);
+            source.detune.value = pitch;
+            source.start();
+            isPlaying = true;
+
+            source.onended = function () {
+                isPlaying = false;
+                source = null;
+            };
+        }
+    };
 
     // used for applying force
     var direction = new THREE.Vector3();
     var forceVector = new AMMO.btVector3();
     var relativePos = new AMMO.btVector3(0, 0, 0);
 
-    this.addToScene = function (scene, physicsWorld) {
+    this.addToScene = function (scene, physicsWorld, camera) {
         scene.add(ball);
         physicsWorld.addRigidBody(body);
+        camera.add(listener);
     };
 
     this.applyForce = function (AMMO, forceMultiplier, mousePos, sign) {
@@ -54018,6 +54061,8 @@ function Ball(pos, radius, mass, AMMO) {
     };
 
     this.updatePhysics = function (tmpTrans, deltaTime) {
+        prevIsColliding = isColliding;
+        isColliding = false;
         // motion state holds the current transform
         var motionState = body.getMotionState();
         if (motionState) {
@@ -54107,13 +54152,15 @@ function Scene(canvas) {
 
     // const textureLoader = new THREE.TextureLoader();
     // const sdfTexture = textureLoader.load(fontSdf);
-    var rigidBodies = [];
+    var balls = [];
     // Physics world is in a world of its own on a different realm from your game.
     // it's just there to model the physical objects of your scene and their possible interaction using its own objects.
     // it's your duty to update the transform of the objects, especially in the main render loop.
     var physicsWorld = void 0;
     var tmpTrans = void 0;
     var AMMO = null;
+
+    var slide = void 0;
 
     var Mode = { SPAWN: "SPAWN", ATTRACT: "ATTRACT", REPEL: "REPEL" };
     var mode = Mode.SPAWN;
@@ -54123,9 +54170,10 @@ function Scene(canvas) {
             forceMultiplier = maxForceMultiplier;
             // when the balls get settled, they get deactivated until there's something that
             // wakes them up (e.g., collision), so force them to wake up
-            for (var i = 0; i < rigidBodies.length; i++) {
-                rigidBodies[i].activate();
+            for (var i = 0; i < balls.length; i++) {
+                balls[i].activate();
             }
+            slide.activate();
 
             mode = newMode;
             // reset the mouse pos so that the balls get reset when the mode changes.
@@ -54294,8 +54342,8 @@ function Scene(canvas) {
 
     function createBall(pos, radius, mass) {
         var ball = new _Ball2.default(pos, radius, mass, AMMO);
-        ball.addToScene(scene, physicsWorld);
-        rigidBodies.push(ball);
+        ball.addToScene(scene, physicsWorld, camera);
+        balls.push(ball);
     }
 
     function updatePhysics(deltaTime) {
@@ -54304,10 +54352,10 @@ function Scene(canvas) {
             // make sure we don't go negative..
             // forceMultiplier = Math.max(forceMultiplier, 0);
             if (mousePos != null) {
-                for (var i = 0; i < rigidBodies.length; i++) {
-                    var body = rigidBodies[i];
+                for (var i = 0; i < balls.length; i++) {
+                    var body = balls[i];
                     if (body instanceof _Ball2.default) {
-                        rigidBodies[i].applyForce(AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
+                        balls[i].applyForce(AMMO, forceMultiplier, mousePos, mode == Mode.ATTRACT ? 1 : -1);
                     }
                 }
             }
@@ -54315,10 +54363,12 @@ function Scene(canvas) {
 
         // step world
         physicsWorld.stepSimulation(deltaTime, 10);
-
+        if (slide != null) {
+            slide.updatePhysics(tmpTrans, deltaTime);
+        }
         // update rigid bodies
-        for (var _i = 0; _i < rigidBodies.length; _i++) {
-            rigidBodies[_i].updatePhysics(tmpTrans, deltaTime);
+        for (var _i = 0; _i < balls.length; _i++) {
+            balls[_i].updatePhysics(tmpTrans, deltaTime);
         }
     }
 
@@ -54352,9 +54402,9 @@ function Scene(canvas) {
             AMMO = Ammo;
             setupPhysicsWorld();
             createContainer();
-            var slide = new _Slide2.default(new THREE.Vector3(0, 0, -13), new THREE.Vector3(20, 2, 5), new THREE.Quaternion(0, 0, 0, 1), AMMO);
+            slide = new _Slide2.default(new THREE.Vector3(0, 0, -13), new THREE.Vector3(20, 2, 5), new THREE.Quaternion(0, 0, 0, 1), AMMO);
             slide.addToScene(scene, physicsWorld);
-            rigidBodies.push(slide);
+            // rigidBodies.push(slide);
         });
     };
 
@@ -54447,7 +54497,6 @@ var THREE = _interopRequireWildcard(_three);
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function Slide(pos, scale, quat, AMMO) {
-    // change this if we want static
     var mass = 0;
     var axis = new THREE.Vector3(0, 0, 1);
 
@@ -54474,13 +54523,77 @@ function Slide(pos, scale, quat, AMMO) {
 
     var rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
     var body = new AMMO.btRigidBody(rbInfo);
+    body.tag = "slide";
 
+    // for rotation
     var tmpQuat = new THREE.Quaternion();
     var tmpQuat2 = new THREE.Quaternion();
+
+    // for collision check.. should i move this to Ball as well..
+    var contactResultCallback = new AMMO.ConcreteContactResultCallback();
+    contactResultCallback.addSingleResult = function (cp, colObj0Wrap, partId0, index0, colObj1Wrap, partId1, index1) {
+        var contactPoint = AMMO.wrapPointer(cp, AMMO.btManifoldPoint);
+
+        var distance = contactPoint.getDistance();
+
+        if (distance > 0) return;
+
+        var colWrapper0 = AMMO.wrapPointer(colObj0Wrap, AMMO.btCollisionObjectWrapper);
+        var rb0 = AMMO.castObject(colWrapper0.getCollisionObject(), AMMO.btRigidBody);
+
+        var colWrapper1 = AMMO.wrapPointer(colObj1Wrap, AMMO.btCollisionObjectWrapper);
+        var rb1 = AMMO.castObject(colWrapper1.getCollisionObject(), AMMO.btRigidBody);
+
+        // if (rb0.tag == "ball") {
+        //     rb0.onCollision();
+        //     console.log("rb1: " + JSON.stringify(contactPoint, null, 4))
+        // }
+        var localPos = void 0,
+            worldPos = void 0;
+
+        if (rb1.tag == "ball") {
+            // rb0 is the bar.
+            localPos = contactPoint.get_m_localPointA();
+            worldPos = contactPoint.get_m_positionWorldOnA();
+
+            // let localPosDisplay = {x: localPos.x(), y: localPos.y(), z: localPos.z()};
+            // let worldPosDisplay = {x: worldPos.x(), y: worldPos.y(), z: worldPos.z()};
+
+            // major scale
+            var scaleValues = [0, 2, 4, 5, 7, 9, 11, 12];
+            // minor scale
+            // const scaleValues = [0, 2, 3, 5, 7, 9, 11, 12];
+            // pentatonic
+            // const scaleValues = [0, 2, 4, 7, 9, 12];
+            var lowEnd = -scale.x * 0.5;
+            var highEnd = scale.x * 0.5;
+            var pitch = remap(localPos.x(), lowEnd, highEnd, 0, 12);
+
+            var nearestPitch = -1;
+            var nearestDistance = Infinity;
+            for (var i = 0; i < scaleValues.length; i++) {
+                var _distance = Math.abs(pitch - scaleValues[i]);
+                if (_distance < nearestDistance) {
+                    nearestPitch = scaleValues[i];
+                    nearestDistance = _distance;
+                }
+            }
+
+            var pitchOffset = -600;
+            nearestPitch *= 100;
+            nearestPitch += pitchOffset;
+
+            rb1.onCollision(nearestPitch);
+            // console.log("pitch: " + pitch);
+            // console.log( { localPosDisplay, worldPosDisplay } );
+        }
+    };
 
     this.addToScene = function (scene, physicsWorld) {
         scene.add(slide);
         physicsWorld.addRigidBody(body);
+
+        this.physicsWorld = physicsWorld;
     };
 
     this.activate = function () {
@@ -54488,6 +54601,8 @@ function Slide(pos, scale, quat, AMMO) {
     };
 
     this.updatePhysics = function (tmpTrans, deltaTime) {
+        this.physicsWorld.contactTest(body, contactResultCallback);
+
         var motionState = body.getMotionState();
         if (motionState) {
             motionState.getWorldTransform(tmpTrans);
@@ -54506,10 +54621,20 @@ function Slide(pos, scale, quat, AMMO) {
             body.setMotionState(motionState);
 
             slide.quaternion.set(tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w);
-            // slide.rotation.z += deltaTime;
         }
     };
+
+    function remap(value, inMin, inMax, outMin, outMax) {
+        return outMin + (outMax - outMin) * ((value - inMin) / (inMax - inMin));
+    }
 }
+
+/***/ }),
+
+/***/ "./sketch9/assets/single_ping.wav":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch9/assets/single_ping.wav";
 
 /***/ }),
 
