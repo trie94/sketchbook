@@ -36,15 +36,15 @@ export default function Slide(pos, scale, quat, AMMO) {
     let tmpQuat = new THREE.Quaternion();
     let tmpQuat2 = new THREE.Quaternion();
 
-    // for collision check.. should i move this to Ball as well..
+    // for collision check..
     let contactResultCallback = new AMMO.ConcreteContactResultCallback();
     contactResultCallback.addSingleResult =
     function(cp, colObj0Wrap, partId0, index0, colObj1Wrap, partId1, index1){
-        let contactPoint = AMMO.wrapPointer( cp, AMMO.btManifoldPoint );
+        let contactPoint = AMMO.wrapPointer(cp, AMMO.btManifoldPoint);
 
         const distance = contactPoint.getDistance();
 
-        if( distance > 0 ) return;
+        if (distance > 0) return;
 
         let colWrapper0 = AMMO.wrapPointer( colObj0Wrap, AMMO.btCollisionObjectWrapper );
         let rb0 = AMMO.castObject( colWrapper0.getCollisionObject(), AMMO.btRigidBody );
@@ -56,12 +56,11 @@ export default function Slide(pos, scale, quat, AMMO) {
         //     rb0.onCollision();
         //     console.log("rb1: " + JSON.stringify(contactPoint, null, 4))
         // }
-        let localPos, worldPos;
 
         if (rb1.tag == "ball") {
             // rb0 is the bar.
-            localPos = contactPoint.get_m_localPointA();
-            worldPos = contactPoint.get_m_positionWorldOnA();
+            let localPos = contactPoint.get_m_localPointA();
+            let worldPos = contactPoint.get_m_positionWorldOnA();
 
             // let localPosDisplay = {x: localPos.x(), y: localPos.y(), z: localPos.z()};
             // let worldPosDisplay = {x: worldPos.x(), y: worldPos.y(), z: worldPos.z()};

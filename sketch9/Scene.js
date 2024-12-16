@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import Ammo from 'ammo.js';
 import Ball from './Ball.js';
 import Slide from './Slide.js';
+import Platform from './Platform.js';
 
 const OrbitControls = require('three-orbit-controls')(THREE);
 
@@ -29,7 +30,6 @@ export default function Scene(canvas) {
 
     const maxForceMultiplier = 400;
     let forceMultiplier = maxForceMultiplier;
-    const decayRate = 10;
 
     // const textureLoader = new THREE.TextureLoader();
     // const sdfTexture = textureLoader.load(fontSdf);
@@ -42,6 +42,11 @@ export default function Scene(canvas) {
     let AMMO = null;
 
     let slide;
+    let platform;
+    const tiltAngle = -15;
+    let tilt = new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(1, 0, 0), tiltAngle * Math.PI / 180
+    );
 
     const Mode = { SPAWN: "SPAWN", ATTRACT: "ATTRACT", REPEL: "REPEL" };
     let mode = Mode.SPAWN;
@@ -148,7 +153,7 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(0, 0, 50);
+        camera.position.set(0, 5, 40);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
@@ -165,83 +170,6 @@ export default function Scene(canvas) {
         controls.maxDistance = 1000;
 
         return controls;
-    }
-
-    function createPlatform(pos, scale, quat) {
-        // zero mass means the body has infinite mass, hence it's static.
-        const mass = 0;
-
-        // render
-        const box = new THREE.Mesh(
-          new THREE.BoxGeometry(),
-          new THREE.MeshPhysicalMaterial({
-            color: 0xadaaa5,
-            // side: THREE.DoubleSide,
-          })
-        );
-        box.position.set(pos.x, pos.y, pos.z);
-        box.scale.set(scale.x, scale.y, scale.z);
-        box.castShadow = true;
-        box.receiveShadow = true;
-
-        scene.add(box);
-
-        // physics
-        const transform = new AMMO.btTransform();
-        transform.setIdentity();
-        transform.setOrigin(new AMMO.btVector3(pos.x, pos.y, pos.z ));
-        transform.setRotation(new AMMO.btQuaternion(quat.x, quat.y, quat.z, quat.w));
-        const motionState = new AMMO.btDefaultMotionState(transform);
-    
-        // each rigidbody needs to reference a collision shape.
-        // the collision shape is for collision s only, thus has no concept of mass, inertia, restitution, etc.
-        const colShape = new AMMO.btBoxShape(new AMMO.btVector3(scale.x * 0.5, scale.y * 0.5, scale.z * 0.5));
-        colShape.setMargin(0.05);
-    
-        const localInertia = new AMMO.btVector3(0, 0, 0);
-        colShape.calculateLocalInertia(mass, localInertia);
-    
-        const rbInfo = new AMMO.btRigidBodyConstructionInfo(mass, motionState, colShape, localInertia);
-        const body = new AMMO.btRigidBody(rbInfo);
-    
-        physicsWorld.addRigidBody(body);
-    }
-
-    function createContainer() {
-        const length = 30;
-        const halfLength = length * 0.5;
-        const thickness = 1;
-        const quat = new THREE.Quaternion(0, 0, 0, 1);
-        // bottom
-        createPlatform(
-            new THREE.Vector3(0, -halfLength, 0),
-            new THREE.Vector3(length + thickness, thickness, length),
-            quat
-        );
-        // left
-        createPlatform(
-            new THREE.Vector3(-halfLength, 0, 0),
-            new THREE.Vector3(thickness, length, length),
-            quat
-        );
-        // right
-        createPlatform(
-            new THREE.Vector3(halfLength, 0, 0),
-            new THREE.Vector3(thickness, length, length),
-            quat
-        );
-        // top
-        createPlatform(
-            new THREE.Vector3(0, halfLength, 0),
-            new THREE.Vector3(length + thickness, thickness, length),
-            quat
-        );
-        // back
-        createPlatform(
-            new THREE.Vector3(0, 0, -halfLength),
-            new THREE.Vector3(length + thickness, length + thickness, thickness),
-            quat
-        );
     }
 
     function createBall(pos, radius, mass) {
@@ -271,9 +199,9 @@ export default function Scene(canvas) {
         if (slide != null) {
             slide.updatePhysics(tmpTrans, deltaTime);
         }
-        // update rigid bodies
+        // update ball rigid bodies
         for (let i = 0; i < balls.length; i++) {
-            balls[i].updatePhysics(tmpTrans, deltaTime);
+            balls[i].updatePhysics(tmpTrans);
         }
     }
 
@@ -314,11 +242,14 @@ export default function Scene(canvas) {
         Ammo().then((Ammo) => { 
             AMMO = Ammo;
             setupPhysicsWorld();
-            createContainer();
+
+            platform = new Platform(AMMO, tilt);
+            platform.addToScene(scene, physicsWorld);
+
             slide = new Slide(
-                new THREE.Vector3(0, 0, -13),
+                new THREE.Vector3(0, 0, 0),
                 new THREE.Vector3(20, 2, 5),
-                new THREE.Quaternion(0, 0, 0, 1),
+                tilt,
                 AMMO
             )
             slide.addToScene(scene, physicsWorld);
@@ -350,7 +281,8 @@ export default function Scene(canvas) {
         pointer.y = - (e.clientY / HEIGHT) * 2 + 1;
 
         rayCaster.setFromCamera(pointer, camera);
-        const intersects = rayCaster.intersectObjects(scene.children);
+        // need recursive to be true, to respect three js group objects.
+        const intersects = rayCaster.intersectObjects(scene.children, true);
 
         if (intersects.length > 0) {
             if (mousePos == null) {

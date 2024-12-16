@@ -91,7 +91,7 @@ export default function Ball(pos, radius, mass, AMMO) {
         // drawDebugForce(objThree, force, forceMagnitude);
     }
 
-    this.updatePhysics = function(tmpTrans, deltaTime) {
+    this.updatePhysics = function(tmpTrans) {
         prevIsColliding = isColliding;
         isColliding = false;
         // motion state holds the current transform
