@@ -6,8 +6,8 @@ export default function Slide(pos, scale, quat, AMMO) {
 
     const slide = new THREE.Mesh(
         new THREE.BoxGeometry(),
-        new THREE.MeshPhysicalMaterial({
-            color: 0x536075,
+        new THREE.MeshBasicMaterial({
+            color: 0xc4bbb5,
         })
     );
     slide.position.set(pos.x, pos.y, pos.z);
@@ -120,7 +120,7 @@ export default function Slide(pos, scale, quat, AMMO) {
             // compute new rotation
             tmpQuat.set(q.x(), q.y(), q.z(), q.w());
             tmpQuat.multiply(tmpQuat2.setFromAxisAngle(
-                axis, 3 * deltaTime
+                axis, -3 * deltaTime
             ));
 
             tmpTrans.setRotation(

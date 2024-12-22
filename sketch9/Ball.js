@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import ping from './assets/single_ping.wav';
 
-export default function Ball(pos, radius, mass, AMMO) {
+export default function Ball(pos, radius, mass, AMMO, col) {
     // three js
     const ball = new THREE.Mesh(
         new THREE.SphereGeometry(radius, 20, 20),
-        new THREE.MeshStandardMaterial({
-            color: 0x7bacbd
+        new THREE.MeshBasicMaterial({
+            color: col
         })
     );
     ball.position.set(pos.x, pos.y, pos.z);

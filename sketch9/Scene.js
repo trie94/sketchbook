@@ -20,19 +20,16 @@ export default function Scene(canvas) {
     const rayCaster = new THREE.Raycaster();
     // mouse pointer position
     const pointer = new THREE.Vector2();
-    // let mousePos = new THREE.Vector3();
     let mousePos = null;
     let mousePosIndicator = new THREE.Mesh(
-        new THREE.SphereGeometry(0.5, 32, 32),
-        new THREE.MeshBasicMaterial({ color: 0xff0000 })
+        new THREE.SphereGeometry(0.3, 32, 32),
+        new THREE.MeshBasicMaterial({ color: 0xada6a3 })
     );
     let indicatorTimeout;
 
     const maxForceMultiplier = 400;
     let forceMultiplier = maxForceMultiplier;
 
-    // const textureLoader = new THREE.TextureLoader();
-    // const sdfTexture = textureLoader.load(fontSdf);
     let balls = [];
     // Physics world is in a world of its own on a different realm from your game.
     // it's just there to model the physical objects of your scene and their possible interaction using its own objects.
@@ -47,6 +44,11 @@ export default function Scene(canvas) {
     let tilt = new THREE.Quaternion().setFromAxisAngle(
         new THREE.Vector3(1, 0, 0), tiltAngle * Math.PI / 180
     );
+
+    const ballColors = [
+        0xD9C5BA, 0xC9A793, 0xD9BBA9, 0xC7B2A5, 0xBA9F8F
+    ];
+    let ballColorIndex = 0;
 
     const Mode = { SPAWN: "SPAWN", ATTRACT: "ATTRACT", REPEL: "REPEL" };
     let mode = Mode.SPAWN;
@@ -78,7 +80,7 @@ export default function Scene(canvas) {
         modeText.style.top = "10%";
         modeText.style.left = "50%";
         modeText.style.transform = "translate(-10%, -50%)";
-        modeText.style.color = "black";
+        modeText.style.color = "#665b54";
         modeText.textContent = mode;
 
         modeText.addEventListener("pointerup", function() {
@@ -93,24 +95,35 @@ export default function Scene(canvas) {
         });
 
         root.appendChild(modeText);
+
+        let helperText = document.createElement("div");
+        helperText.textContent = "Click the text or press keys to switch modes." + "\r\n" + " S: Spawn, A: Attract, R: Repel"
+        helperText.style.width = WIDTH * 0.3;
+        helperText.style.position = "absolute";
+        helperText.style.top = "5%";
+        helperText.style.left = "38%";
+        helperText.style.transform = "translate(-10%, -50%)";
+        helperText.style.color = "#665b54";
+        helperText.style.textAlign = "center";
+        root.appendChild(helperText);
         
         return modeText;
     }
 
     function addLights() {
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
+        const hemiLight = new THREE.HemisphereLight(0xE7E2E0, 0xD9C5BA, 0.5);
         // hemiLight.color.setHSL(0.6, 0.6, 0.6);
         // hemiLight.groundColor.setHSL(0.1, 1, 0.4);
         hemiLight.position.set(0, 50, 0);
-        scene.add(hemiLight);
+        // scene.add(hemiLight);
     
         //Add directional light
-        const dirLight = new THREE.DirectionalLight(0xffffff , 0.9);
-        dirLight.color.setHSL(0.1, 1, 0.95);
+        const dirLight = new THREE.DirectionalLight(0xFFFFFF, 0.5);
+        // dirLight.color.setHSL(0.1, 1, 0.95);
         dirLight.position.set(0, 3, 10);
-        dirLight.position.multiplyScalar(1);
+        // dirLight.position.multiplyScalar(1);
         dirLight.lookAt(0, 0, 0);
-        scene.add(dirLight);
+        // scene.add(dirLight);
     
         // dirLight.castShadow = true;
     
@@ -129,7 +142,7 @@ export default function Scene(canvas) {
 
     function createScene() {
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color( 0xbfd1e5 );
+        scene.background = new THREE.Color( 0xd6cfcb );
 
         return scene;
     }
@@ -171,9 +184,10 @@ export default function Scene(canvas) {
     }
 
     function createBall(pos, radius, mass) {
-        const ball = new Ball(pos, radius, mass, AMMO);
+        const ball = new Ball(pos, radius, mass, AMMO, ballColors[ballColorIndex]);
         ball.addToScene(scene, physicsWorld, camera);
         balls.push(ball);
+        ballColorIndex = (ballColorIndex + 1) % ballColors.length;
     }
 
     function updatePhysics(deltaTime) {

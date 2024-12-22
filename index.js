@@ -31,8 +31,8 @@ const sketches = {
     sketch6: () => import(/* webpackChunkName: "sketch6" */ "./sketch6").then(document.getElementById(sketchName).style.color = "ffedb8"),
     sketch7: () => import(/* webpackChunkName: "sketch7" */ "./sketch7").then(document.getElementById(sketchName).style.color = "black"),
     sketch8: () => import(/* webpackChunkName: "sketch8" */ "./sketch8").then(document.getElementById(sketchName).style.color = "white"),
-    // sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9").then(document.getElementById(sketchName).style.color = "white"),
-    sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9")
+    sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9").then(document.getElementById(sketchName).style.color = "white"),
+    // sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9")
 };
 
 let sketchName = window.location.pathname;
@@ -70,7 +70,7 @@ function init() {
     addSketchElem(sketchList, "sketch4", "Moolang");
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
-    // addSketchElem(sketchList, "sketch9", "Factoree");
+    addSketchElem(sketchList, "sketch9", "Otokei");
     // addSketchElem(sketchList, "sketch7", "Liquid");
     // addSketchElem(sketchList, "sketch1", "Iceberg");
 }

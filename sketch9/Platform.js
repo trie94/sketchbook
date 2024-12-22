@@ -14,26 +14,32 @@ export default function Platform(AMMO, tilt) {
     const bottom = createPlatform(
         new THREE.Vector3(0, -halfLength, sideLength * 0.5),
         new THREE.Vector3(length + thickness, thickness, sideLength),
+        0xE7E2E0
     );
     // left
     const left = createPlatform(
         new THREE.Vector3(-halfLength, 0, sideLength * 0.5),
         new THREE.Vector3(thickness, length, sideLength),
+        0xE7E2E0
     );
     // right
     const right = createPlatform(
         new THREE.Vector3(halfLength, 0, sideLength * 0.5),
         new THREE.Vector3(thickness, length, sideLength),
+        0xE7E2E0
     );
     // top
     const top = createPlatform(
         new THREE.Vector3(0, halfLength, sideLength * 0.5),
         new THREE.Vector3(length + thickness, thickness, sideLength),
+        0xE7E2E0
     );
     // back, main one
     const back = createPlatform(
         new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(length - thickness, length - thickness, thickness),
+        new THREE.Vector3(length - thickness, length - thickness, thickness,
+        0xf0ebe6
+        ),
     );
     // we don't render this, but add this so that we can trap the balls inside the box.
     const front = createPlatform(
@@ -67,15 +73,15 @@ export default function Platform(AMMO, tilt) {
         return [back];
     }
 
-    function createPlatform(pos, scale) {
+    function createPlatform(pos, scale, col) {
         // zero mass means the body has infinite mass, hence it's static.
         const mass = 0;
 
         // render
         const box = new THREE.Mesh(
           new THREE.BoxGeometry(),
-          new THREE.MeshPhysicalMaterial({
-            color: 0xadaaa5,
+          new THREE.MeshBasicMaterial({
+            color: col,
             // side: THREE.DoubleSide,
           })
         );
