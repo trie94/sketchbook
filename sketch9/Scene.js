@@ -15,7 +15,7 @@ export default function Scene(canvas) {
     const renderer = createRenderer();
     const camera = createCamera();
 
-    const controls = createControl();
+    // const controls = createControl();
 
     const rayCaster = new THREE.Raycaster();
     // mouse pointer position
@@ -108,7 +108,7 @@ export default function Scene(canvas) {
         const dirLight = new THREE.DirectionalLight(0xffffff , 0.9);
         dirLight.color.setHSL(0.1, 1, 0.95);
         dirLight.position.set(0, 3, 10);
-        dirLight.position.multiplyScalar(100);
+        dirLight.position.multiplyScalar(1);
         dirLight.lookAt(0, 0, 0);
         scene.add(dirLight);
     
@@ -140,8 +140,6 @@ export default function Scene(canvas) {
         renderer.setSize(WIDTH, HEIGHT);
         renderer.gammaInput = true;
         renderer.gammaOutput = true;
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.BasicShadowMap;
 
         return renderer;
     }
@@ -153,7 +151,7 @@ export default function Scene(canvas) {
         const farPlane = 10000;
         const camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
 
-        camera.position.set(0, 5, 40);
+        camera.position.set(0, 15, 40);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         return camera;
@@ -247,7 +245,7 @@ export default function Scene(canvas) {
             platform.addToScene(scene, physicsWorld);
 
             slide = new Slide(
-                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, 3),
                 new THREE.Vector3(20, 2, 5),
                 tilt,
                 AMMO
@@ -282,16 +280,17 @@ export default function Scene(canvas) {
 
         rayCaster.setFromCamera(pointer, camera);
         // need recursive to be true, to respect three js group objects.
-        const intersects = rayCaster.intersectObjects(scene.children, true);
+        const intersects = rayCaster.intersectObjects(platform.getCollisionTarget(), true);
 
         if (intersects.length > 0) {
             if (mousePos == null) {
                 mousePos = new THREE.Vector3();
             }
-            mousePos.copy(intersects[0].point);
+            let target = intersects[0];
+            mousePos.copy(target.point);
             if (mode == Mode.SPAWN) {
                 // console.log("spawn at: " + mousePos.x + ", " + mousePos.y + ", " + mousePos.z);
-                createBall(intersects[0].point, 1, 1);
+                createBall(target.point, 1, 1);
             } else {
                 // we only need the indicator for non spawn modes.
                 if (mousePos != null) {

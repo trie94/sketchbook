@@ -101,6 +101,7 @@ export default function Ball(pos, radius, mass, AMMO) {
             motionState.getWorldTransform(tmpTrans);
             let p = tmpTrans.getOrigin();
             let q = tmpTrans.getRotation();
+            
             ball.position.set(p.x(), p.y(), p.z());
             ball.quaternion.set(q.x(), q.y(), q.z(), q.w());
         }

@@ -135,6 +135,10 @@ export default function Slide(pos, scale, quat, AMMO) {
         }
     }
 
+    this.assignMaterial = function(mat) {
+        slide.material = mat;
+    }
+
     function remap(value, inMin, inMax, outMin , outMax) {
         return outMin + (outMax - outMin) * ((value - inMin) / (inMax - inMin));
     }

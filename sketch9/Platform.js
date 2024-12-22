@@ -5,38 +5,44 @@ export default function Platform(AMMO, tilt) {
 
     const length = 30;
     const halfLength = length * 0.5;
-    const thickness = 1;
+    const thickness = 2;
     const sideLength = 5;
 
     let bodies = [];
 
     // bottom
     const bottom = createPlatform(
-        new THREE.Vector3(0, -halfLength, 0),
-        new THREE.Vector3(length + thickness, thickness, sideLength)
+        new THREE.Vector3(0, -halfLength, sideLength * 0.5),
+        new THREE.Vector3(length + thickness, thickness, sideLength),
     );
     // left
     const left = createPlatform(
-        new THREE.Vector3(-halfLength, 0, 0),
-        new THREE.Vector3(thickness, length, sideLength)
+        new THREE.Vector3(-halfLength, 0, sideLength * 0.5),
+        new THREE.Vector3(thickness, length, sideLength),
     );
     // right
     const right = createPlatform(
-        new THREE.Vector3(halfLength, 0, 0),
-        new THREE.Vector3(thickness, length, sideLength)
+        new THREE.Vector3(halfLength, 0, sideLength * 0.5),
+        new THREE.Vector3(thickness, length, sideLength),
     );
     // top
     const top = createPlatform(
-        new THREE.Vector3(0, halfLength, 0),
-        new THREE.Vector3(length + thickness, thickness, sideLength)
+        new THREE.Vector3(0, halfLength, sideLength * 0.5),
+        new THREE.Vector3(length + thickness, thickness, sideLength),
     );
     // back, main one
     const back = createPlatform(
-        new THREE.Vector3(0, 0, -sideLength * 0.5),
-        new THREE.Vector3(length + thickness, length + thickness, thickness)
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(length - thickness, length - thickness, thickness),
+    );
+    // we don't render this, but add this so that we can trap the balls inside the box.
+    const front = createPlatform(
+        new THREE.Vector3(0, 0, sideLength),
+        new THREE.Vector3(length + thickness, length + thickness, thickness),
     );
 
-    platformGroup.add(bottom, left, right, top, back);
+    platformGroup.add(bottom, left, right, top, back, front);
+
     // tilt the whole thing
     platformGroup.setRotationFromQuaternion(tilt);
     // force update so that we can initialize ammo bodies correctly
@@ -46,12 +52,19 @@ export default function Platform(AMMO, tilt) {
     for (let i=0; i<platformGroup.children.length; i++) {
         createAmmoInfo(platformGroup.children[i]);
     }
+    front.visible = false;
 
     this.addToScene = function(scene, physicsWorld) {
+
         scene.add(platformGroup);
+
         for (let i=0; i<bodies.length; i++) {
             physicsWorld.addRigidBody(bodies[i]);
         }
+    }
+    
+    this.getCollisionTarget = function() {
+        return [back];
     }
 
     function createPlatform(pos, scale) {
