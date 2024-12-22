@@ -92,7 +92,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "f7093ac3e1dded9cb8ae";
+/******/ 	var hotCurrentHash = "00966a9d95ea4742fcdc";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -1024,10 +1024,10 @@ var sketches = {
     sketch8: function sketch8() {
         return __webpack_require__.e(/* import() | sketch8 */ 7).then(__webpack_require__.t.bind(null, "./sketch8/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     },
-    // sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9").then(document.getElementById(sketchName).style.color = "white"),
     sketch9: function sketch9() {
-        return __webpack_require__.e(/* import() | sketch9 */ 8).then(__webpack_require__.t.bind(null, "./sketch9/index.js", 7));
+        return __webpack_require__.e(/* import() | sketch9 */ 8).then(__webpack_require__.t.bind(null, "./sketch9/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     }
+    // sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9")
 };
 
 var sketchName = window.location.pathname;
@@ -1067,7 +1067,7 @@ function init() {
     addSketchElem(sketchList, "sketch4", "Moolang");
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
-    // addSketchElem(sketchList, "sketch9", "Factoree");
+    addSketchElem(sketchList, "sketch9", "Otokei");
     // addSketchElem(sketchList, "sketch7", "Liquid");
     // addSketchElem(sketchList, "sketch1", "Iceberg");
 }

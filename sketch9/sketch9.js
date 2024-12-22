@@ -53973,10 +53973,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-function Ball(pos, radius, mass, AMMO) {
+function Ball(pos, radius, mass, AMMO, col) {
     // three js
-    var ball = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 20), new THREE.MeshStandardMaterial({
-        color: 0x7bacbd
+    var ball = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 20), new THREE.MeshBasicMaterial({
+        color: col
     }));
     ball.position.set(pos.x, pos.y, pos.z);
     ball.castShadow = true;
@@ -54123,15 +54123,15 @@ function Platform(AMMO, tilt) {
     var bodies = [];
 
     // bottom
-    var bottom = createPlatform(new THREE.Vector3(0, -halfLength, sideLength * 0.5), new THREE.Vector3(length + thickness, thickness, sideLength));
+    var bottom = createPlatform(new THREE.Vector3(0, -halfLength, sideLength * 0.5), new THREE.Vector3(length + thickness, thickness, sideLength), 0xE7E2E0);
     // left
-    var left = createPlatform(new THREE.Vector3(-halfLength, 0, sideLength * 0.5), new THREE.Vector3(thickness, length, sideLength));
+    var left = createPlatform(new THREE.Vector3(-halfLength, 0, sideLength * 0.5), new THREE.Vector3(thickness, length, sideLength), 0xE7E2E0);
     // right
-    var right = createPlatform(new THREE.Vector3(halfLength, 0, sideLength * 0.5), new THREE.Vector3(thickness, length, sideLength));
+    var right = createPlatform(new THREE.Vector3(halfLength, 0, sideLength * 0.5), new THREE.Vector3(thickness, length, sideLength), 0xE7E2E0);
     // top
-    var top = createPlatform(new THREE.Vector3(0, halfLength, sideLength * 0.5), new THREE.Vector3(length + thickness, thickness, sideLength));
+    var top = createPlatform(new THREE.Vector3(0, halfLength, sideLength * 0.5), new THREE.Vector3(length + thickness, thickness, sideLength), 0xE7E2E0);
     // back, main one
-    var back = createPlatform(new THREE.Vector3(0, 0, 0), new THREE.Vector3(length - thickness, length - thickness, thickness));
+    var back = createPlatform(new THREE.Vector3(0, 0, 0), new THREE.Vector3(length - thickness, length - thickness, thickness, 0xf0ebe6));
     // we don't render this, but add this so that we can trap the balls inside the box.
     var front = createPlatform(new THREE.Vector3(0, 0, sideLength), new THREE.Vector3(length + thickness, length + thickness, thickness));
 
@@ -54161,13 +54161,13 @@ function Platform(AMMO, tilt) {
         return [back];
     };
 
-    function createPlatform(pos, scale) {
+    function createPlatform(pos, scale, col) {
         // zero mass means the body has infinite mass, hence it's static.
         var mass = 0;
 
         // render
-        var box = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({
-            color: 0xadaaa5
+        var box = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({
+            color: col
             // side: THREE.DoubleSide,
         }));
         box.position.set(pos.x, pos.y, pos.z);
@@ -54262,16 +54262,13 @@ function Scene(canvas) {
     var rayCaster = new THREE.Raycaster();
     // mouse pointer position
     var pointer = new THREE.Vector2();
-    // let mousePos = new THREE.Vector3();
     var mousePos = null;
-    var mousePosIndicator = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+    var mousePosIndicator = new THREE.Mesh(new THREE.SphereGeometry(0.3, 32, 32), new THREE.MeshBasicMaterial({ color: 0xada6a3 }));
     var indicatorTimeout = void 0;
 
     var maxForceMultiplier = 400;
     var forceMultiplier = maxForceMultiplier;
 
-    // const textureLoader = new THREE.TextureLoader();
-    // const sdfTexture = textureLoader.load(fontSdf);
     var balls = [];
     // Physics world is in a world of its own on a different realm from your game.
     // it's just there to model the physical objects of your scene and their possible interaction using its own objects.
@@ -54284,6 +54281,9 @@ function Scene(canvas) {
     var platform = void 0;
     var tiltAngle = -15;
     var tilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), tiltAngle * Math.PI / 180);
+
+    var ballColors = [0xD9C5BA, 0xC9A793, 0xD9BBA9, 0xC7B2A5, 0xBA9F8F];
+    var ballColorIndex = 0;
 
     var Mode = { SPAWN: "SPAWN", ATTRACT: "ATTRACT", REPEL: "REPEL" };
     var mode = Mode.SPAWN;
@@ -54315,7 +54315,7 @@ function Scene(canvas) {
         modeText.style.top = "10%";
         modeText.style.left = "50%";
         modeText.style.transform = "translate(-10%, -50%)";
-        modeText.style.color = "black";
+        modeText.style.color = "#665b54";
         modeText.textContent = mode;
 
         modeText.addEventListener("pointerup", function () {
@@ -54331,23 +54331,34 @@ function Scene(canvas) {
 
         root.appendChild(modeText);
 
+        var helperText = document.createElement("div");
+        helperText.textContent = "Click the text or press keys to switch modes." + "\r\n" + " S: Spawn, A: Attract, R: Repel";
+        helperText.style.width = WIDTH * 0.3;
+        helperText.style.position = "absolute";
+        helperText.style.top = "5%";
+        helperText.style.left = "38%";
+        helperText.style.transform = "translate(-10%, -50%)";
+        helperText.style.color = "#665b54";
+        helperText.style.textAlign = "center";
+        root.appendChild(helperText);
+
         return modeText;
     }
 
     function addLights() {
-        var hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
+        var hemiLight = new THREE.HemisphereLight(0xE7E2E0, 0xD9C5BA, 0.5);
         // hemiLight.color.setHSL(0.6, 0.6, 0.6);
         // hemiLight.groundColor.setHSL(0.1, 1, 0.4);
         hemiLight.position.set(0, 50, 0);
-        scene.add(hemiLight);
+        // scene.add(hemiLight);
 
         //Add directional light
-        var dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-        dirLight.color.setHSL(0.1, 1, 0.95);
+        var dirLight = new THREE.DirectionalLight(0xFFFFFF, 0.5);
+        // dirLight.color.setHSL(0.1, 1, 0.95);
         dirLight.position.set(0, 3, 10);
-        dirLight.position.multiplyScalar(1);
+        // dirLight.position.multiplyScalar(1);
         dirLight.lookAt(0, 0, 0);
-        scene.add(dirLight);
+        // scene.add(dirLight);
 
         // dirLight.castShadow = true;
 
@@ -54366,7 +54377,7 @@ function Scene(canvas) {
 
     function createScene() {
         var scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xbfd1e5);
+        scene.background = new THREE.Color(0xd6cfcb);
 
         return scene;
     }
@@ -54408,9 +54419,10 @@ function Scene(canvas) {
     }
 
     function createBall(pos, radius, mass) {
-        var ball = new _Ball2.default(pos, radius, mass, AMMO);
+        var ball = new _Ball2.default(pos, radius, mass, AMMO, ballColors[ballColorIndex]);
         ball.addToScene(scene, physicsWorld, camera);
         balls.push(ball);
+        ballColorIndex = (ballColorIndex + 1) % ballColors.length;
     }
 
     function updatePhysics(deltaTime) {
@@ -54572,8 +54584,8 @@ function Slide(pos, scale, quat, AMMO) {
     var mass = 0;
     var axis = new THREE.Vector3(0, 0, 1);
 
-    var slide = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshPhysicalMaterial({
-        color: 0x536075
+    var slide = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({
+        color: 0xc4bbb5
     }));
     slide.position.set(pos.x, pos.y, pos.z);
     slide.scale.set(scale.x, scale.y, scale.z);
@@ -54683,7 +54695,7 @@ function Slide(pos, scale, quat, AMMO) {
 
             // compute new rotation
             tmpQuat.set(q.x(), q.y(), q.z(), q.w());
-            tmpQuat.multiply(tmpQuat2.setFromAxisAngle(axis, 3 * deltaTime));
+            tmpQuat.multiply(tmpQuat2.setFromAxisAngle(axis, -3 * deltaTime));
 
             tmpTrans.setRotation(new AMMO.btQuaternion(tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w));
             motionState.setWorldTransform(tmpTrans);
