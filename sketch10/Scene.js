@@ -77,7 +77,6 @@ export default function Scene(canvas) {
         
             vertexShader: require('../shaders/andy.vert'),
             fragmentShader: require('../shaders/andy.frag'),
-            glslVersion: THREE.GLSL3
         
         } );
         const mesh = new THREE.Mesh( geometry, material );
