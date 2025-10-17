@@ -32,6 +32,7 @@ const sketches = {
     sketch7: () => import(/* webpackChunkName: "sketch7" */ "./sketch7").then(document.getElementById(sketchName).style.color = "black"),
     sketch8: () => import(/* webpackChunkName: "sketch8" */ "./sketch8").then(document.getElementById(sketchName).style.color = "white"),
     sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9").then(document.getElementById(sketchName).style.color = "white"),
+    sketch10: () => import(/* webpackChunkName: "sketch9" */ "./sketch10").then(document.getElementById(sketchName).style.color = "white"),
     // sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9")
 };
 
@@ -71,6 +72,7 @@ function init() {
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
     addSketchElem(sketchList, "sketch9", "Otokei");
+    addSketchElem(sketchList, "sketch10", "Andies");
     // addSketchElem(sketchList, "sketch7", "Liquid");
     // addSketchElem(sketchList, "sketch1", "Iceberg");
 }
