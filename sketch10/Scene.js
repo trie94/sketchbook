@@ -7,11 +7,25 @@ export default function Scene(canvas) {
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
 
+    const material = new THREE.ShaderMaterial( {
+
+        uniforms: {
+            resolution: { value: new THREE.Vector2(WIDTH, HEIGHT) },
+            time: { value: 1.0 },
+        },
+    
+        vertexShader: require('../shaders/andy.vert'),
+        fragmentShader: require('../shaders/andy.frag'),
+    
+    } );
+
     const scene = createScene();
     const renderer = createRenderer();
     const camera = createCamera();
 
     const controls = createControl();
+
+    
     function addLights() {
         const hemiLight = new THREE.HemisphereLight(0xE7E2E0, 0xD9C5BA, 0.5);
         hemiLight.color.setHSL(0.6, 0.6, 0.6);
@@ -68,17 +82,6 @@ export default function Scene(canvas) {
         geometry.addAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
         geometry.addAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
         
-        const material = new THREE.ShaderMaterial( {
-
-            uniforms: {
-                resolution: { value: new THREE.Vector2(WIDTH, HEIGHT) },
-                time: { value: 1.0 },
-            },
-        
-            vertexShader: require('../shaders/andy.vert'),
-            fragmentShader: require('../shaders/andy.frag'),
-        
-        } );
         const mesh = new THREE.Mesh( geometry, material );
 
         scene.add(mesh);
@@ -124,6 +127,8 @@ export default function Scene(canvas) {
     };
 
     this.update = function () {
+        let time = Date.now() / 1000 % 120000;
+        material.uniforms.time.value = time;
         renderer.render(scene, camera);
     }
 
@@ -138,6 +143,8 @@ export default function Scene(canvas) {
         camera.updateProjectionMatrix();
 
         renderer.setSize(WIDTH, HEIGHT);
+
+        material.uniforms.resolution.value = new THREE.Vector2(WIDTH, HEIGHT);
     }
 
     this.onMouseClick = function (e) {
