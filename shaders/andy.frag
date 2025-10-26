@@ -11,19 +11,22 @@ uniform float time;
 #define EYE 12
 #define CONE 13
 
+#define MAX_DIST 10.
+
 // #define LIGHT_BALL_NUM 3
 
 // #define ANTI_ALIAS true
 #define ANIMATE 1.
-vec3 lightPos = vec3(2., 0.4, 16.);
+vec3 lightPos = vec3(1., 0.45, 1.75);
 vec3 lightColor = vec3(1., 0.79, 0.);
-float lightRad = 0.3;
+float lightRad = 0.4;
 
-vec3 eyeColor = vec3(1., 0.95, 0.);
+// vec3 eyeColor = vec3(1., 0.95, 0.);
+vec3 eyeColor = vec3(1., 0, 0.);
 vec3 bodyColor = vec3(0.643, 0.776, 0.223);
 vec3 coneColor = eyeColor;
 
-vec3 andyPos = vec3(0.,0.,15.);
+vec3 andyPos = vec3(0.,0.,0.);
 
 #define DENSITY_MULTIPLIER 5.
 #define MAX_STEPS 64
@@ -213,10 +216,21 @@ float andy(vec3 pos, float delta, out int matId) {
     return d;
 }
 
+vec3 getLeftBeamPos(out vec3 dir) {
+    dir = rotateY(rotateX(vec3(0,1,0), -1.45), 0.1);
+    return andyPos - vec3(0.35, -0.5, 0.75) + dir * 0.1;
+}
+
+vec3 getRightBeamPos(out vec3 dir) {
+    dir = rotateY(rotateX(vec3(0,1,0), -1.45), -0.1);
+    return andyPos - vec3(-0.35, -0.5, 0.75) + dir * 0.1;
+}
+
 float pointLight(vec3 pos, float rad) {
     return sphere(pos, rad);
 }
 
+// TODO: remove as we are now using a line instead of cone sdf for the laser beams
 float getEyeBeam(vec3 p) {
     // TODO fix the pos and transform
     vec3 leftBeamPos = andyPos + vec3(-0.35, 0.8, 1.2);
@@ -239,10 +253,108 @@ float getDensity(float d, vec3 p) {
     return baseDensity * DENSITY_MULTIPLIER;
 }
 
+// infinite lines
+float distanceBetweenLines(vec3 a0, vec3 aDir, vec3 b0, vec3 bDir) {
+    vec3 d = b0 - a0;
+    vec3 c = cross(aDir, bDir);
+    float cLen = length(c);
+
+    return abs(dot(d, c)) / cLen;
+}
+
+// Calculates the squared shortest distance between two line segments in 3D.
+// Seg1: P0 + s*u  (0 <= s <= 1)
+// Seg2: Q0 + t*v  (0 <= t <= 1)
+float segmentToSegmentDistanceSq(
+    vec3 P0, vec3 P1, // Segment 1 endpoints
+    vec3 Q0, vec3 Q1,  // Segment 2 endpoints
+    out vec3 closestP, out vec3 closestQ // point on the line segs
+) {
+    // Direction vectors
+    vec3 u = P1 - P0;
+    vec3 v = Q1 - Q0;
+    vec3 w0 = P0 - Q0; // Vector between start points
+
+    // Coefficients for the quadratic equation
+    float a = dot(u, u); // Squared length of u
+    float b = dot(u, v);
+    float c = dot(v, v); // Squared length of v
+    float d = dot(u, w0);
+    float e = dot(v, w0);
+
+    // Determinant (always non-negative)
+    float denom = a * c - b * b;
+
+    float s, t; // Segment parameters
+
+    // Check if segments are parallel (denom is near zero)
+    if (denom < 1e-6) {
+        // Segments are nearly parallel.
+        // Pick s = 0 and clamp t, then try s = 1 and clamp t,
+        // but for simplicity and robustness in GLSL, we'll
+        // just set s = 0 and clamp t, as one of the endpoints of
+        // segment 1 will be involved in the closest point pair.
+        s = 0.0;
+        t = clamp(e / c, 0.0, 1.0); // Clamp t along v
+    } else {
+        // Segments are not parallel. Find the closest points on the infinite lines.
+        s = (b * e - c * d) / denom;
+        t = (a * e - b * d) / denom;
+
+        // Clamp the parameters s and t to the [0, 1] range of the segments
+        if (s < 0.0) {
+            s = 0.0;
+            // The minimum must lie on the segment s=0, so re-clamped t is needed
+            t = clamp(-d / a, 0.0, 1.0);
+        } else if (s > 1.0) {
+            s = 1.0;
+            // The minimum must lie on the segment s=1, so re-clamped t is needed
+            t = clamp((b - d) / a, 0.0, 1.0);
+        } else if (t < 0.0) {
+            t = 0.0;
+            // The minimum must lie on the segment t=0, so re-clamped s is needed
+            s = clamp(-d / a, 0.0, 1.0);
+        } else if (t > 1.0) {
+            t = 1.0;
+            // The minimum must lie on the segment t=1, so re-clamped s is needed
+            s = clamp((b - d) / a, 0.0, 1.0);
+        }
+        // If s and t are both in [0, 1], they represent the closest points
+        // and no further clamping or re-projection is needed.
+    }
+
+    // Compute the difference vector between the closest points
+    closestP = P0 + s * u;
+    closestQ = Q0 + t * v;
+
+    vec3 diff = closestP - closestQ;
+    // vec3 diff = w0 + s * u - t * v;
+
+    return dot(diff, diff); // Return the squared distance
+}
+
+// 1) the laser beam should cast shadow
+// 2) depending on the dist between the camera ray and the laser beam, it should contribute more?
+float getEyeBeamShadow() {
+    return 0.;
+}
+
+float getEyeBeamContribution(vec3 ro, vec3 re, vec3 laserOrigin, vec3 laserEnd) {
+    vec3 closestOnRay;
+    vec3 closestOnLaser;
+
+    float d = segmentToSegmentDistanceSq(ro, re, laserOrigin, laserEnd, closestOnRay, closestOnLaser);
+
+    // TODO: use a 3D noise texture
+    float noise = perlin(closestOnRay * 5. + time * 2. * vec3(0.3, 0.4, 0.5)) * 0.5 + 0.5;
+    // when d is close to 0, we want the max contribution; we want to fall off quickly
+    return exp(-d * 150.) * noise;
+}
+
 // scene with solid surfaces
 float scene(vec3 p, out int matId) {
     float d = 1e10;
-    d = andy(p - andyPos, 0.0, matId);
+    d = andy(p - andyPos, time, matId);
 
     float dPointLight = sphere(p - getLightPos(), lightRad);
     if (dPointLight < d)  {
@@ -266,59 +378,89 @@ vec3 sceneNormal( in vec3 pos ) {
 
 // march ray using sphere tracing
 // surface raymarching (for solid surfaces)
-vec3 march(vec3 ro, vec3 rd, out bool hit, out int matId) {
+vec3 march(vec3 ro, vec3 rd, out bool hit, out int matId, out float distTraveled) {
     const float hitThreshold = 0.01;
     hit = false;
     vec3 pos = ro;
     vec3 hitPos = ro;
+    // we use this for volume/light to stop marching when there's a solid surface that's closer.
+    float totalDist = 0.;
 
-    for(int i=0; i<MAX_STEPS; i++) {
+    for(int i=0; i < MAX_STEPS; i++) {
         matId = BODY;
         float d = scene(pos, matId);
+        totalDist += d;
         if (d < hitThreshold) {
             hit = true;
             hitPos = pos;
         }
         pos += d*rd;
     }
+
+    // it's possible that we have used up max steps before we reach any surface.
+    // so if there's no hit, we make distTraveled MAX_DIST.
+    // otherwise we set to totalDist with clamping.
+    if (hit) {
+        distTraveled = min(totalDist, MAX_DIST);
+    } else {
+        distTraveled = MAX_DIST;
+    }
     return hitPos;
 }
 
-vec4 volumeMarch(vec3 ro, vec3 rd) {
+vec4 volumeMarch(vec3 ro, vec3 rd, float maxDist, out float totalDistTraveled) {
     // loop through the volume
     // accumulated color and opacity
     vec4 acc = vec4(0.0, 0.0, 0.0, 0.0); // Start with black color, fully transparent.
     vec3 pos = ro;
 
-    const float maxDist = 10.;
-    float stepSize = maxDist / float(MAX_STEPS);
-    // matId doesn't matter here. we are using it just to check the distance.
-    int matId = -1;
-    for (int i = 0; i < MAX_STEPS; i++) {
-        pos += stepSize * rd;
-        float dEyeBeam = getEyeBeam(pos);
-        // TODO: fix this
-        float d = scene(pos, matId);
-        // some solid surface is closer.
-        if (d < dEyeBeam) {
-            break;
-        }
+    // float stepSize = MAX_DIST / float(MAX_STEPS);
+    // float distTraveled = 0.;
 
-        float density = getDensity(dEyeBeam, pos);
-        float extinction = density * stepSize;
+    // for (int i = 0; i < MAX_STEPS; i++) {
+    //     pos += stepSize * rd;
+    //     distTraveled += stepSize;
+    //     // there's some solid surface that's closer to the camera
+    //     if (distTraveled > maxDist) {
+    //         break;
+    //     }
+    //     float dEyeBeam = getEyeBeam(pos);
+    //     float density = getDensity(dEyeBeam, pos);
+    //     float extinction = density * stepSize;
 
-        // new color = old color + transparency * scattered color
-        // scattered color = original beam color * extinction
-        vec3 scatteredColor = coneColor * extinction;
-        // accumulate the color, the new color scattered at this step can only contributed
-        // as much as the light that makes it to that point, meaning transparency.
-        acc.rgb += (1. - acc.a) * scatteredColor;
-        // now we need to update the opacity
-        // opacity is old opacity + extinction.
-        acc.a += (1. - acc.a) * extinction;
-        // Check for early exit (e.g., if the volume is fully opaque)
-        if (acc.a > 0.999) break; 
-    }
+    //     // new color = old color + transparency * scattered color
+    //     // scattered color = original beam color * extinction
+    //     vec3 scatteredColor = coneColor * extinction;
+    //     // accumulate the color, the new color scattered at this step can only contributed
+    //     // as much as the light that makes it to that point, meaning transparency.
+    //     acc.rgb += (1. - acc.a) * scatteredColor;
+    //     // now we need to update the opacity
+    //     // opacity is old opacity + extinction.
+    //     acc.a += (1. - acc.a) * extinction;
+    //     // Check for early exit (e.g., if the volume is fully opaque)
+    //     if (acc.a > 0.999) break; 
+
+    // }
+    // totalDistTraveled = distTraveled;
+
+    bool laserHit;
+    int laserMatId = 0;
+    float laserDistTraveled;
+    
+    vec3 leftLaserDir;
+    vec3 leftLaserPos = getLeftBeamPos(leftLaserDir);
+    vec3 laserHitPos = march(leftLaserPos, leftLaserDir, laserHit, laserMatId, laserDistTraveled);
+    float leftLaser = getEyeBeamContribution(ro, ro + rd * maxDist, leftLaserPos, leftLaserPos + leftLaserDir * laserDistTraveled);
+
+    vec3 rightLaserDir;
+    vec3 rightLaserPos = getRightBeamPos(rightLaserDir);
+    laserHitPos = march(rightLaserPos, rightLaserDir, laserHit, laserMatId, laserDistTraveled);
+    float rightLaser = getEyeBeamContribution(ro, ro + rd * maxDist, rightLaserPos, rightLaserPos + rightLaserDir * laserDistTraveled);
+
+    acc.r += leftLaser;
+    acc.r += rightLaser;
+
+    // return vec4(maxDist * 0.1, 0., 0., 1.);
     
     return acc;
 }
@@ -340,8 +482,9 @@ vec4 shade(vec3 pos, vec3 n, vec3 cam, int matId) {
     vec3 pointLightContribution = vec3(0,0,0);
     bool hit = false;
     int materialId = matId;
+    float maxDist = MAX_DIST;
     vec3 lightDir = normalize(getLightPos()-pos);
-    vec3 lightHitPos = march(pos + n * 0.001, lightDir, hit, materialId);
+    vec3 lightHitPos = march(pos + n * 0.001, lightDir, hit, materialId, maxDist);
 
     if (hit && isLight(materialId)) {
         // in order to make it unbised, we should multiply a pdf (probability distribution function) to the contribution - the probability of picking up the ray if we randomly picked the ray on the hemisphere.
@@ -362,6 +505,7 @@ vec4 shade(vec3 pos, vec3 n, vec3 cam, int matId) {
 
     if (isLight(matId)) {
         return vec4(lightColor, 1.0);
+        // return vec4(lightColor * pointLightContribution, 1.0);
     }
 
     // fallback to black
@@ -385,23 +529,30 @@ vec3 randomPointOnSurfaceOfUnitHemisphere(vec3 pos) {
 }
 
 vec4 raycolor(vec3 rayOrigin, vec3 rayDir) {
-    vec4 volumeResult = volumeMarch(rayOrigin, rayDir);
-    vec3 volumeColor = volumeResult.rgb;
-    float volumeOpacity = volumeResult.a;
-
     bool hit;
     int matId;
-    vec3 t = march(rayOrigin, rayDir, hit, matId);
+    float maxDist;
+
+    vec3 t = march(rayOrigin, rayDir, hit, matId, maxDist);
+
     vec4 surfaceColor;
     if (hit) {
-        surfaceColor = shade(t, sceneNormal(t), rayOrigin, matId);
+        vec3 sceneNormal = sceneNormal(t);
+        surfaceColor = shade(t, sceneNormal, rayOrigin, matId);
     } else {
         // background color
         surfaceColor = vec4(0.007843138,0.145098,0.145098,1);
     }
+
+    float totalDistTraveled;
+    vec4 volumeResult = volumeMarch(rayOrigin, rayDir, maxDist, totalDistTraveled);
+    vec3 volumeColor = volumeResult.rgb;
+    float volumeOpacity = volumeResult.a;
     // alpha blending
-    // return surfaceColor + (1.-volumeOpacity) * volumeResult;
-    return surfaceColor + volumeResult;
+    // return vec4(volumeColor, 1.);
+    return surfaceColor + (1.-volumeOpacity) * volumeResult;
+    // return surfaceColor + volumeResult;
+    // return vec4(volumeOpacity, 0, 0, 1.);
 }
 
 void main() {
@@ -411,7 +562,10 @@ void main() {
     vec3 rayDir = normalize(vec3(aspectRatio * pixel.x, pixel.y, 2.0));
     // vec3 raydx = dFdx(rayDir);
     // vec3 raydy = dFdy(rayDir);
-    vec3 rayOrigin = vec3(0.0, 0.0, 8.8);
+    vec3 rayOrigin = vec3(0.0, 0.0, -5.);
+    float angle = time * 0.1;
+    rayOrigin = rotateY(rayOrigin, angle);
+    rayDir = rotateY(rayDir, angle);
     
     gl_FragColor = raycolor(rayOrigin, rayDir);
     // gl_FragColor = vec4(v_uv, 0., 1.);
