@@ -1,22 +1,26 @@
 import * as THREE from 'three';
+import vertShader from './shaders/andy.vert';
+import fragShader from './shaders/andy.frag';
+import noiseTexture from './assets/3d_simplex_texture.bin';
 
 const OrbitControls = require('three-orbit-controls')(THREE);
 
 export default function Scene(canvas) {
     const clock = new THREE.Clock();
+
+    const TEXTURE_SIZE = 64;
     let HEIGHT = window.innerHeight;
     let WIDTH = window.innerWidth;
 
-    const material = new THREE.ShaderMaterial( {
+    let tick = true;
 
+    const material = new THREE.ShaderMaterial( {
         uniforms: {
             resolution: { value: new THREE.Vector2(WIDTH, HEIGHT) },
             time: { value: 1.0 },
         },
-    
-        vertexShader: require('../shaders/andy.vert'),
-        fragmentShader: require('../shaders/andy.frag'),
-    
+        vertexShader: vertShader,
+        fragmentShader: fragShader,
     } );
 
     const scene = createScene();
@@ -24,37 +28,6 @@ export default function Scene(canvas) {
     const camera = createCamera();
 
     const controls = createControl();
-
-    
-    function addLights() {
-        const hemiLight = new THREE.HemisphereLight(0xE7E2E0, 0xD9C5BA, 0.5);
-        hemiLight.color.setHSL(0.6, 0.6, 0.6);
-        hemiLight.groundColor.setHSL(0.1, 1, 0.4);
-        hemiLight.position.set(0, 50, 0);
-        scene.add(hemiLight);
-    
-        //Add directional light
-        const dirLight = new THREE.DirectionalLight(0xFFFFFF, 0.5);
-        dirLight.color.setHSL(0.1, 1, 0.95);
-        dirLight.position.set(0, 3, 10);
-        dirLight.position.multiplyScalar(1);
-        dirLight.lookAt(0, 0, 0);
-        scene.add(dirLight);
-    
-        dirLight.castShadow = true;
-    
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-    
-        const d = 50;
-    
-        dirLight.shadow.camera.left = -d;
-        dirLight.shadow.camera.right = d;
-        dirLight.shadow.camera.top = d;
-        dirLight.shadow.camera.bottom = -d;
-    
-        dirLight.shadow.camera.far = 13500;
-    }
 
     function createScene() {
         const scene = new THREE.Scene();
@@ -121,14 +94,59 @@ export default function Scene(canvas) {
         return controls;
     }
 
+    function loadTexture() {
+        let width = TEXTURE_SIZE;
+        let height = TEXTURE_SIZE;
+        let depth = TEXTURE_SIZE;
+
+        return fetch(noiseTexture)
+        .then(response => {
+            if (!response.ok) {
+                return null;
+            }
+            return response.arrayBuffer(); // Get the response as a raw binary buffer
+        })
+        .then(buffer => {
+            // interpret the raw buffer as a Float32Array
+            const rawData = new Float32Array(buffer);
+
+            // sanity check
+            if (rawData.length !== width * height * depth) {
+                console.error("Error: Loaded data size does not match expected dimensions!");
+            }
+
+            console.log(`Loaded 3D data: ${width}x${height}x${depth}. Voxel count: ${rawData.length}`);
+
+            // create the THREE.Data3DTexture
+            const texture = new THREE.Data3DTexture(
+                rawData, 
+                width, 
+                height, 
+                depth
+            );
+            
+            texture.format = THREE.RedFormat;      // Single channel (grayscale noise)
+            texture.type = THREE.FloatType;        // Matches the float32 data type
+            
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            
+            texture.unpackAlignment = 1;           // Required for correct byte alignment
+            texture.needsUpdate = true;
+            
+            return texture;
+        });
+    }
+
     this.start = function () {
-        addLights();
-        console.log("hello");
+        loadTexture();
     };
 
     this.update = function () {
-        let time = Date.now() / 1000 % 120000;
-        material.uniforms.time.value = time;
+        if (tick) {
+            let time = Date.now() / 1000 % 120000;
+            material.uniforms.time.value = time;
+        }
         renderer.render(scene, camera);
     }
 
@@ -148,5 +166,7 @@ export default function Scene(canvas) {
     }
 
     this.onMouseClick = function (e) {
+        console.log("toggle timer");
+        tick = !tick;
     }
 }
