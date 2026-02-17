@@ -53950,6 +53950,245 @@ module.exports = g;
 
 /***/ }),
 
+/***/ "./sketch10/Scene.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = Scene;
+
+var _three = __webpack_require__("./node_modules/three/build/three.module.js");
+
+var THREE = _interopRequireWildcard(_three);
+
+var _andy = __webpack_require__("./sketch10/shaders/andy.vert");
+
+var _andy2 = _interopRequireDefault(_andy);
+
+var _andy3 = __webpack_require__("./sketch10/shaders/andy.frag");
+
+var _andy4 = _interopRequireDefault(_andy3);
+
+var _d_simplex_texture = __webpack_require__("./sketch10/assets/3d_simplex_texture.bin");
+
+var _d_simplex_texture2 = _interopRequireDefault(_d_simplex_texture);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var OrbitControls = __webpack_require__("./node_modules/three-orbit-controls/index.js")(THREE);
+
+function Scene(canvas) {
+    var clock = new THREE.Clock();
+
+    var TEXTURE_SIZE = 64;
+    var HEIGHT = window.innerHeight;
+    var WIDTH = window.innerWidth;
+
+    var tick = true;
+
+    var material = new THREE.ShaderMaterial({
+        uniforms: {
+            resolution: { value: new THREE.Vector2(WIDTH, HEIGHT) },
+            time: { value: 1.0 }
+        },
+        vertexShader: _andy2.default,
+        fragmentShader: _andy4.default
+    });
+
+    var scene = createScene();
+    var renderer = createRenderer();
+    var camera = createCamera();
+
+    var controls = createControl();
+
+    function createScene() {
+        var scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xd6cfcb);
+
+        var geometry = new THREE.BufferGeometry();
+
+        var vertices = new Float32Array([-1.0, -1.0, 1.0, // v0
+        3.0, -1.0, 1.0, // v1
+        -1.0, 3.0, 1.0]);
+
+        var indices = [0, 1, 2];
+
+        var uvs = new Float32Array([0, 0, // uv0
+        2, 0, // uv1
+        0, 2 // uv2
+        ]);
+
+        geometry.setIndex(indices);
+        geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        geometry.addAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+
+        var mesh = new THREE.Mesh(geometry, material);
+
+        scene.add(mesh);
+
+        return scene;
+    }
+
+    function createRenderer() {
+        var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
+        renderer.setSize(WIDTH, HEIGHT);
+        renderer.gammaInput = true;
+        renderer.gammaOutput = true;
+
+        return renderer;
+    }
+
+    function createCamera() {
+        var aspectRatio = WIDTH / HEIGHT;
+        var fieldOfView = 60;
+        var nearPlane = 1;
+        var farPlane = 10000;
+        var camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
+
+        camera.position.set(0, 0, 300);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        return camera;
+    }
+
+    function createControl() {
+        var controls = new OrbitControls(camera, renderer.domElement);
+        controls.target = new THREE.Vector3(0, 0, 0);
+        // controls.maxPolarAngle = Math.PI / 2;
+        controls.maxDistance = 1000;
+
+        return controls;
+    }
+
+    function loadTexture() {
+        var width = TEXTURE_SIZE;
+        var height = TEXTURE_SIZE;
+        var depth = TEXTURE_SIZE;
+
+        return fetch(_d_simplex_texture2.default).then(function (response) {
+            if (!response.ok) {
+                return null;
+            }
+            return response.arrayBuffer(); // Get the response as a raw binary buffer
+        }).then(function (buffer) {
+            // interpret the raw buffer as a Float32Array
+            var rawData = new Float32Array(buffer);
+
+            // sanity check
+            if (rawData.length !== width * height * depth) {
+                console.error("Error: Loaded data size does not match expected dimensions!");
+            }
+
+            console.log('Loaded 3D data: ' + width + 'x' + height + 'x' + depth + '. Voxel count: ' + rawData.length);
+
+            // create the THREE.Data3DTexture
+            var texture = new THREE.Data3DTexture(rawData, width, height, depth);
+
+            texture.format = THREE.RedFormat; // Single channel (grayscale noise)
+            texture.type = THREE.FloatType; // Matches the float32 data type
+
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+
+            texture.unpackAlignment = 1; // Required for correct byte alignment
+            texture.needsUpdate = true;
+
+            return texture;
+        });
+    }
+
+    this.start = function () {
+        loadTexture();
+    };
+
+    this.update = function () {
+        if (tick) {
+            var time = Date.now() / 1000 % 120000;
+            material.uniforms.time.value = time;
+        }
+        renderer.render(scene, camera);
+    };
+
+    this.onWindowResize = function () {
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+
+        canvas.innerWidth = WIDTH;
+        canvas.innerHeight = HEIGHT;
+
+        camera.aspect = WIDTH / HEIGHT;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(WIDTH, HEIGHT);
+
+        material.uniforms.resolution.value = new THREE.Vector2(WIDTH, HEIGHT);
+    };
+
+    this.onMouseClick = function (e) {
+        console.log("toggle timer");
+        tick = !tick;
+    };
+}
+
+/***/ }),
+
+/***/ "./sketch10/assets/3d_simplex_texture.bin":
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "sketch10/assets/3d_simplex_texture.bin";
+
+/***/ }),
+
+/***/ "./sketch10/index.js":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = Sketch10;
+
+var _Scene = __webpack_require__("./sketch10/Scene.js");
+
+var _Scene2 = _interopRequireDefault(_Scene);
+
+var _BaseSketch = __webpack_require__("./BaseSketch.js");
+
+var _BaseSketch2 = _interopRequireDefault(_BaseSketch);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function Sketch10() {
+    var canvas = document.getElementById('canvas');
+    var scene = new _Scene2.default(canvas);
+    Sketch10.prototype = new _BaseSketch2.default(scene);
+}
+
+/***/ }),
+
+/***/ "./sketch10/shaders/andy.frag":
+/***/ (function(module, exports) {
+
+module.exports = "#define GLSLIFY 1\nvarying vec2 v_uv;\nuniform vec2 resolution;\nuniform float time;\n\n#define SKEW 0.366025404 // (sqrt(3)-1)/2;\n#define UNSKEW 0.211324865 // (3-sqrt(3))/6;\n\n// define material here. reserve 0-10 for lights.\n#define LIGHT 0\n#define BODY 11\n#define EYE 12\n#define CONE 13\n\n#define MAX_DIST 10.\n\n// #define LIGHT_BALL_NUM 3\n\n// #define ANTI_ALIAS true\n#define ANIMATE 1.\nvec3 lightPos = vec3(1., 0.45, 1.75);\nvec3 lightColor = vec3(1., 0.79, 0.);\nfloat lightRad = 0.4;\n\n// vec3 eyeColor = vec3(1., 0.95, 0.);\nvec3 eyeColor = vec3(1., 0, 0.);\nvec3 bodyColor = vec3(0.643, 0.776, 0.223);\nvec3 coneColor = eyeColor;\n\nvec3 andyPos = vec3(0.,0.,0.);\n\n#define DENSITY_MULTIPLIER 5.\n#define MAX_STEPS 64\n\nbool isLight(int matId) {\n    return matId < 11;\n}\n\n// CSG operations\nfloat _union(float a, float b) {\n    return min(a, b);\n}\n\nfloat intersect(float a, float b) {\n    return max(a, b);\n}\n\nfloat difference(float a, float b) {\n    return max(a, -b);\n}\n\n// given segment ab and point c, computes closest point d on ab\n// also returns t for the position of d, d(t) = a + t(b-a)\nvec3 closestPtPointSegment(vec3 c, vec3 a, vec3 b, out float t) {\n    vec3 ab = b - a;\n    // project c onto ab, computing parameterized position d(t) = a + t(b-a)\n    t = dot(c - a, ab) / dot(ab, ab);\n    // clamp to closest endpoint\n    t = clamp(t, 0.0, 1.0);\n    // compute projected position\n    return a + t * ab;\n}\n\n// primitive functions\n// these all return the distance to the surface from a given point\nfloat plane(vec3 p, vec3 planeN, vec3 planePos) {\n    return dot(p - planePos, planeN);\n}\n\nfloat sphere(vec3 p, float r) {\n    return length(p) - r;\n}\n\n// capsule in Y axis\nfloat capsuleY(vec3 p, float r, float h) {\n    p.y -= clamp(p.y, 0.0, h);\n    return length(p) - r;\n}\n\nfloat halfSphere(vec3 p, float r) {\n    return difference(sphere(p, r),\n        plane(p, vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 0.0)) );\n}\n\nfloat capsule(vec3 p, vec3 a, vec3 b, float r) {\n    float t;\n    vec3 c = closestPtPointSegment(p, a, b, t);\n    return length(c - p) - r;\n}\n\n// infinite cone\nfloat sdCone(vec3 p, vec2 c) {\n    // c is the sin/cos of the angle\n    vec2 q = vec2( length(p.xz), -p.y );\n    float d = length(q-c*max(dot(q,c), 0.0));\n    return d * ((q.x*c.y-q.y*c.x<0.0)?-1.0:1.0);\n}\n\nfloat sdCone(vec3 p, vec2 c, float h) {\n  // c is the sin/cos of the angle, h is height\n  // Alternatively pass q instead of (c,h),\n  // which is the point at the base in 2D\n  vec2 q = h*vec2(c.x/c.y,-1.0);\n    \n  vec2 w = vec2( length(p.xz), p.y );\n  vec2 a = w - q*clamp( dot(w,q)/dot(q,q), 0.0, 1.0 );\n  vec2 b = w - q*vec2( clamp( w.x/q.x, 0.0, 1.0 ), 1.0 );\n  float k = sign( q.y );\n  float d = min(dot( a, a ),dot(b, b));\n  float s = max( k*(w.x*q.y-w.y*q.x),k*(w.y-q.y)  );\n  return sqrt(d)*sign(s);\n}\n\n// transforms\nvec3 rotateX(vec3 p, float a) {\n    float sa = sin(a);\n    float ca = cos(a);\n    vec3 r;\n    r.x = p.x;\n    r.y = ca*p.y - sa*p.z;\n    r.z = sa*p.y + ca*p.z;\n    return r;\n}\n\nvec3 rotateY(vec3 p, float a) {\n    float sa = sin(a);\n    float ca = cos(a);\n    vec3 r;\n    r.x = ca*p.x + sa*p.z;\n    r.y = p.y;\n    r.z = -sa*p.x + ca*p.z;\n    return r;\n}\n\n// some noise functions\n\nvec3 hash(vec3 p) {\n\tp = fract(p * vec3(.3456, .1234, .9876));\n    p += dot(p, p.yxz+43.21);\n    p = (p.xxy + p.yxx)*p.zyx;\n    return (fract(sin(p)*4567.1234567)-.5)*2.;\n}\n\nvec3 hash33(vec3 p) {\n    p = fract(p * vec3(0.1031, 0.11369, 0.13787));\n    p += dot(p, p.yzx + 19.19);\n    return fract(vec3((p.x + p.y) * p.z, (p.x + p.z) * p.y, (p.y + p.z) * p.x));\n}\n\nfloat perlin(vec3 p) {\n    vec3 i = floor(p);\n    vec3 f = fract(p);\n    \n    vec3 u = f * f * (3.0 - 2.0 * f);\n    \n    vec3 a = hash33(i + vec3(0.0, 0.0, 0.0));\n    vec3 b = hash33(i + vec3(1.0, 0.0, 0.0));\n    vec3 c = hash33(i + vec3(0.0, 1.0, 0.0));\n    vec3 d = hash33(i + vec3(1.0, 1.0, 0.0));\n    vec3 e = hash33(i + vec3(0.0, 0.0, 1.0));\n    vec3 g = hash33(i + vec3(1.0, 0.0, 1.0));\n    vec3 h = hash33(i + vec3(0.0, 1.0, 1.0));\n    vec3 j = hash33(i + vec3(1.0, 1.0, 1.0));\n\n    float k0 = dot(a, f - vec3(0.0, 0.0, 0.0));\n    float k1 = dot(b, f - vec3(1.0, 0.0, 0.0));\n    float k2 = dot(c, f - vec3(0.0, 1.0, 0.0));\n    float k3 = dot(d, f - vec3(1.0, 1.0, 0.0));\n    float k4 = dot(e, f - vec3(0.0, 0.0, 1.0));\n    float k5 = dot(g, f - vec3(1.0, 0.0, 1.0));\n    float k6 = dot(h, f - vec3(0.0, 1.0, 1.0));\n    float k7 = dot(j, f - vec3(1.0, 1.0, 1.0));\n\n    float k = mix(k0, k1, u.x);\n    float l = mix(k2, k3, u.x);\n    float m = mix(k4, k5, u.x);\n    float n = mix(k6, k7, u.x);\n    float o = mix(k, l, u.y);\n    float q = mix(m, n, u.y);\n    \n    return mix(o, q, u.z);\n}\n\nvec3 getLightPos() {\n    float speed = 1.;\n    return rotateY(lightPos - andyPos, time * speed * ANIMATE) + andyPos;\n}\n\nfloat andy(vec3 pos, float delta, out int matId) {\n    float d = 1e10;\n    pos.x = abs(pos.x);  // mirror in X\n    matId = BODY;\n\n    // head\n    d = halfSphere(pos, 1.0);\n\n    // antennas\n    d = _union(d, capsule(pos, vec3(0.4, 0.7, 0.0), vec3(0.75, 1.2, 0.0), 0.05));\n\n    // body\n    d = _union(d, capsuleY((pos*vec3(1.0, 4.0, 1.0) - vec3(0.0, -4.6, 0.0)), 1.0, 4.0));\n\n    // arms\n    d = _union(d, capsuleY(rotateX(pos, sin(delta)) - vec3(1.2, -0.9, 0.0), 0.2, 0.7));\n\n    // legs\n    d = _union(d, capsuleY(pos - vec3(0.4, -1.8, 0.0), 0.2, 0.5));\n\n    float dEyes = sphere(pos + vec3(-0.35, -0.5, 0.75), /* eye size= */ 0.075);\n    if (dEyes < d)\n    {\n        matId = EYE;\n    }\n    // eyes\n    d = _union(d, dEyes);\n\n    return d;\n}\n\nvec3 getLeftBeamPos(out vec3 dir) {\n    dir = rotateY(rotateX(vec3(0,1,0), -1.45), 0.1);\n    return andyPos - vec3(0.35, -0.5, 0.75) + dir * 0.1;\n}\n\nvec3 getRightBeamPos(out vec3 dir) {\n    dir = rotateY(rotateX(vec3(0,1,0), -1.45), -0.1);\n    return andyPos - vec3(-0.35, -0.5, 0.75) + dir * 0.1;\n}\n\nfloat pointLight(vec3 pos, float rad) {\n    return sphere(pos, rad);\n}\n\n// TODO: remove as we are now using a line instead of cone sdf for the laser beams\nfloat getEyeBeam(vec3 p) {\n    // TODO fix the pos and transform\n    vec3 leftBeamPos = andyPos + vec3(-0.35, 0.8, 1.2);\n    vec3 rightBeamPos = andyPos + vec3(0.35, 0.8, 1.2);\n    float left = sdCone(rotateY(rotateX(p - leftBeamPos, -1.45), 0.1), vec2(0.005, 0.12), 7.);\n    float right = sdCone(rotateY(rotateX(p - rightBeamPos, -1.45), 0.1), vec2(0.005, 0.12), 7.);\n\n    return _union(left, right);\n}\n\nfloat getDensity(float d, vec3 p) {\n    // returns high density when it's inside\n    float baseDensity = max(0., -d);\n    float SHARPNESS = 1.4;\n    baseDensity = pow(baseDensity, SHARPNESS);\n    // TODO: think about noise...\n    // float noise = perlin(p + time * 1.2) * 0.5 + 0.5;\n\n    // return baseDensity * noise * DENSITY_MULTIPLIER;\n    return baseDensity * DENSITY_MULTIPLIER;\n}\n\n// infinite lines\nfloat distanceBetweenLines(vec3 a0, vec3 aDir, vec3 b0, vec3 bDir) {\n    vec3 d = b0 - a0;\n    vec3 c = cross(aDir, bDir);\n    float cLen = length(c);\n\n    return abs(dot(d, c)) / cLen;\n}\n\n// Calculates the squared shortest distance between two line segments in 3D.\n// Seg1: P0 + s*u  (0 <= s <= 1)\n// Seg2: Q0 + t*v  (0 <= t <= 1)\nfloat segmentToSegmentDistanceSq(\n    vec3 P0, vec3 P1, // Segment 1 endpoints\n    vec3 Q0, vec3 Q1,  // Segment 2 endpoints\n    out vec3 closestP, out vec3 closestQ // point on the line segs\n) {\n    // Direction vectors\n    vec3 u = P1 - P0;\n    vec3 v = Q1 - Q0;\n    vec3 w0 = P0 - Q0; // Vector between start points\n\n    // Coefficients for the quadratic equation\n    float a = dot(u, u); // Squared length of u\n    float b = dot(u, v);\n    float c = dot(v, v); // Squared length of v\n    float d = dot(u, w0);\n    float e = dot(v, w0);\n\n    // Determinant (always non-negative)\n    float denom = a * c - b * b;\n\n    float s, t; // Segment parameters\n\n    // Check if segments are parallel (denom is near zero)\n    if (denom < 1e-6) {\n        // Segments are nearly parallel.\n        // Pick s = 0 and clamp t, then try s = 1 and clamp t,\n        // but for simplicity and robustness in GLSL, we'll\n        // just set s = 0 and clamp t, as one of the endpoints of\n        // segment 1 will be involved in the closest point pair.\n        s = 0.0;\n        t = clamp(e / c, 0.0, 1.0); // Clamp t along v\n    } else {\n        // Segments are not parallel. Find the closest points on the infinite lines.\n        s = (b * e - c * d) / denom;\n        t = (a * e - b * d) / denom;\n\n        // Clamp the parameters s and t to the [0, 1] range of the segments\n        if (s < 0.0) {\n            s = 0.0;\n            // The minimum must lie on the segment s=0, so re-clamped t is needed\n            t = clamp(-d / a, 0.0, 1.0);\n        } else if (s > 1.0) {\n            s = 1.0;\n            // The minimum must lie on the segment s=1, so re-clamped t is needed\n            t = clamp((b - d) / a, 0.0, 1.0);\n        } else if (t < 0.0) {\n            t = 0.0;\n            // The minimum must lie on the segment t=0, so re-clamped s is needed\n            s = clamp(-d / a, 0.0, 1.0);\n        } else if (t > 1.0) {\n            t = 1.0;\n            // The minimum must lie on the segment t=1, so re-clamped s is needed\n            s = clamp((b - d) / a, 0.0, 1.0);\n        }\n        // If s and t are both in [0, 1], they represent the closest points\n        // and no further clamping or re-projection is needed.\n    }\n\n    // Compute the difference vector between the closest points\n    closestP = P0 + s * u;\n    closestQ = Q0 + t * v;\n\n    vec3 diff = closestP - closestQ;\n    // vec3 diff = w0 + s * u - t * v;\n\n    return dot(diff, diff); // Return the squared distance\n}\n\n// 1) the laser beam should cast shadow\n// 2) depending on the dist between the camera ray and the laser beam, it should contribute more?\nfloat getEyeBeamShadow() {\n    return 0.;\n}\n\nfloat getEyeBeamContribution(vec3 ro, vec3 re, vec3 laserOrigin, vec3 laserEnd) {\n    vec3 closestOnRay;\n    vec3 closestOnLaser;\n\n    float d = segmentToSegmentDistanceSq(ro, re, laserOrigin, laserEnd, closestOnRay, closestOnLaser);\n\n    // TODO: use a 3D noise texture\n    float noise = perlin(closestOnRay * 5. + time * 2. * vec3(0.3, 0.4, 0.5)) * 0.5 + 0.5;\n    // when d is close to 0, we want the max contribution; we want to fall off quickly\n    return exp(-d * 150.) * noise;\n}\n\n// scene with solid surfaces\nfloat scene(vec3 p, out int matId) {\n    float d = 1e10;\n    d = andy(p - andyPos, time, matId);\n\n    float dPointLight = sphere(p - getLightPos(), lightRad);\n    if (dPointLight < d)  {\n        matId = LIGHT;\n    }\n    d = _union(d, dPointLight);\n\n    return d;\n}\n\n// calculate scene normal\nvec3 sceneNormal( in vec3 pos ) {\n    int matId = BODY;\n    float eps = 0.0001;\n    vec3 n;\n    n.x = scene( vec3(pos.x+eps, pos.y, pos.z), matId ) - scene( vec3(pos.x-eps, pos.y, pos.z), matId );\n    n.y = scene( vec3(pos.x, pos.y+eps, pos.z), matId ) - scene( vec3(pos.x, pos.y-eps, pos.z), matId );\n    n.z = scene( vec3(pos.x, pos.y, pos.z+eps), matId ) - scene( vec3(pos.x, pos.y, pos.z-eps), matId );\n    return normalize(n);\n}\n\n// march ray using sphere tracing\n// surface raymarching (for solid surfaces)\nvec3 march(vec3 ro, vec3 rd, out bool hit, out int matId, out float distTraveled) {\n    const float hitThreshold = 0.01;\n    hit = false;\n    vec3 pos = ro;\n    vec3 hitPos = ro;\n    // we use this for volume/light to stop marching when there's a solid surface that's closer.\n    float totalDist = 0.;\n\n    for(int i=0; i < MAX_STEPS; i++) {\n        matId = BODY;\n        float d = scene(pos, matId);\n        totalDist += d;\n        if (d < hitThreshold) {\n            hit = true;\n            hitPos = pos;\n        }\n        pos += d*rd;\n    }\n\n    // it's possible that we have used up max steps before we reach any surface.\n    // so if there's no hit, we make distTraveled MAX_DIST.\n    // otherwise we set to totalDist with clamping.\n    if (hit) {\n        distTraveled = min(totalDist, MAX_DIST);\n    } else {\n        distTraveled = MAX_DIST;\n    }\n    return hitPos;\n}\n\nvec4 volumeMarch(vec3 ro, vec3 rd, float maxDist, out float totalDistTraveled) {\n    // loop through the volume\n    // accumulated color and opacity\n    vec4 acc = vec4(0.0, 0.0, 0.0, 0.0); // Start with black color, fully transparent.\n    vec3 pos = ro;\n\n    // float stepSize = MAX_DIST / float(MAX_STEPS);\n    // float distTraveled = 0.;\n\n    // for (int i = 0; i < MAX_STEPS; i++) {\n    //     pos += stepSize * rd;\n    //     distTraveled += stepSize;\n    //     // there's some solid surface that's closer to the camera\n    //     if (distTraveled > maxDist) {\n    //         break;\n    //     }\n    //     float dEyeBeam = getEyeBeam(pos);\n    //     float density = getDensity(dEyeBeam, pos);\n    //     float extinction = density * stepSize;\n\n    //     // new color = old color + transparency * scattered color\n    //     // scattered color = original beam color * extinction\n    //     vec3 scatteredColor = coneColor * extinction;\n    //     // accumulate the color, the new color scattered at this step can only contributed\n    //     // as much as the light that makes it to that point, meaning transparency.\n    //     acc.rgb += (1. - acc.a) * scatteredColor;\n    //     // now we need to update the opacity\n    //     // opacity is old opacity + extinction.\n    //     acc.a += (1. - acc.a) * extinction;\n    //     // Check for early exit (e.g., if the volume is fully opaque)\n    //     if (acc.a > 0.999) break; \n\n    // }\n    // totalDistTraveled = distTraveled;\n\n    bool laserHit;\n    int laserMatId = 0;\n    float laserDistTraveled;\n    \n    vec3 leftLaserDir;\n    vec3 leftLaserPos = getLeftBeamPos(leftLaserDir);\n    vec3 laserHitPos = march(leftLaserPos, leftLaserDir, laserHit, laserMatId, laserDistTraveled);\n    float leftLaser = getEyeBeamContribution(ro, ro + rd * maxDist, leftLaserPos, leftLaserPos + leftLaserDir * laserDistTraveled);\n\n    vec3 rightLaserDir;\n    vec3 rightLaserPos = getRightBeamPos(rightLaserDir);\n    laserHitPos = march(rightLaserPos, rightLaserDir, laserHit, laserMatId, laserDistTraveled);\n    float rightLaser = getEyeBeamContribution(ro, ro + rd * maxDist, rightLaserPos, rightLaserPos + rightLaserDir * laserDistTraveled);\n\n    acc.r += leftLaser;\n    acc.r += rightLaser;\n\n    // return vec4(maxDist * 0.1, 0., 0., 1.);\n    \n    return acc;\n}\n\nvec3 computeLight(vec3 pointLightPos, vec3 cam, vec3 pos, vec3 n, vec3 pointLightColor) {\n    vec3 l = normalize(pointLightPos - pos);\n    vec3 v = normalize(cam - pos);\n    vec3 h = normalize(v + l);\n\n    vec3 diffuse = /* attenuation= */ 0.5 * pointLightColor * max(0.0, dot(n, l));\n    vec3 spec = pointLightColor * pow(max(0.0, dot(n, h)), /* shininess= */ 100.);\n\n    return diffuse + spec;\n}\n\n// lighting\nvec4 shade(vec3 pos, vec3 n, vec3 cam, int matId) {\n    // shoot a ray towards the point light\n    vec3 pointLightContribution = vec3(0,0,0);\n    bool hit = false;\n    int materialId = matId;\n    float maxDist = MAX_DIST;\n    vec3 lightDir = normalize(getLightPos()-pos);\n    vec3 lightHitPos = march(pos + n * 0.001, lightDir, hit, materialId, maxDist);\n\n    if (hit && isLight(materialId)) {\n        // in order to make it unbised, we should multiply a pdf (probability distribution function) to the contribution - the probability of picking up the ray if we randomly picked the ray on the hemisphere.\n        pointLightContribution += computeLight(getLightPos(), cam, pos, n, lightColor);\n    }\n\n    if (matId == EYE) {\n        return vec4(eyeColor, 1.0);\n    }\n\n    if (matId == BODY) {\n        return vec4(bodyColor * pointLightContribution, 1.0);\n    }\n\n    // if (matId == CONE) {\n    //     return vec4(coneColor, 1.0);\n    // }\n\n    if (isLight(matId)) {\n        return vec4(lightColor, 1.0);\n        // return vec4(lightColor * pointLightContribution, 1.0);\n    }\n\n    // fallback to black\n    return vec4(0.,0.,0.,1);\n}\n\nfloat rand(vec3 co) {\n    return fract(sin( dot(co.xyz ,vec3(12.9898,78.233,45.5432) )) * 43758.5453);\n}\n\n// get a random point on the surface of a unit hemisphere\nvec3 randomPointOnSurfaceOfUnitHemisphere(vec3 pos) {\n    float PI = 3.141592;\n    float theta = 2. * 3.141592 * rand(pos);\n    float phi = acos(1. - 2. * rand(pos));\n    float x = sin(phi) * cos(theta);\n    float y = sin(phi) * sin(theta);\n    float z = cos(phi);\n\n    return vec3(x, y, z);\n}\n\nvec4 raycolor(vec3 rayOrigin, vec3 rayDir) {\n    bool hit;\n    int matId;\n    float maxDist;\n\n    vec3 t = march(rayOrigin, rayDir, hit, matId, maxDist);\n\n    vec4 surfaceColor;\n    if (hit) {\n        vec3 sceneNormal = sceneNormal(t);\n        surfaceColor = shade(t, sceneNormal, rayOrigin, matId);\n    } else {\n        // background color\n        surfaceColor = vec4(0.007843138,0.145098,0.145098,1);\n    }\n\n    float totalDistTraveled;\n    vec4 volumeResult = volumeMarch(rayOrigin, rayDir, maxDist, totalDistTraveled);\n    vec3 volumeColor = volumeResult.rgb;\n    float volumeOpacity = volumeResult.a;\n    // alpha blending\n    // return vec4(volumeColor, 1.);\n    return surfaceColor + (1.-volumeOpacity) * volumeResult;\n    // return surfaceColor + volumeResult;\n    // return vec4(volumeOpacity, 0, 0, 1.);\n}\n\nvoid main() {\n    vec2 pixel = v_uv * 2.0 - 1.0;\n\n    float aspectRatio = resolution.x / resolution.y;\n    vec3 rayDir = normalize(vec3(aspectRatio * pixel.x, pixel.y, 2.0));\n    // vec3 raydx = dFdx(rayDir);\n    // vec3 raydy = dFdy(rayDir);\n    vec3 rayOrigin = vec3(0.0, 0.0, -5.);\n    float angle = time * 0.1;\n    rayOrigin = rotateY(rayOrigin, angle);\n    rayDir = rotateY(rayDir, angle);\n    \n    gl_FragColor = raycolor(rayOrigin, rayDir);\n    // gl_FragColor = vec4(v_uv, 0., 1.);\n\n    // enable anti-alias\n    //vec4 color = vec4(0,0,0,0);\n    //for (float x=0.; x<4.; x++) {\n        //for (float y=0.; y<4.; y++) {\n            //vec3 rd = rayDir + raydx * (x-1.5) * 0.5 + raydy * (y-1.5) * 0.5;\n            //color += raycolor(rayOrigin, rd);\n       //}\n    //}\n    //fragColor = color / 16.;\n}"
+
+/***/ }),
+
+/***/ "./sketch10/shaders/andy.vert":
+/***/ (function(module, exports) {
+
+module.exports = "#define GLSLIFY 1\nvarying vec2 v_uv;\n\nvoid main(){\n    gl_Position = vec4(position, 1.0);\n    v_uv = uv;\n}"
+
+/***/ }),
+
 /***/ "./sketch9/Ball.js":
 /***/ (function(module, exports, __webpack_require__) {
 

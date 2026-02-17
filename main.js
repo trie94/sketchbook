@@ -92,7 +92,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "00966a9d95ea4742fcdc";
+/******/ 	var hotCurrentHash = "3b1eacb8e983c1aeba82";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -1026,6 +1026,9 @@ var sketches = {
     },
     sketch9: function sketch9() {
         return __webpack_require__.e(/* import() | sketch9 */ 8).then(__webpack_require__.t.bind(null, "./sketch9/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
+    },
+    sketch10: function sketch10() {
+        return __webpack_require__.e(/* import() | sketch9 */ 8).then(__webpack_require__.t.bind(null, "./sketch10/index.js", 7)).then(document.getElementById(sketchName).style.color = "white");
     }
     // sketch9: () => import(/* webpackChunkName: "sketch9" */ "./sketch9")
 };
@@ -1068,8 +1071,7 @@ function init() {
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
     addSketchElem(sketchList, "sketch9", "Otokei");
-    // addSketchElem(sketchList, "sketch7", "Liquid");
-    // addSketchElem(sketchList, "sketch1", "Iceberg");
+    addExternalSketchElem(sketchList, "https://trie94.github.io/andytachi/", "andies", "Angy Andies");
 }
 
 function addSketchElem(sketchList, sketchFileName, sketchName) {
@@ -1078,6 +1080,15 @@ function addSketchElem(sketchList, sketchFileName, sketchName) {
     sketchList.appendChild(sketch);
     sketch.setAttribute('href', basename + sketchFileName);
     sketch.id = sketchFileName;
+    sketch.innerHTML = sketchName;
+}
+
+function addExternalSketchElem(sketchList, link, sketchId, sketchName) {
+    var sketch = document.createElement('a');
+    sketch.className = "sketch-item";
+    sketchList.appendChild(sketch);
+    sketch.setAttribute('href', link);
+    sketch.id = sketchId;
     sketch.innerHTML = sketchName;
 }
 
