@@ -72,9 +72,8 @@ function init() {
     addSketchElem(sketchList, "sketch3", "Munyu");
     addSketchElem(sketchList, "sketch2", "Shell");
     addSketchElem(sketchList, "sketch9", "Otokei");
-    addSketchElem(sketchList, "sketch10", "Andies");
-    // addSketchElem(sketchList, "sketch7", "Liquid");
-    // addSketchElem(sketchList, "sketch1", "Iceberg");
+    addExternalSketchElem(
+        sketchList, "https://trie94.github.io/andytachi/", "andies", "Angy Andies");
 }
 
 function addSketchElem(sketchList, sketchFileName, sketchName) {
@@ -83,5 +82,14 @@ function addSketchElem(sketchList, sketchFileName, sketchName) {
     sketchList.appendChild(sketch);
     sketch.setAttribute('href', basename + sketchFileName);
     sketch.id = sketchFileName;
+    sketch.innerHTML = sketchName;
+}
+
+function addExternalSketchElem(sketchList, link, sketchId, sketchName) {
+    let sketch = document.createElement('a');
+    sketch.className = "sketch-item";
+    sketchList.appendChild(sketch);
+    sketch.setAttribute('href', link);
+    sketch.id = sketchId;
     sketch.innerHTML = sketchName;
 }
